@@ -22,7 +22,7 @@ namespace syscon::controllers
         return controllerHandlers.size() >= MaxControllerHandlersSize;
     }
 
-    Result Insert(std::unique_ptr<IController> &&controllerPtr)
+    ams::Result Insert(std::unique_ptr<IController> &&controllerPtr)
     {
         std::unique_ptr<SwitchVirtualGamepadHandler> switchHandler;
         if (UseAbstractedPad)
@@ -36,7 +36,7 @@ namespace syscon::controllers
             WriteToLog("Inserting controller as HDLs");
         }
 
-        Result rc = switchHandler->Initialize();
+        ams::Result rc = switchHandler->Initialize();
         if (R_SUCCEEDED(rc))
         {
             std::scoped_lock scoped_lock(controllerMutex);

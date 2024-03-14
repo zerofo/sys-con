@@ -45,7 +45,13 @@ Instead, clone the repository **recursively** using any git client you have. (Gi
 
 Like all other switch projects, you need to have [devkitA64](https://switchbrew.org/wiki/Setting_up_Development_Environment) set up on your system.
 
-For compatibility with the Atmosphere-libs dependency, this project currently uses a version of libnx at commit **[b35d42f](https://github.com/switchbrew/libnx/commit/b35d42faaa60b02662aaaf0702614f6e4afcbbbc)**. Clone the repository, checkout to that commit, and run `make install` to set it up.
+On Windows:
+Install: https://github.com/devkitPro/installer/releases/tag/v3.0.3
+Latest version: https://github.com/switchbrew/libnx/
+
+```
+pacman -S switch-libjpeg-turbo
+```
 
 If you have **Visual Studio Code**, you can open the project as a folder and run the build tasks from inside the program. It also has Intellisense configured for switch development, if you have DEVKITPRO correctly defined in your environment variables. Handy!
 

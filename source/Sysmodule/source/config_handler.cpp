@@ -86,6 +86,8 @@ namespace syscon::config
 
         int ParseConfigLine(void *dummy, const char *section, const char *name, const char *value)
         {
+            (void)(dummy);
+            (void)(section);
             if (strncmp(name, "KEY_", 4) == 0)
             {
                 ControllerButton button = StringToKey(name + 4);
@@ -176,6 +178,7 @@ namespace syscon::config
 
         void ConfigChangedCheckThreadFunc(void *arg)
         {
+            (void)(arg);
             WriteToLog("Starting config check thread!");
             do
             {

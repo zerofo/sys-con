@@ -9,12 +9,13 @@ class SwitchUSBInterface : public IUSBInterface
 private:
     UsbHsClientIfSession m_session;
     UsbHsInterface m_interface;
-
-    std::array<std::unique_ptr<IUSBEndpoint>, 15> m_inEndpoints;
-    std::array<std::unique_ptr<IUSBEndpoint>, 15> m_outEndpoints;
+    std::unique_ptr<IUSBEndpoint> m_inEndpoints[15];
+    std::unique_ptr<IUSBEndpoint> m_outEndpoints[15];
+    // std::array<std::unique_ptr<IUSBEndpoint>, 15> m_inEndpoints;
+    // std::array<std::unique_ptr<IUSBEndpoint>, 15> m_outEndpoints;
 
 public:
-    //Pass the specified interface to allow for opening the session
+    // Pass the specified interface to allow for opening the session
     SwitchUSBInterface(UsbHsInterface &interface);
     ~SwitchUSBInterface();
 
@@ -31,11 +32,11 @@ public:
     // Reset the device
     virtual Result Reset() override;
 
-    //Get the unique session ID for this interface
+    // Get the unique session ID for this interface
     inline s32 GetID() { return m_session.ID; }
-    //Get the raw interface
+    // Get the raw interface
     inline UsbHsInterface &GetInterface() { return m_interface; }
-    //Get the raw session
+    // Get the raw session
     inline UsbHsClientIfSession &GetSession() { return m_session; }
 
     virtual InterfaceDescriptor *GetDescriptor() override { return reinterpret_cast<InterfaceDescriptor *>(&m_interface.inf.interface_desc); }

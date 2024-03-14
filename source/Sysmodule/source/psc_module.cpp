@@ -13,7 +13,7 @@ namespace syscon::psc
         Waiter pscModuleWaiter;
         const uint32_t dependencies[] = {PscPmModuleId_Fs};
 
-        //Thread to check for psc:pm state change (console waking up/going to sleep)
+        // Thread to check for psc:pm state change (console waking up/going to sleep)
         void PscThreadFunc(void *arg);
 
         alignas(ams::os::ThreadStackAlignment) u8 psc_thread_stack[0x1000];
@@ -23,6 +23,7 @@ namespace syscon::psc
 
         void PscThreadFunc(void *arg)
         {
+            (void)arg;
             do
             {
                 if (R_SUCCEEDED(waitSingle(pscModuleWaiter, UINT64_MAX)))
@@ -35,11 +36,11 @@ namespace syscon::psc
                         {
                             case PscPmState_Awake:
                             case PscPmState_ReadyAwaken:
-                                //usb::CreateUsbEvents();
+                                // usb::CreateUsbEvents();
                                 break;
                             case PscPmState_ReadySleep:
                             case PscPmState_ReadyShutdown:
-                                //usb::DestroyUsbEvents();
+                                // usb::DestroyUsbEvents();
                                 controllers::Reset();
                                 break;
                             default:
@@ -51,7 +52,7 @@ namespace syscon::psc
             } while (is_psc_thread_running);
         }
     } // namespace
-    Result Initialize()
+    ams::Result Initialize()
     {
         R_TRY(pscmGetPmModule(&pscModule, PscPmModuleId(126), dependencies, sizeof(dependencies) / sizeof(uint32_t), true));
         pscModuleWaiter = waiterForEvent(&pscModule.event);

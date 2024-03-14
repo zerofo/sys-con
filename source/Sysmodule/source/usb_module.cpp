@@ -21,11 +21,11 @@ namespace syscon::usb
 
         ams::os::Mutex usbMutex(false);
 
-        //Thread that waits on generic usb event
+        // Thread that waits on generic usb event
         void UsbEventThreadFunc(void *arg);
-        //Thread that waits on sony vendor usb event
+        // Thread that waits on sony vendor usb event
         void UsbSonyEventThreadFunc(void *arg);
-        //Thread that waits on any disconnected usb devices
+        // Thread that waits on any disconnected usb devices
         void UsbInterfaceChangeThreadFunc(void *arg);
 
         alignas(ams::os::ThreadStackAlignment) u8 usb_event_thread_stack[0x2000];
@@ -48,6 +48,7 @@ namespace syscon::usb
 
         void UsbEventThreadFunc(void *arg)
         {
+            (void)arg;
             do
             {
                 if (R_SUCCEEDED(eventWait(&g_usbCatchAllEvent, UINT64_MAX)))
@@ -59,17 +60,17 @@ namespace syscon::usb
                     {
                         s32 total_entries;
                         if ((total_entries = QueryInterfaces(USB_CLASS_VENDOR_SPEC, 93, 1)) != 0)
-                            WriteToLog("Initializing Xbox 360 controller: 0x%x", controllers::Insert(std::make_unique<Xbox360Controller>(std::make_unique<SwitchUSBDevice>(interfaces, total_entries))));
+                            WriteToLog("Initializing Xbox 360 controller: 0x%x", controllers::Insert(std::make_unique<Xbox360Controller>(std::make_unique<SwitchUSBDevice>(interfaces, total_entries))).GetValue());
 
                         if ((total_entries = QueryInterfaces(USB_CLASS_VENDOR_SPEC, 93, 129)) != 0)
                             for (int i = 0; i != total_entries; ++i)
-                                WriteToLog("Initializing Xbox 360 wireless controller: 0x%x", controllers::Insert(std::make_unique<Xbox360WirelessController>(std::make_unique<SwitchUSBDevice>(interfaces + i, 1))));
+                                WriteToLog("Initializing Xbox 360 wireless controller: 0x%x", controllers::Insert(std::make_unique<Xbox360WirelessController>(std::make_unique<SwitchUSBDevice>(interfaces + i, 1))).GetValue());
 
                         if ((total_entries = QueryInterfaces(0x58, 0x42, 0x00)) != 0)
-                            WriteToLog("Initializing Xbox Original controller: 0x%x", controllers::Insert(std::make_unique<XboxController>(std::make_unique<SwitchUSBDevice>(interfaces, total_entries))));
+                            WriteToLog("Initializing Xbox Original controller: 0x%x", controllers::Insert(std::make_unique<XboxController>(std::make_unique<SwitchUSBDevice>(interfaces, total_entries))).GetValue());
 
                         if ((total_entries = QueryInterfaces(USB_CLASS_VENDOR_SPEC, 71, 208)) != 0)
-                            WriteToLog("Initializing Xbox One controller: 0x%x", controllers::Insert(std::make_unique<XboxOneController>(std::make_unique<SwitchUSBDevice>(interfaces, total_entries))));
+                            WriteToLog("Initializing Xbox One controller: 0x%x", controllers::Insert(std::make_unique<XboxOneController>(std::make_unique<SwitchUSBDevice>(interfaces, total_entries))).GetValue());
                     }
                 }
             } while (is_usb_event_thread_running);
@@ -77,6 +78,7 @@ namespace syscon::usb
 
         void UsbSonyEventThreadFunc(void *arg)
         {
+            (void)arg;
             do
             {
                 if (R_SUCCEEDED(eventWait(&g_usbSonyEvent, UINT64_MAX)))
@@ -88,10 +90,10 @@ namespace syscon::usb
                     {
                         s32 total_entries;
                         if ((QueryVendorProduct(VENDOR_SONY, PRODUCT_DUALSHOCK3) != 0) && (total_entries = QueryInterfaces(USB_CLASS_HID, 0, 0)) != 0)
-                            WriteToLog("Initializing Dualshock 3 controller: 0x%x", controllers::Insert(std::make_unique<Dualshock3Controller>(std::make_unique<SwitchUSBDevice>(interfaces, total_entries))));
+                            WriteToLog("Initializing Dualshock 3 controller: 0x%x", controllers::Insert(std::make_unique<Dualshock3Controller>(std::make_unique<SwitchUSBDevice>(interfaces, total_entries))).GetValue());
 
                         else if ((QueryVendorProduct(VENDOR_SONY, PRODUCT_DUALSHOCK4_1X) != 0 || QueryVendorProduct(VENDOR_SONY, PRODUCT_DUALSHOCK4_2X) != 0) && (total_entries = QueryInterfaces(USB_CLASS_HID, 0, 0)) != 0)
-                            WriteToLog("Initializing Dualshock 4 controller: 0x%x", controllers::Insert(std::make_unique<Dualshock4Controller>(std::make_unique<SwitchUSBDevice>(interfaces, total_entries))));
+                            WriteToLog("Initializing Dualshock 4 controller: 0x%x", controllers::Insert(std::make_unique<Dualshock4Controller>(std::make_unique<SwitchUSBDevice>(interfaces, total_entries))).GetValue());
                     }
                 }
             } while (is_usb_event_thread_running);
@@ -99,6 +101,7 @@ namespace syscon::usb
 
         void UsbInterfaceChangeThreadFunc(void *arg)
         {
+            (void)arg;
             do
             {
                 if (R_SUCCEEDED(eventWait(usbHsGetInterfaceStateChangeEvent(), UINT64_MAX)))
@@ -119,8 +122,8 @@ namespace syscon::usb
 
                             for (auto &&ptr : (*it)->GetController()->GetDevice()->GetInterfaces())
                             {
-                                //We check if a device was removed by comparing the controller's interfaces and the currently acquired interfaces
-                                //If we didn't find a single matching interface ID, we consider a controller removed
+                                // We check if a device was removed by comparing the controller's interfaces and the currently acquired interfaces
+                                // If we didn't find a single matching interface ID, we consider a controller removed
                                 for (int i = 0; i != total_entries; ++i)
                                 {
                                     if (interfaces[i].inf.ID == static_cast<SwitchUSBInterface *>(ptr.get())->GetID())
@@ -198,7 +201,7 @@ namespace syscon::usb
         Disable();
     }
 
-    Result Enable()
+    ams::Result Enable()
     {
         R_TRY(CreateUsbEvents());
 
@@ -236,7 +239,7 @@ namespace syscon::usb
         controllers::Reset();
     }
 
-    Result CreateUsbEvents()
+    ams::Result CreateUsbEvents()
     {
         if (g_usbCatchAllEvent.revent != INVALID_HANDLE)
             return 0x99;

@@ -9,7 +9,7 @@ SwitchVirtualGamepadHandler::~SwitchVirtualGamepadHandler()
 {
 }
 
-Result SwitchVirtualGamepadHandler::Initialize()
+ams::Result SwitchVirtualGamepadHandler::Initialize()
 {
     return m_controller->Initialize();
 }
@@ -72,15 +72,16 @@ static_assert(JOYSTICK_MAX == 32767 && JOYSTICK_MIN == -32767,
 
 void SwitchVirtualGamepadHandler::ConvertAxisToSwitchAxis(float x, float y, float deadzone, s32 *x_out, s32 *y_out)
 {
+    (void)deadzone;
     float floatRange = 2.0f;
-    //JOYSTICK_MAX is 1 above and JOYSTICK_MIN is 1 below acceptable joystick values, causing crashes on various games including Xenoblade Chronicles 2 and Resident Evil 4
+    // JOYSTICK_MAX is 1 above and JOYSTICK_MIN is 1 below acceptable joystick values, causing crashes on various games including Xenoblade Chronicles 2 and Resident Evil 4
     float newRange = (JOYSTICK_MAX - JOYSTICK_MIN);
 
     *x_out = (((x + 1.0f) * newRange) / floatRange) + JOYSTICK_MIN;
     *y_out = (((y + 1.0f) * newRange) / floatRange) + JOYSTICK_MIN;
     /*
-    OldRange = (OldMax - OldMin)  
-    NewRange = (NewMax - NewMin)  
+    OldRange = (OldMax - OldMin)
+    NewRange = (NewMax - NewMin)
     NewValue = (((OldValue - OldMin) * NewRange) / OldRange) + NewMin
     */
 }

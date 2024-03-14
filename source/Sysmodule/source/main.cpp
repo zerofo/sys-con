@@ -58,7 +58,7 @@ extern "C" void __appInit(void)
     R_ABORT_UNLESS(smInitialize());
     // ams::sm::DoWithSession([]
     {
-        //Initialize system firmware version
+        // Initialize system firmware version
         R_ABORT_UNLESS(setsysInitialize());
         SetSysFirmwareVersion fw;
         R_ABORT_UNLESS(setsysGetFirmwareVersion(&fw));
@@ -67,7 +67,7 @@ extern "C" void __appInit(void)
 
         R_ABORT_UNLESS(hiddbgInitialize());
         if (hosversionAtLeast(7, 0, 0))
-            R_ABORT_UNLESS(hiddbgAttachHdlsWorkBuffer(&SwitchHDLHandler::GetHdlsSessionId()));
+            R_ABORT_UNLESS(hiddbgAttachHdlsWorkBuffer(&SwitchHDLHandler::GetHdlsSessionId(), NULL, 0));
         R_ABORT_UNLESS(usbHsInitialize());
         R_ABORT_UNLESS(pscmInitialize());
         R_ABORT_UNLESS(fsInitialize());
@@ -92,6 +92,8 @@ using namespace syscon;
 
 int main(int argc, char *argv[])
 {
+    (void)(argc);
+    (void)(argv);
     WriteToLog("\n\nNew sysmodule session started on version " APP_VERSION);
     config::Initialize();
     controllers::Initialize();

@@ -39,10 +39,10 @@ void WriteToLog(const char *fmt, ...)
 
     FILE *fp = fopen(LOG_PATH, "a");
 
-    //Print time
+    // Print time
     fprintf(fp, "%02lid %02li:%02li:%02li: ", ts.GetDays(), ts.GetHours() % 24, ts.GetMinutes() % 60, ts.GetSeconds() % 60);
 
-    //Print the actual text
+    // Print the actual text
     va_list va;
     va_start(va, fmt);
     vfprintf(fp, fmt, va);

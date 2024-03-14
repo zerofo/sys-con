@@ -6,7 +6,7 @@ TOPTARGETS := all clean mrproper
 all: $(COMPONENTS)
 
 libstratosphere:
-	$(MAKE) -C $@
+	$(MAKE) -C $@/libstratosphere
 
 AppletCompanion:
 	$(MAKE) -C $@

@@ -24,7 +24,7 @@ public:
 
     virtual Result Initialize() = 0;
 
-    //Since Exit is used to clean up resources, no Result report should be needed
+    // Since Exit is used to clean up resources, no Result report should be needed
     virtual void Exit() = 0;
 
     virtual Result GetInput() { return 1; }
@@ -33,7 +33,12 @@ public:
 
     inline IUSBDevice *GetDevice() { return m_device.get(); }
     virtual ControllerType GetType() = 0;
-    virtual Result SetRumble(uint8_t strong_magnitude, uint8_t weak_magnitude) { return 1; }
+    virtual Result SetRumble(uint8_t strong_magnitude, uint8_t weak_magnitude)
+    {
+        (void)strong_magnitude;
+        (void)weak_magnitude;
+        return 1;
+    }
     virtual bool IsControllerActive() { return true; }
 
     virtual Result OutputBuffer() { return 1; };

@@ -4,7 +4,7 @@
 #include "IController.h"
 #include "SwitchVirtualGamepadHandler.h"
 
-//Wrapper for HDL functions for switch versions [7.0.0+]
+// Wrapper for HDL functions for switch versions [7.0.0+]
 class SwitchHDLHandler : public SwitchVirtualGamepadHandler
 {
 private:
@@ -13,26 +13,26 @@ private:
     HiddbgHdlsState m_hdlState;
 
 public:
-    //Initialize the class with specified controller
+    // Initialize the class with specified controller
     SwitchHDLHandler(std::unique_ptr<IController> &&controller);
     ~SwitchHDLHandler();
 
-    //Initialize controller handler, HDL state
-    virtual Result Initialize() override;
+    // Initialize controller handler, HDL state
+    virtual ams::Result Initialize() override;
     virtual void Exit() override;
 
-    //This will be called periodically by the input threads
+    // This will be called periodically by the input threads
     virtual void UpdateInput() override;
-    //This will be called periodically by the output threads
+    // This will be called periodically by the output threads
     virtual void UpdateOutput() override;
 
-    //Separately init and close the HDL state
+    // Separately init and close the HDL state
     Result InitHdlState();
     Result ExitHdlState();
 
-    //Fills out the HDL state with the specified button data
+    // Fills out the HDL state with the specified button data
     void FillHdlState(const NormalizedButtonData &data);
-    //Passes the HDL state to HID so that it could register the inputs
+    // Passes the HDL state to HID so that it could register the inputs
     Result UpdateHdlState();
 
     static HiddbgHdlsSessionId &GetHdlsSessionId();
