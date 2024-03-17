@@ -1,7 +1,7 @@
 #pragma once
 #include "ControllerTypes.h"
 
-#define CONFIG_PATH "sdmc:///config/sys-con/"
+#define CONFIG_PATH "/config/sys-con/"
 
 #define GLOBALCONFIG     CONFIG_PATH "config_global.ini"
 #define XBOXCONFIG       CONFIG_PATH "config_xboxorig.ini"

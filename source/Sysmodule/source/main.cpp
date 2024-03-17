@@ -99,21 +99,19 @@ namespace ams
 
         void Startup()
         {
-            // Load module configuration from ini file
-            // mitm::LoadConfiguration();
-            /* Create new lru_list.dat. */
+            /* ... */
         }
     } // namespace init
 
     void Main()
     {
 
-        WriteToLog("New sysmodule session started\n");
-        //::syscon::config::Initialize();
-        /*::syscon::controllers::Initialize();
+        WriteToLog("New sysmodule session started");
+        ::syscon::config::Initialize();
+        ::syscon::controllers::Initialize();
         ::syscon::usb::Initialize();
         ::syscon::psc::Initialize();
-        */
+
         while (true)
         {
             svcSleepThread(1e+8L);

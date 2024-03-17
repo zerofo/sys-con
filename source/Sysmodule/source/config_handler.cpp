@@ -206,19 +206,19 @@ namespace syscon::config
             LoadGlobalConfig(tempGlobalConfig);
         }
         else
-            WriteToLog("Failed to read from global config!");
+            WriteToLog("Failed to read from global config (%s)!", GLOBALCONFIG);
 
         if (R_SUCCEEDED(ReadFromConfig(XBOXCONFIG)))
         {
             XboxController::LoadConfig(&tempConfig);
         }
         else
-            WriteToLog("Failed to read from xbox orig config!");
+            WriteToLog("Failed to read from xbox orig config (%s)!", XBOXCONFIG);
 
         if (R_SUCCEEDED(ReadFromConfig(XBOXONECONFIG)))
             XboxOneController::LoadConfig(&tempConfig);
         else
-            WriteToLog("Failed to read from xbox one config!");
+            WriteToLog("Failed to read from xbox one config (%s)!", XBOXONECONFIG);
 
         if (R_SUCCEEDED(ReadFromConfig(XBOX360CONFIG)))
         {
@@ -226,17 +226,17 @@ namespace syscon::config
             Xbox360WirelessController::LoadConfig(&tempConfig);
         }
         else
-            WriteToLog("Failed to read from xbox 360 config!");
+            WriteToLog("Failed to read from xbox 360 config (%s)!", XBOX360CONFIG);
 
         if (R_SUCCEEDED(ReadFromConfig(DUALSHOCK3CONFIG)))
             Dualshock3Controller::LoadConfig(&tempConfig);
         else
-            WriteToLog("Failed to read from dualshock 3 config!");
+            WriteToLog("Failed to read from dualshock 3 config (%s)!", DUALSHOCK3CONFIG);
 
         if (R_SUCCEEDED(ReadFromConfig(DUALSHOCK4CONFIG)))
             Dualshock4Controller::LoadConfig(&tempConfig, tempColor);
         else
-            WriteToLog("Failed to read from dualshock 4 config!");
+            WriteToLog("Failed to read from dualshock 4 config (%s)!", DUALSHOCK4CONFIG);
     }
 
     bool CheckForFileChanges()
