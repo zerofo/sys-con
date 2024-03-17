@@ -1,6 +1,8 @@
 #---------------------------------------------------------------------------------
 # pull in common stratosphere sysmodule configuration
 #---------------------------------------------------------------------------------
+THIS_MAKEFILE := $(abspath $(lastword $(MAKEFILE_LIST)))
+CURRENT_DIRECTORY := $(abspath $(dir $(THIS_MAKEFILE)))
 include $(dir $(abspath $(lastword $(MAKEFILE_LIST))))/../libstratosphere/config/templates/stratosphere.mk
 
 TARGET		:=	sys-con
@@ -19,8 +21,6 @@ export TOPDIR	:=	$(CURDIR)
 
 export VPATH	:=	$(foreach dir,$(SOURCES),$(CURDIR)/$(dir)) \
 			$(foreach dir,$(DATA),$(CURDIR)/$(dir))
-
-export DEPSDIR	:=	$(CURDIR)/$(BUILD)
 
 CFILES      :=	$(call FIND_SOURCE_FILES,$(SOURCES),c)
 CPPFILES    :=	$(call FIND_SOURCE_FILES,$(SOURCES),cpp)
@@ -47,10 +47,10 @@ export OFILES	:=	$(addsuffix .o,$(BINFILES)) \
 
 export INCLUDE	:=	$(foreach dir,$(INCLUDES),-I$(CURDIR)/$(dir)) \
 			$(foreach dir,$(AMS_LIBDIRS),-I$(dir)/include) \
-			-I$(CURDIR)/$(BUILD) \
-			-I$(LIBNX)/include
+			$(foreach dir,$(LIBDIRS),-I$(dir)/include) \
+			-I$(CURDIR)/$(ATMOSPHERE_BUILD_DIR)
 
-export LIBPATHS	:=	$(foreach dir,$(AMS_LIBDIRS),-L$(dir)/lib)
+export LIBPATHS	:=	$(foreach dir,$(LIBDIRS),-L$(dir)/lib)  $(foreach dir,$(AMS_LIBDIRS),-L$(dir)/$(ATMOSPHERE_LIBRARY_DIR))
 
 export BUILD_EXEFS_SRC := $(TOPDIR)/$(EXEFS_SRC)
 

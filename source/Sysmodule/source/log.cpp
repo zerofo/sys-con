@@ -2,9 +2,14 @@
 #include "log.h"
 #include <sys/stat.h>
 #include <stratosphere.hpp>
+#include <stratosphere/fs/fs_filesystem.hpp>
+#include <stratosphere/fs/fs_file.hpp>
+#include <vapours/util/util_format_string.hpp>
 
 static ams::os::Mutex printMutex(false);
+char gLogBuffer[1024];
 
+// C:\dev\MissionControl\lib\Atmosphere-libs\libstratosphere\source\diag\diag_log.cpp
 void DiscardOldLogs()
 {
     std::scoped_lock printLock(printMutex);
@@ -29,31 +34,34 @@ void DiscardOldLogs()
     }
 }
 
-void WriteToLog(const char *fmt, ...)
+ams::Result WriteToLog(const char *fmt, ...)
 {
     std::scoped_lock printLock(printMutex);
 
     ams::TimeSpan ts = ams::os::ConvertToTimeSpan(ams::os::GetSystemTick());
 
-    mkdir(CONFIG_PATH, 777);
+    ams::fs::CreateDirectory(CONFIG_PATH);
 
-    FILE *fp = fopen(LOG_PATH, "a");
+    /* Create file if not exists */
+    ams::fs::CreateFile(LOG_PATH, 0);
 
-    // Print time
-    fprintf(fp, "%02lid %02li:%02li:%02li: ", ts.GetDays(), ts.GetHours() % 24, ts.GetMinutes() % 60, ts.GetSeconds() % 60);
+    /* Open the file. */
+    ams::fs::FileHandle file;
+    R_TRY(ams::fs::OpenFile(std::addressof(file), LOG_PATH, ams::fs::OpenMode_Write | ams::fs::OpenMode_AllowAppend));
+    ON_SCOPE_EXIT { ams::fs::CloseFile(file); };
 
-    // Print the actual text
-    va_list va;
-    va_start(va, fmt);
-    vfprintf(fp, fmt, va);
-    va_end(va);
+    // Get file size
+    s64 fileOffset;
+    R_TRY(ams::fs::GetFileSize(&fileOffset, file));
 
-    fprintf(fp, "\n");
-    fclose(fp);
-}
+    ams::util::SNPrintf(gLogBuffer, sizeof(gLogBuffer), "%02li:%02li:%02li - ", ts.GetHours() % 24, ts.GetMinutes() % 60, ts.GetSeconds() % 60);
 
-void LockedUpdateConsole()
-{
-    std::scoped_lock printLock(printMutex);
-    consoleUpdate(NULL);
+    ::std::va_list vl;
+    va_start(vl, fmt);
+    ams::util::VSNPrintf(&gLogBuffer[strlen(gLogBuffer)], ams::util::size(gLogBuffer) - strlen(gLogBuffer), fmt, vl);
+    va_end(vl);
+
+    R_TRY(ams::fs::WriteFile(file, fileOffset, gLogBuffer, strlen(gLogBuffer), ams::fs::WriteOption::Flush));
+
+    R_SUCCEED();
 }

@@ -1,5 +1,6 @@
 #pragma once
 #include "config_handler.h"
+#include "vapours/results/results_common.hpp"
 
 #define LOG_PATH CONFIG_PATH "log.txt"
 
@@ -9,7 +10,7 @@ extern "C"
 #endif
     void DiscardOldLogs();
 
-    void WriteToLog(const char *fmt, ...) __attribute__((format(printf, 1, 2)));
+    ams::Result WriteToLog(const char *fmt, ...) __attribute__((format(printf, 1, 2)));
 
     void LockedUpdateConsole();
 

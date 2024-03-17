@@ -10,103 +10,170 @@
 
 #define APP_VERSION "0.6.4"
 
-// libnx fake heap initialization
-extern "C"
-{
-    // We aren't an applet, so disable applet functionality.
-    u32 __nx_applet_type = AppletType_None;
-    // We are a sysmodule, so don't use more FS sessions than needed.
-    u32 __nx_fs_num_sessions = 1;
-    // We don't need to reserve memory for fsdev, so don't use it.
-    u32 __nx_fsdev_direntry_cache_size = 1;
-
-#define INNER_HEAP_SIZE 0x40'000
-    size_t nx_inner_heap_size = INNER_HEAP_SIZE;
-    char nx_inner_heap[INNER_HEAP_SIZE];
-
-    void __libnx_initheap(void)
-    {
-        // Newlib
-        extern char *fake_heap_start;
-        extern char *fake_heap_end;
-
-        fake_heap_start = nx_inner_heap;
-        fake_heap_end = nx_inner_heap + nx_inner_heap_size;
-    }
-
-    // Exception handling
-    alignas(16) u8 __nx_exception_stack[ams::os::MemoryPageSize];
-    u64 __nx_exception_stack_size = sizeof(__nx_exception_stack);
-    void __libnx_exception_handler(ThreadExceptionDump *ctx)
-    {
-        ams::CrashHandler(ctx);
-    }
-}
+// example: https://github.com/ndeadly/MissionControl/blob/master/mc_mitm/source/mcmitm_main.cpp
 
 // libstratosphere variables
 namespace ams
 {
-    ncm::ProgramId CurrentProgramId = {0x690000000000000D};
-    namespace result
+    namespace syscon
     {
-        bool CallFatalOnResultAssertion = true;
+
+        namespace
+        {
+
+            alignas(0x40) constinit u8 g_heap_memory[64_KB];
+            constinit lmem::HeapHandle g_heap_handle;
+            constinit bool g_heap_initialized;
+            constinit os::SdkMutex g_heap_init_mutex;
+
+            lmem::HeapHandle GetHeapHandle()
+            {
+                if (AMS_UNLIKELY(!g_heap_initialized))
+                {
+                    std::scoped_lock lk(g_heap_init_mutex);
+
+                    if (AMS_LIKELY(!g_heap_initialized))
+                    {
+                        g_heap_handle = lmem::CreateExpHeap(g_heap_memory, sizeof(g_heap_memory), lmem::CreateOption_ThreadSafe);
+                        g_heap_initialized = true;
+                    }
+                }
+
+                return g_heap_handle;
+            }
+
+            void *Allocate(size_t size)
+            {
+                return lmem::AllocateFromExpHeap(GetHeapHandle(), size);
+            }
+
+            void *AllocateWithAlign(size_t size, size_t align)
+            {
+                return lmem::AllocateFromExpHeap(GetHeapHandle(), size, align);
+            }
+
+            void Deallocate(void *p, size_t size)
+            {
+                AMS_UNUSED(size);
+                return lmem::FreeToExpHeap(GetHeapHandle(), p);
+            }
+
+        } // namespace
+
+    } // namespace syscon
+
+    namespace init
+    {
+        void InitializeSystemModuleBeforeConstructors(void)
+        {
+            R_ABORT_UNLESS(sm::Initialize());
+
+            fs::InitializeForSystem();
+            fs::SetAllocator(syscon::Allocate, syscon::Deallocate);
+            fs::SetEnabledAutoAbort(false);
+
+            R_ABORT_UNLESS(hiddbgInitialize());
+            R_ABORT_UNLESS(usbHsInitialize());
+            R_ABORT_UNLESS(pscmInitialize());
+            // R_ABORT_UNLESS(pmdmntInitialize());
+            // R_ABORT_UNLESS(pminfoInitialize());
+            R_ABORT_UNLESS(setsysInitialize());
+
+            // Initialize system firmware version
+            /*
+            SetSysFirmwareVersion fw;
+            R_ABORT_UNLESS(setsysGetFirmwareVersion(&fw));
+            hosversionSet(MAKEHOSVERSION(fw.major, fw.minor, fw.micro));
+            setsysExit();
+
+            if (hosversionAtLeast(7, 0, 0))
+                R_ABORT_UNLESS(hiddbgAttachHdlsWorkBuffer(&SwitchHDLHandler::GetHdlsSessionId(), NULL, 0));
+            */
+
+            R_ABORT_UNLESS(fs::MountSdCard("sdmc"));
+        }
+
+        void FinalizeSystemModule()
+        { /* ... */
+        }
+
+        void Startup()
+        {
+            // Load module configuration from ini file
+            // mitm::LoadConfiguration();
+            /* Create new lru_list.dat. */
+        }
+    } // namespace init
+
+    void Main()
+    {
+
+        WriteToLog("New sysmodule session started\n");
+        //::syscon::config::Initialize();
+        /*::syscon::controllers::Initialize();
+        ::syscon::usb::Initialize();
+        ::syscon::psc::Initialize();
+        */
+        while (true)
+        {
+            svcSleepThread(1e+8L);
+        }
+
+        ::syscon::psc::Exit();
+        ::syscon::usb::Exit();
+        ::syscon::controllers::Exit();
+        ::syscon::config::Exit();
     }
+
 } // namespace ams
 
-extern "C" void __appInit(void)
+void *operator new(size_t size)
 {
-    R_ABORT_UNLESS(smInitialize());
-    // ams::sm::DoWithSession([]
-    {
-        // Initialize system firmware version
-        R_ABORT_UNLESS(setsysInitialize());
-        SetSysFirmwareVersion fw;
-        R_ABORT_UNLESS(setsysGetFirmwareVersion(&fw));
-        hosversionSet(MAKEHOSVERSION(fw.major, fw.minor, fw.micro));
-        setsysExit();
-
-        R_ABORT_UNLESS(hiddbgInitialize());
-        if (hosversionAtLeast(7, 0, 0))
-            R_ABORT_UNLESS(hiddbgAttachHdlsWorkBuffer(&SwitchHDLHandler::GetHdlsSessionId(), NULL, 0));
-        R_ABORT_UNLESS(usbHsInitialize());
-        R_ABORT_UNLESS(pscmInitialize());
-        R_ABORT_UNLESS(fsInitialize());
-    }
-    // );
-    smExit();
-
-    R_ABORT_UNLESS(fsdevMountSdmc());
+    return ams::syscon::Allocate(size);
 }
 
-extern "C" void __appExit(void)
+void *operator new(size_t size, const std::nothrow_t &)
 {
-    pscmExit();
-    usbHsExit();
-    hiddbgReleaseHdlsWorkBuffer(SwitchHDLHandler::GetHdlsSessionId());
-    hiddbgExit();
-    fsdevUnmountAll();
-    fsExit();
+    return ams::syscon::Allocate(size);
 }
 
-using namespace syscon;
-
-int main(int argc, char *argv[])
+void operator delete(void *p)
 {
-    (void)(argc);
-    (void)(argv);
-    WriteToLog("\n\nNew sysmodule session started on version " APP_VERSION);
-    config::Initialize();
-    controllers::Initialize();
-    usb::Initialize();
-    psc::Initialize();
+    return ams::syscon::Deallocate(p, 0);
+}
 
-    while (true)
-    {
-        svcSleepThread(1e+8L);
-    }
+void operator delete(void *p, size_t size)
+{
+    return ams::syscon::Deallocate(p, size);
+}
 
-    psc::Exit();
-    usb::Exit();
-    controllers::Exit();
-    config::Exit();
+void *operator new[](size_t size)
+{
+    return ams::syscon::Allocate(size);
+}
+
+void *operator new[](size_t size, const std::nothrow_t &)
+{
+    return ams::syscon::Allocate(size);
+}
+
+void operator delete[](void *p)
+{
+    return ams::syscon::Deallocate(p, 0);
+}
+
+void operator delete[](void *p, size_t size)
+{
+    return ams::syscon::Deallocate(p, size);
+}
+
+void *operator new(size_t size, std::align_val_t align)
+{
+    return ams::syscon::AllocateWithAlign(size, static_cast<size_t>(align));
+}
+
+void operator delete(void *p, std::align_val_t align)
+{
+    AMS_UNUSED(align);
+    return ams::syscon::Deallocate(p, 0);
 }

@@ -2,40 +2,33 @@
 
 #### A Nintendo Switch custom sysmodule for third-party controller support. No man-in-the-middle required! 
 ###### \[Switch FW 5.0.0+\] [Atmosphère only]
-
-
+Tested on Switch FW 17.0.0
 
 ## Description
 This sysmodule aims to provide complete functionality for most popular game controllers not supported by Nintendo Switch.
 At the current moment, **only USB connection** is supported.
 
-This app is missing a lot of features. For more information, see the [issues page](https://github.com/cathery/sys-con/issues).
-
-### ⚠ I can't support your generic 3rd party HID controller yet.
-It is a limitation of the firmware and I'm looking to work around it.
-
+This app is missing a lot of features. For more information, see the [issues page](https://github.com/o0zz/sys-con/issues).
 
 ## Install
 
-Grab the latest zip from the [releases page](https://github.com/cathery/sys-con/releases). Extract it in your SD card and boot/reboot your switch.
+Grab the latest zip from the [releases page](https://github.com/o0zz/sys-con/releases). Extract it in your SD card and boot/reboot your switch.
 
 ## Config
 
 sys-con comes with a config folder located at `sdmc:/config/sys-con/`. It contains options for adjusting stick/trigger deadzone, as well as remapping inputs. For more information, see `example.ini` in the same folder. All changes to the files will be updated in real time.
 
-## Progress roadmap
-- [x] **~~Docked USB Support~~**
-- [x] **~~\[5.0.0-7.0.0\] FW Version Support~~**
-- [x] **~~Xbox 360 Controller Support~~**
-- [x] **~~Xbox One X/S Controller Support~~**
-- [x] **~~Dualshock 3 Support~~**
-- [x] **~~Undocked USB Support~~** Works with a USB-C OTG adapter. Some knock-off brands may not support OTG.
-- [x] **~~Xbox 360 Wireless adapter~~**
-- [x] **~~Dualshock 4 Support~~**
-- [ ] **[Rumble Support](https://github.com/cathery/sys-con/issues/1)**
-- [ ] **~~[Bluetooth Support]~~** See ndeadly's [MissionControl](https://github.com/ndeadly/MissionControl)
-- [ ] **[Motion Controls Support](https://github.com/cathery/sys-con/issues/9)**
-- [ ] **Config application**
+## Logs
+
+In case of issue, you can look at the logs in `sdmc:/config/sys-con/logs.txt`
+
+## Supported controller
+- [x] Xbox 360 Controller
+- [x] Xbox One X/S Controller
+- [x] Dualshock 3 Support
+- [x] Xbox 360 Wireless adapter
+- [x] Dualshock 4
+- [x] Xinmotek XM-10 (Arcade controller)
 
 ## Building (For developers)
 
@@ -43,26 +36,28 @@ Don't download the project as ZIP. It doesn't copy the submodules correctly and 
 
 Instead, clone the repository **recursively** using any git client you have. (Git Bash, Git GUI, Github Desktop, etc.)
 
-Like all other switch projects, you need to have [devkitA64](https://switchbrew.org/wiki/Setting_up_Development_Environment) set up on your system.
+Like all other switch projects, you need to have [devkitA64](https://switchbrew.org/wiki/Setting_up_Development_Environment) set up on your system. (Direct link for windows https://github.com/devkitPro/installer/releases/tag/v3.0.3)
 
-On Windows:
-Install: https://github.com/devkitPro/installer/releases/tag/v3.0.3
-Latest version: https://github.com/switchbrew/libnx/
-
+### Install dependencies
+Open MSYS2 console from devkitA64 and type below command
 ```
 pacman -S switch-libjpeg-turbo
+
+make -C source/libnx install
 ```
 
-If you have **Visual Studio Code**, you can open the project as a folder and run the build tasks from inside the program. It also has Intellisense configured for switch development, if you have DEVKITPRO correctly defined in your environment variables. Handy!
+### Build the project
+If you have **Visual Studio Code**, you can open the project as a folder and run the build tasks from inside the program. 
+It also has Intellisense configured for switch development, if you have DEVKITPRO correctly defined in your environment variables. Handy!
 
 Otherwise, you can open the console inside the project directory and use one of the following commands:
-
-`make -j8`: Builds the project and its dependencies (libstratosphere) and places the resulting files in the output folder (out/). The -j8 means it will create 8 separate threads to speed up the building process. Make it lower if it freezes up your system.
-
+`make -C source -j8`: Build the project
 `make clean`: Cleans the project files (but not the dependencies).
-
 `make mrproper`: Cleans the project files and the dependencies.
 
+Output folder will be there: out/
 For an in-depth explanation of how sys-con works, see [here](source).
 
-[![ko-fi](https://www.ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/H2H316ZQV)
+
+### Debug the application
+All crash report goes to /atmosphere/fatal_errors/report_xxxxx.bin (e6)
