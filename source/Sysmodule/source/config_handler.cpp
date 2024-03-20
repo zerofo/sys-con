@@ -3,10 +3,10 @@
 #include "Controllers.h"
 #include "ControllerConfig.h"
 #include "logger.h"
-#include "ini.h"
 #include <cstring>
 #include <stratosphere.hpp>
 #include "usb_module.h"
+#include <stratosphere/util/util_ini.hpp>
 
 namespace syscon::config
 {
@@ -173,7 +173,19 @@ namespace syscon::config
         Result ReadFromConfig(const char *path)
         {
             tempConfig = ControllerConfig{};
-            return ini_parse(path, ParseConfigLine, NULL);
+
+            /* Open the file. */
+            ams::fs::FileHandle file;
+            {
+                if (R_FAILED(ams::fs::OpenFile(std::addressof(file), path, ams::fs::OpenMode_Read)))
+                {
+                    return 1;
+                }
+            }
+            ON_SCOPE_EXIT { ams::fs::CloseFile(file); };
+
+            /* Parse the config. */
+            return ams::util::ini::ParseFile(file, nullptr, ParseConfigLine);
         }
 
         void ConfigChangedCheckThreadFunc(void *arg)
