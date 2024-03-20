@@ -2,8 +2,8 @@
 
 #include "IController.h"
 
-//References used:
-//https://cs.chromium.org/chromium/src/device/gamepad/xbox_controller_mac.mm
+// References used:
+// https://cs.chromium.org/chromium/src/device/gamepad/xbox_controller_mac.mm
 
 struct Xbox360ButtonData
 {
@@ -89,7 +89,7 @@ private:
     Xbox360ButtonData m_buttonData{};
 
 public:
-    Xbox360Controller(std::unique_ptr<IUSBDevice> &&interface);
+    Xbox360Controller(std::unique_ptr<IUSBDevice> &&interface, std::unique_ptr<ILogger> &&logger);
     virtual ~Xbox360Controller() override;
 
     virtual Result Initialize() override;

@@ -2,8 +2,8 @@
 
 #include "IController.h"
 
-//References used:
-//http://euc.jp/periphs/xbox-controller.ja.html
+// References used:
+// http://euc.jp/periphs/xbox-controller.ja.html
 
 struct XboxButtonData
 {
@@ -22,7 +22,7 @@ struct XboxButtonData
 
     uint8_t reserved;
 
-    //These are analog
+    // These are analog
     uint8_t a;
     uint8_t b;
     uint8_t x;
@@ -59,7 +59,7 @@ private:
     XboxButtonData m_buttonData{};
 
 public:
-    XboxController(std::unique_ptr<IUSBDevice> &&interface);
+    XboxController(std::unique_ptr<IUSBDevice> &&interface, std::unique_ptr<ILogger> &&logger);
     virtual ~XboxController() override;
 
     virtual Result Initialize() override;

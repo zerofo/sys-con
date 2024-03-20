@@ -7,7 +7,7 @@
 
 #include "SwitchUSBDevice.h"
 #include "ControllerHelpers.h"
-#include "log.h"
+#include "logger.h"
 #include <string.h>
 
 namespace syscon::usb
@@ -53,24 +53,38 @@ namespace syscon::usb
             {
                 if (R_SUCCEEDED(eventWait(&g_usbCatchAllEvent, UINT64_MAX)))
                 {
-                    WriteToLog("Catch-all event went off");
+                    syscon::logger::LogInfo("Catch-all event went off");
 
                     std::scoped_lock usbLock(usbMutex);
                     if (!controllers::IsAtControllerLimit())
                     {
                         s32 total_entries;
-                        if ((total_entries = QueryInterfaces(USB_CLASS_VENDOR_SPEC, 93, 1)) != 0)
-                            WriteToLog("Initializing Xbox 360 controller: 0x%x", controllers::Insert(std::make_unique<Xbox360Controller>(std::make_unique<SwitchUSBDevice>(interfaces, total_entries))).GetValue());
+                        if ((total_entries = QueryInterfaces(USB_CLASS_VENDOR_SPEC, 0x5D, 0x01)) != 0)
+                        {
+                            syscon::logger::LogInfo("Initializing Xbox 360 controller ...");
+                            controllers::Insert(std::make_unique<Xbox360Controller>(std::make_unique<SwitchUSBDevice>(interfaces, total_entries), std::make_unique<syscon::logger::Logger>()));
+                        }
 
-                        if ((total_entries = QueryInterfaces(USB_CLASS_VENDOR_SPEC, 93, 129)) != 0)
+                        if ((total_entries = QueryInterfaces(USB_CLASS_VENDOR_SPEC, 0x5D, 0x81)) != 0)
+                        {
                             for (int i = 0; i != total_entries; ++i)
-                                WriteToLog("Initializing Xbox 360 wireless controller: 0x%x", controllers::Insert(std::make_unique<Xbox360WirelessController>(std::make_unique<SwitchUSBDevice>(interfaces + i, 1))).GetValue());
+                            {
+                                syscon::logger::LogInfo("Initializing Xbox 360 wireless controller ...");
+                                controllers::Insert(std::make_unique<Xbox360WirelessController>(std::make_unique<SwitchUSBDevice>(interfaces + i, 1), std::make_unique<syscon::logger::Logger>()));
+                            }
+                        }
 
                         if ((total_entries = QueryInterfaces(0x58, 0x42, 0x00)) != 0)
-                            WriteToLog("Initializing Xbox Original controller: 0x%x", controllers::Insert(std::make_unique<XboxController>(std::make_unique<SwitchUSBDevice>(interfaces, total_entries))).GetValue());
+                        {
+                            syscon::logger::LogInfo("Initializing Xbox Original controller...");
+                            controllers::Insert(std::make_unique<XboxController>(std::make_unique<SwitchUSBDevice>(interfaces, total_entries), std::make_unique<syscon::logger::Logger>()));
+                        }
 
-                        if ((total_entries = QueryInterfaces(USB_CLASS_VENDOR_SPEC, 71, 208)) != 0)
-                            WriteToLog("Initializing Xbox One controller: 0x%x", controllers::Insert(std::make_unique<XboxOneController>(std::make_unique<SwitchUSBDevice>(interfaces, total_entries))).GetValue());
+                        if ((total_entries = QueryInterfaces(USB_CLASS_VENDOR_SPEC, 0x47, 0xD0)) != 0)
+                        {
+                            syscon::logger::LogInfo("Initializing Xbox One controller...");
+                            controllers::Insert(std::make_unique<XboxOneController>(std::make_unique<SwitchUSBDevice>(interfaces, total_entries), std::make_unique<syscon::logger::Logger>()));
+                        }
                     }
                 }
             } while (is_usb_event_thread_running);
@@ -83,17 +97,22 @@ namespace syscon::usb
             {
                 if (R_SUCCEEDED(eventWait(&g_usbSonyEvent, UINT64_MAX)))
                 {
-                    WriteToLog("Sony event went off");
+                    syscon::logger::LogInfo("Sony event went off");
 
                     std::scoped_lock usbLock(usbMutex);
                     if (!controllers::IsAtControllerLimit())
                     {
                         s32 total_entries;
                         if ((QueryVendorProduct(VENDOR_SONY, PRODUCT_DUALSHOCK3) != 0) && (total_entries = QueryInterfaces(USB_CLASS_HID, 0, 0)) != 0)
-                            WriteToLog("Initializing Dualshock 3 controller: 0x%x", controllers::Insert(std::make_unique<Dualshock3Controller>(std::make_unique<SwitchUSBDevice>(interfaces, total_entries))).GetValue());
-
+                        {
+                            syscon::logger::LogInfo("Initializing Dualshock 3 controller ...");
+                            controllers::Insert(std::make_unique<Dualshock3Controller>(std::make_unique<SwitchUSBDevice>(interfaces, total_entries), std::make_unique<syscon::logger::Logger>()));
+                        }
                         else if ((QueryVendorProduct(VENDOR_SONY, PRODUCT_DUALSHOCK4_1X) != 0 || QueryVendorProduct(VENDOR_SONY, PRODUCT_DUALSHOCK4_2X) != 0) && (total_entries = QueryInterfaces(USB_CLASS_HID, 0, 0)) != 0)
-                            WriteToLog("Initializing Dualshock 4 controller: 0x%x", controllers::Insert(std::make_unique<Dualshock4Controller>(std::make_unique<SwitchUSBDevice>(interfaces, total_entries))).GetValue());
+                        {
+                            syscon::logger::LogInfo("Initializing Dualshock 4 controller ...");
+                            controllers::Insert(std::make_unique<Dualshock4Controller>(std::make_unique<SwitchUSBDevice>(interfaces, total_entries), std::make_unique<syscon::logger::Logger>()));
+                        }
                     }
                 }
             } while (is_usb_event_thread_running);
@@ -107,7 +126,7 @@ namespace syscon::usb
                 if (R_SUCCEEDED(eventWait(usbHsGetInterfaceStateChangeEvent(), UINT64_MAX)))
                 {
                     s32 total_entries;
-                    WriteToLog("Interface state was changed");
+                    syscon::logger::LogInfo("Interface state was changed");
 
                     std::scoped_lock usbLock(usbMutex);
                     std::scoped_lock controllersLock(controllers::GetScopedLock());
@@ -136,9 +155,9 @@ namespace syscon::usb
 
                             if (!found_flag)
                             {
-                                WriteToLog("Erasing controller");
+                                syscon::logger::LogInfo("Erasing controller");
                                 controllers::Get().erase(it--);
-                                WriteToLog("Controller erased!");
+                                syscon::logger::LogInfo("Controller erased!");
                             }
                         }
                     }

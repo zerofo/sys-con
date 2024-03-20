@@ -3,8 +3,8 @@
 
 static ControllerConfig _dualshock3ControllerConfig{};
 
-Dualshock3Controller::Dualshock3Controller(std::unique_ptr<IUSBDevice> &&interface)
-    : IController(std::move(interface))
+Dualshock3Controller::Dualshock3Controller(std::unique_ptr<IUSBDevice> &&interface, std::unique_ptr<ILogger> &&logger)
+    : IController(std::move(interface), std::move(logger))
 {
 }
 

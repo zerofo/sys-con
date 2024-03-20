@@ -3,14 +3,14 @@
 
 static ControllerConfig _xbox360ControllerConfig{};
 
-Xbox360Controller::Xbox360Controller(std::unique_ptr<IUSBDevice> &&interface)
-    : IController(std::move(interface))
+Xbox360Controller::Xbox360Controller(std::unique_ptr<IUSBDevice> &&interface, std::unique_ptr<ILogger> &&logger)
+    : IController(std::move(interface), std::move(logger))
 {
 }
 
 Xbox360Controller::~Xbox360Controller()
 {
-    //Exit();
+    // Exit();
 }
 
 Result Xbox360Controller::Initialize()
@@ -31,15 +31,18 @@ void Xbox360Controller::Exit()
 
 Result Xbox360Controller::OpenInterfaces()
 {
+    LogPrint(LogLevelDebug, "Xbox360Controller: Opening USB interfaces ...");
+
     Result rc;
     rc = m_device->Open();
     if (R_FAILED(rc))
         return rc;
 
-    //This will open each interface and try to acquire Xbox One controller's in and out endpoints, if it hasn't already
+    // This will open each interface and try to acquire Xbox One controller's in and out endpoints, if it hasn't already
     std::vector<std::unique_ptr<IUSBInterface>> &interfaces = m_device->GetInterfaces();
     for (auto &&interface : interfaces)
     {
+        LogPrint(LogLevelDebug, "Xbox360Controller: Opening device interface (If: %p) ...", interface.get());
         rc = interface->Open();
         if (R_FAILED(rc))
             return rc;
@@ -52,14 +55,18 @@ Result Xbox360Controller::OpenInterfaces()
 
         if (!m_inPipe)
         {
-            for (int i = 0; i != 15; ++i)
+            LogPrint(LogLevelDebug, "Xbox360Controller: Opening USB EndPoint IN (If: %p) ...", interface.get());
+            for (int i = 0; i < 15; i++)
             {
                 IUSBEndpoint *inEndpoint = interface->GetEndpoint(IUSBEndpoint::USB_ENDPOINT_IN, i);
                 if (inEndpoint)
                 {
                     rc = inEndpoint->Open();
                     if (R_FAILED(rc))
+                    {
+                        LogPrint(LogLevelDebug, "Xbox360Controller: Failed to open USB EndPoint IN (Idx: %d)", i);
                         return 55555;
+                    }
 
                     m_inPipe = inEndpoint;
                     break;
@@ -69,14 +76,17 @@ Result Xbox360Controller::OpenInterfaces()
 
         if (!m_outPipe)
         {
-            for (int i = 0; i != 15; ++i)
+            for (int i = 0; i < 15; i++)
             {
                 IUSBEndpoint *outEndpoint = interface->GetEndpoint(IUSBEndpoint::USB_ENDPOINT_OUT, i);
                 if (outEndpoint)
                 {
                     rc = outEndpoint->Open();
                     if (R_FAILED(rc))
+                    {
+                        LogPrint(LogLevelDebug, "Xbox360Controller: Failed to open USB EndPoint OUT(Idx: %d)", i);
                         return 66666;
+                    }
 
                     m_outPipe = outEndpoint;
                     break;
@@ -86,13 +96,16 @@ Result Xbox360Controller::OpenInterfaces()
     }
 
     if (!m_inPipe || !m_outPipe)
+    {
+        LogPrint(LogLevelDebug, "Xbox360Controller: USB EndPoint IN or OUT missing !");
         return 369;
+    }
 
     return rc;
 }
 void Xbox360Controller::CloseInterfaces()
 {
-    //m_device->Reset();
+    // m_device->Reset();
     m_device->Close();
 }
 
@@ -104,7 +117,7 @@ Result Xbox360Controller::GetInput()
 
     uint8_t type = input_bytes[0];
 
-    if (type == XBOX360INPUT_BUTTON) //Button data
+    if (type == XBOX360INPUT_BUTTON) // Button data
     {
         m_buttonData = *reinterpret_cast<Xbox360ButtonData *>(input_bytes);
     }
@@ -125,7 +138,7 @@ Result Xbox360Controller::SendInitBytes()
 float Xbox360Controller::NormalizeTrigger(uint8_t deadzonePercent, uint8_t value)
 {
     uint16_t deadzone = (UINT8_MAX * deadzonePercent) / 100;
-    //If the given value is below the trigger zone, save the calc and return 0, otherwise adjust the value to the deadzone
+    // If the given value is below the trigger zone, save the calc and return 0, otherwise adjust the value to the deadzone
     return value < deadzone
                ? 0
                : static_cast<float>(value - deadzone) / (UINT8_MAX - deadzone);
@@ -140,8 +153,8 @@ void Xbox360Controller::NormalizeAxis(int16_t x,
     float x_val = x;
     float y_val = y;
     // Determine how far the stick is pushed.
-    //This will never exceed 32767 because if the stick is
-    //horizontally maxed in one direction, vertically it must be neutral(0) and vice versa
+    // This will never exceed 32767 because if the stick is
+    // horizontally maxed in one direction, vertically it must be neutral(0) and vice versa
     float real_magnitude = std::sqrt(x_val * x_val + y_val * y_val);
     float real_deadzone = (32767 * deadzonePercent) / 100;
     // Check if the controller is outside a circular dead zone.
@@ -153,7 +166,7 @@ void Xbox360Controller::NormalizeAxis(int16_t x,
         magnitude -= real_deadzone;
         // Normalize the magnitude with respect to its expected range giving a
         // magnitude value of 0.0 to 1.0
-        //ratio = (currentValue / maxValue) / realValue
+        // ratio = (currentValue / maxValue) / realValue
         float ratio = (magnitude / (32767 - real_deadzone)) / real_magnitude;
 
         *x_out = x_val * ratio;
@@ -166,7 +179,7 @@ void Xbox360Controller::NormalizeAxis(int16_t x,
     }
 }
 
-//Pass by value should hopefully be optimized away by RVO
+// Pass by value should hopefully be optimized away by RVO
 NormalizedButtonData Xbox360Controller::GetNormalizedButtonData()
 {
     NormalizedButtonData normalData{};

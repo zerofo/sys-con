@@ -2,7 +2,7 @@
 #include "config_handler.h"
 #include "Controllers.h"
 #include "ControllerConfig.h"
-#include "log.h"
+#include "logger.h"
 #include "ini.h"
 #include <cstring>
 #include <stratosphere.hpp>
@@ -179,14 +179,14 @@ namespace syscon::config
         void ConfigChangedCheckThreadFunc(void *arg)
         {
             (void)(arg);
-            WriteToLog("Starting config check thread!");
+            syscon::logger::LogInfo("Starting config check thread!");
             do
             {
                 if (R_SUCCEEDED(waitSingle(filecheckTimerWaiter, UINT64_MAX)))
                 {
                     if (config::CheckForFileChanges())
                     {
-                        WriteToLog("File check succeeded! Loading configs...");
+                        syscon::logger::LogInfo("File check succeeded! Loading configs...");
                         config::LoadAllConfigs();
                     }
                 }
@@ -206,19 +206,19 @@ namespace syscon::config
             LoadGlobalConfig(tempGlobalConfig);
         }
         else
-            WriteToLog("Failed to read from global config (%s)!", GLOBALCONFIG);
+            syscon::logger::LogError("Failed to read from global config (%s)!", GLOBALCONFIG);
 
         if (R_SUCCEEDED(ReadFromConfig(XBOXCONFIG)))
         {
             XboxController::LoadConfig(&tempConfig);
         }
         else
-            WriteToLog("Failed to read from xbox orig config (%s)!", XBOXCONFIG);
+            syscon::logger::LogError("Failed to read from xbox orig config (%s)!", XBOXCONFIG);
 
         if (R_SUCCEEDED(ReadFromConfig(XBOXONECONFIG)))
             XboxOneController::LoadConfig(&tempConfig);
         else
-            WriteToLog("Failed to read from xbox one config (%s)!", XBOXONECONFIG);
+            syscon::logger::LogError("Failed to read from xbox one config (%s)!", XBOXONECONFIG);
 
         if (R_SUCCEEDED(ReadFromConfig(XBOX360CONFIG)))
         {
@@ -226,17 +226,17 @@ namespace syscon::config
             Xbox360WirelessController::LoadConfig(&tempConfig);
         }
         else
-            WriteToLog("Failed to read from xbox 360 config (%s)!", XBOX360CONFIG);
+            syscon::logger::LogError("Failed to read from xbox 360 config (%s)!", XBOX360CONFIG);
 
         if (R_SUCCEEDED(ReadFromConfig(DUALSHOCK3CONFIG)))
             Dualshock3Controller::LoadConfig(&tempConfig);
         else
-            WriteToLog("Failed to read from dualshock 3 config (%s)!", DUALSHOCK3CONFIG);
+            syscon::logger::LogError("Failed to read from dualshock 3 config (%s)!", DUALSHOCK3CONFIG);
 
         if (R_SUCCEEDED(ReadFromConfig(DUALSHOCK4CONFIG)))
             Dualshock4Controller::LoadConfig(&tempConfig, tempColor);
         else
-            WriteToLog("Failed to read from dualshock 4 config (%s)!", DUALSHOCK4CONFIG);
+            syscon::logger::LogError("Failed to read from dualshock 4 config (%s)!", DUALSHOCK4CONFIG);
     }
 
     bool CheckForFileChanges()
@@ -304,7 +304,6 @@ namespace syscon::config
 
     Result Initialize()
     {
-        DiscardOldLogs();
         config::LoadAllConfigs();
         config::CheckForFileChanges();
         utimerCreate(&filecheckTimer, 1e+9L, TimerType_Repeating);

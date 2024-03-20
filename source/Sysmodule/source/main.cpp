@@ -1,5 +1,5 @@
 #include "switch.h"
-#include "log.h"
+#include "logger.h"
 #include <stratosphere.hpp>
 
 #include "usb_module.h"
@@ -105,8 +105,10 @@ namespace ams
 
     void Main()
     {
+        ::syscon::logger::Initialize(CONFIG_PATH "log.log");
 
-        WriteToLog("New sysmodule session started");
+        ::syscon::logger::LogInfo("New sysmodule session started (Build: %s %s)", __DATE__, __TIME__);
+
         ::syscon::config::Initialize();
         ::syscon::controllers::Initialize();
         ::syscon::usb::Initialize();

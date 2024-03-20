@@ -5,7 +5,7 @@
 #include <algorithm>
 #include <functional>
 
-#include "log.h"
+#include "logger.h"
 
 namespace syscon::controllers
 {
@@ -28,12 +28,12 @@ namespace syscon::controllers
         if (UseAbstractedPad)
         {
             switchHandler = std::make_unique<SwitchAbstractedPadHandler>(std::move(controllerPtr));
-            WriteToLog("Inserting controller as abstracted pad");
+            syscon::logger::LogInfo("Inserting controller as abstracted pad");
         }
         else
         {
             switchHandler = std::make_unique<SwitchHDLHandler>(std::move(controllerPtr));
-            WriteToLog("Inserting controller as HDLs");
+            syscon::logger::LogInfo("Inserting controller as HDLs");
         }
 
         ams::Result rc = switchHandler->Initialize();
@@ -41,6 +41,10 @@ namespace syscon::controllers
         {
             std::scoped_lock scoped_lock(controllerMutex);
             controllerHandlers.push_back(std::move(switchHandler));
+        }
+        else
+        {
+            syscon::logger::LogError("Failed to initialize controller: Error: 0x%X", rc.GetValue());
         }
 
         return rc;

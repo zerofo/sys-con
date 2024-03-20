@@ -2,9 +2,9 @@
 
 #include "IController.h"
 
-//References used:
-//https://github.com/quantus/xbox-one-controller-protocol
-//https://cs.chromium.org/chromium/src/device/gamepad/xbox_controller_mac.mm
+// References used:
+// https://github.com/quantus/xbox-one-controller-protocol
+// https://cs.chromium.org/chromium/src/device/gamepad/xbox_controller_mac.mm
 
 struct XboxOneButtonData
 {
@@ -82,7 +82,7 @@ private:
     bool m_GuidePressed{false};
 
 public:
-    XboxOneController(std::unique_ptr<IUSBDevice> &&interface);
+    XboxOneController(std::unique_ptr<IUSBDevice> &&interface, std::unique_ptr<ILogger> &&logger);
     virtual ~XboxOneController() override;
 
     virtual Result Initialize() override;

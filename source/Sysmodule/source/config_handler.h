@@ -3,12 +3,12 @@
 
 #define CONFIG_PATH "/config/sys-con/"
 
-#define GLOBALCONFIG     CONFIG_PATH "config_global.ini"
-#define XBOXCONFIG       CONFIG_PATH "config_xboxorig.ini"
-#define XBOX360CONFIG    CONFIG_PATH "config_xbox360.ini"
-#define XBOXONECONFIG    CONFIG_PATH "config_xboxone.ini"
-#define DUALSHOCK3CONFIG CONFIG_PATH "config_dualshock3.ini"
-#define DUALSHOCK4CONFIG CONFIG_PATH "config_dualshock4.ini"
+#define GLOBALCONFIG     "sdmc://" CONFIG_PATH "config_global.ini"
+#define XBOXCONFIG       "sdmc://" CONFIG_PATH "config_xboxorig.ini"
+#define XBOX360CONFIG    "sdmc://" CONFIG_PATH "config_xbox360.ini"
+#define XBOXONECONFIG    "sdmc://" CONFIG_PATH "config_xboxone.ini"
+#define DUALSHOCK3CONFIG "sdmc://" CONFIG_PATH "config_dualshock3.ini"
+#define DUALSHOCK4CONFIG "sdmc://" CONFIG_PATH "config_dualshock4.ini"
 
 namespace syscon::config
 {

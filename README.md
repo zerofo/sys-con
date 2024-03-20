@@ -22,6 +22,12 @@ sys-con comes with a config folder located at `sdmc:/config/sys-con/`. It contai
 
 In case of issue, you can look at the logs in `sdmc:/config/sys-con/logs.txt`
 
+## Debug ?
+
+You will need to get logs from UART:
+https://gbatemp.net/threads/how-to-make-a-joycon-rail-uart-to-capture-boot-log.625784/
+https://github.com/dekuNukem/Nintendo_Switch_Reverse_Engineering
+
 ## Supported controller
 - [x] Xbox 360 Controller
 - [x] Xbox One X/S Controller

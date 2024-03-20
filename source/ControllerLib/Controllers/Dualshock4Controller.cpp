@@ -4,8 +4,8 @@
 static ControllerConfig _dualshock4ControllerConfig{};
 static RGBAColor _ledValue{0x00, 0x00, 0x40};
 
-Dualshock4Controller::Dualshock4Controller(std::unique_ptr<IUSBDevice> &&interface)
-    : IController(std::move(interface))
+Dualshock4Controller::Dualshock4Controller(std::unique_ptr<IUSBDevice> &&interface, std::unique_ptr<ILogger> &&logger)
+    : IController(std::move(interface), std::move(logger))
 {
 }
 
@@ -115,7 +115,6 @@ void Dualshock4Controller::CloseInterfaces()
 
 Result Dualshock4Controller::GetInput()
 {
-
     uint8_t input_bytes[64];
 
     Result rc = m_inPipe->Read(input_bytes, sizeof(input_bytes));

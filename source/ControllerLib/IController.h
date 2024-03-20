@@ -1,5 +1,6 @@
 #pragma once
 #include "IUSBDevice.h"
+#include "ILogger.h"
 #include "ControllerTypes.h"
 #include "ControllerConfig.h"
 #include <memory>
@@ -15,9 +16,18 @@ class IController
 {
 protected:
     std::unique_ptr<IUSBDevice> m_device;
+    std::unique_ptr<ILogger> m_logger;
+
+    void LogPrint(LogLevel lvl, const char *format, ...)
+    {
+        va_list vl;
+        va_start(vl, format);
+        m_logger->Print(lvl, format, vl);
+        va_end(vl);
+    }
 
 public:
-    IController(std::unique_ptr<IUSBDevice> &&interface) : m_device(std::move(interface))
+    IController(std::unique_ptr<IUSBDevice> &&interface, std::unique_ptr<ILogger> &&logger) : m_device(std::move(interface)), m_logger(std::move(logger))
     {
     }
     virtual ~IController() = default;

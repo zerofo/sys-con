@@ -1,24 +1,24 @@
 #include "Controllers/XboxOneController.h"
 #include <cmath>
-//#include "../../Sysmodule/source/log.h"
+// #include "../../Sysmodule/source/log.h"
 
 static ControllerConfig _xboxoneControllerConfig{};
 
 #define TRIGGER_MAXVALUE 1023
 
-//Following input packets were referenced from https://github.com/torvalds/linux/blob/master/drivers/input/joystick/xpad.c
-// and https://github.com/360Controller/360Controller/blob/master/360Controller/_60Controller.cpp
+// Following input packets were referenced from https://github.com/torvalds/linux/blob/master/drivers/input/joystick/xpad.c
+//  and https://github.com/360Controller/360Controller/blob/master/360Controller/_60Controller.cpp
 
-//Enables LED on the PowerA controller but disables input?
+// Enables LED on the PowerA controller but disables input?
 static constexpr uint8_t xboxone_powerA_ledOn[] = {
     0x04, 0x20, 0x01, 0x00};
 
-//does something maybe
+// does something maybe
 static constexpr uint8_t xboxone_test_init1[] = {
     0x01, 0x20, 0x01, 0x09, 0x00, 0x04, 0x20, 0x3a,
     0x00, 0x00, 0x00, 0x98, 0x00};
 
-//required for all xbox one controllers
+// required for all xbox one controllers
 static constexpr uint8_t xboxone_fw2015_init[] = {
     0x05, 0x20, 0x00, 0x01, 0x00};
 
@@ -61,14 +61,14 @@ static constexpr VendorProductPacket init_packets[]{
     {0x24c6, 0x0000, xboxone_rumbleend_init, sizeof(xboxone_rumbleend_init)},
 };
 
-XboxOneController::XboxOneController(std::unique_ptr<IUSBDevice> &&interface)
-    : IController(std::move(interface))
+XboxOneController::XboxOneController(std::unique_ptr<IUSBDevice> &&interface, std::unique_ptr<ILogger> &&logger)
+    : IController(std::move(interface), std::move(logger))
 {
 }
 
 XboxOneController::~XboxOneController()
 {
-    //Exit();
+    // Exit();
 }
 
 Result XboxOneController::Initialize()
@@ -96,7 +96,7 @@ Result XboxOneController::OpenInterfaces()
     if (R_FAILED(rc))
         return rc;
 
-    //This will open each interface and try to acquire Xbox One controller's in and out endpoints, if it hasn't already
+    // This will open each interface and try to acquire Xbox One controller's in and out endpoints, if it hasn't already
     std::vector<std::unique_ptr<IUSBInterface>> &interfaces = m_device->GetInterfaces();
     for (auto &&interface : interfaces)
     {
@@ -152,7 +152,7 @@ Result XboxOneController::OpenInterfaces()
 }
 void XboxOneController::CloseInterfaces()
 {
-    //m_device->Reset();
+    // m_device->Reset();
     m_device->Close();
 }
 
@@ -166,16 +166,16 @@ Result XboxOneController::GetInput()
 
     uint8_t type = input_bytes[0];
 
-    if (type == XBONEINPUT_BUTTON) //Button data
+    if (type == XBONEINPUT_BUTTON) // Button data
     {
         m_buttonData = *reinterpret_cast<XboxOneButtonData *>(input_bytes);
     }
-    else if (type == XBONEINPUT_GUIDEBUTTON) //Guide button Result
+    else if (type == XBONEINPUT_GUIDEBUTTON) // Guide button Result
     {
         m_GuidePressed = input_bytes[4];
 
-        //Xbox one S needs to be sent an ack report for guide buttons
-        //TODO: needs testing
+        // Xbox one S needs to be sent an ack report for guide buttons
+        // TODO: needs testing
         if (input_bytes[1] == 0x30)
         {
             rc = WriteAckGuideReport(input_bytes[2]);
@@ -209,7 +209,7 @@ Result XboxOneController::SendInitBytes()
 float XboxOneController::NormalizeTrigger(uint8_t deadzonePercent, uint16_t value)
 {
     uint16_t deadzone = (TRIGGER_MAXVALUE * deadzonePercent) / 100;
-    //If the given value is below the trigger zone, save the calc and return 0, otherwise adjust the value to the deadzone
+    // If the given value is below the trigger zone, save the calc and return 0, otherwise adjust the value to the deadzone
     return value < deadzone
                ? 0
                : static_cast<float>(value - deadzone) / (TRIGGER_MAXVALUE - deadzone);
@@ -224,8 +224,8 @@ void XboxOneController::NormalizeAxis(int16_t x,
     float x_val = x;
     float y_val = y;
     // Determine how far the stick is pushed.
-    //This will never exceed 32767 because if the stick is
-    //horizontally maxed in one direction, vertically it must be neutral(0) and vice versa
+    // This will never exceed 32767 because if the stick is
+    // horizontally maxed in one direction, vertically it must be neutral(0) and vice versa
     float real_magnitude = std::sqrt(x_val * x_val + y_val * y_val);
     float real_deadzone = (32767 * deadzonePercent) / 100;
     // Check if the controller is outside a circular dead zone.
@@ -237,7 +237,7 @@ void XboxOneController::NormalizeAxis(int16_t x,
         magnitude -= real_deadzone;
         // Normalize the magnitude with respect to its expected range giving a
         // magnitude value of 0.0 to 1.0
-        //ratio = (currentValue / maxValue) / realValue
+        // ratio = (currentValue / maxValue) / realValue
         float ratio = (magnitude / (32767 - real_deadzone)) / real_magnitude;
 
         *x_out = x_val * ratio;
@@ -250,7 +250,7 @@ void XboxOneController::NormalizeAxis(int16_t x,
     }
 }
 
-//Pass by value should hopefully be optimized away by RVO
+// Pass by value should hopefully be optimized away by RVO
 NormalizedButtonData XboxOneController::GetNormalizedButtonData()
 {
     NormalizedButtonData normalData{};

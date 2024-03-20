@@ -1,8 +1,8 @@
 #pragma once
 #include "IController.h"
 
-//References used:
-//https://cs.chromium.org/chromium/src/device/gamepad/dualshock4_controller.cc
+// References used:
+// https://cs.chromium.org/chromium/src/device/gamepad/dualshock4_controller.cc
 
 struct Dualshock4ButtonData
 {
@@ -147,7 +147,7 @@ private:
     Dualshock4USBButtonData m_buttonData{};
 
 public:
-    Dualshock4Controller(std::unique_ptr<IUSBDevice> &&interface);
+    Dualshock4Controller(std::unique_ptr<IUSBDevice> &&interface, std::unique_ptr<ILogger> &&logger);
     virtual ~Dualshock4Controller() override;
 
     virtual Result Initialize() override;

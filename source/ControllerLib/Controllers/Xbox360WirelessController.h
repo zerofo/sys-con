@@ -25,7 +25,7 @@ private:
     std::vector<OutputPacket> m_outputBuffer;
 
 public:
-    Xbox360WirelessController(std::unique_ptr<IUSBDevice> &&interface);
+    Xbox360WirelessController(std::unique_ptr<IUSBDevice> &&interface, std::unique_ptr<ILogger> &&logger);
     virtual ~Xbox360WirelessController() override;
 
     virtual Result Initialize() override;

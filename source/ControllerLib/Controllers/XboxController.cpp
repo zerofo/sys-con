@@ -3,14 +3,14 @@
 
 static ControllerConfig _xboxControllerConfig{};
 
-XboxController::XboxController(std::unique_ptr<IUSBDevice> &&interface)
-    : IController(std::move(interface))
+XboxController::XboxController(std::unique_ptr<IUSBDevice> &&interface, std::unique_ptr<ILogger> &&logger)
+    : IController(std::move(interface), std::move(logger))
 {
 }
 
 XboxController::~XboxController()
 {
-    //Exit();
+    // Exit();
 }
 
 Result XboxController::Initialize()
@@ -35,7 +35,7 @@ Result XboxController::OpenInterfaces()
     if (R_FAILED(rc))
         return rc;
 
-    //This will open each interface and try to acquire Xbox controller's in and out endpoints, if it hasn't already
+    // This will open each interface and try to acquire Xbox controller's in and out endpoints, if it hasn't already
     std::vector<std::unique_ptr<IUSBInterface>> &interfaces = m_device->GetInterfaces();
     for (auto &&interface : interfaces)
     {
@@ -91,7 +91,7 @@ Result XboxController::OpenInterfaces()
 }
 void XboxController::CloseInterfaces()
 {
-    //m_device->Reset();
+    // m_device->Reset();
     m_device->Close();
 }
 
@@ -112,7 +112,7 @@ Result XboxController::GetInput()
 float XboxController::NormalizeTrigger(uint8_t deadzonePercent, uint8_t value)
 {
     uint8_t deadzone = (UINT8_MAX * deadzonePercent) / 100;
-    //If the given value is below the trigger zone, save the calc and return 0, otherwise adjust the value to the deadzone
+    // If the given value is below the trigger zone, save the calc and return 0, otherwise adjust the value to the deadzone
     return value < deadzone
                ? 0
                : static_cast<float>(value - deadzone) / (UINT8_MAX - deadzone);
@@ -127,8 +127,8 @@ void XboxController::NormalizeAxis(int16_t x,
     float x_val = x;
     float y_val = y;
     // Determine how far the stick is pushed.
-    //This will never exceed 32767 because if the stick is
-    //horizontally maxed in one direction, vertically it must be neutral(0) and vice versa
+    // This will never exceed 32767 because if the stick is
+    // horizontally maxed in one direction, vertically it must be neutral(0) and vice versa
     float real_magnitude = std::sqrt(x_val * x_val + y_val * y_val);
     float real_deadzone = (32767 * deadzonePercent) / 100;
     // Check if the controller is outside a circular dead zone.
@@ -140,7 +140,7 @@ void XboxController::NormalizeAxis(int16_t x,
         magnitude -= real_deadzone;
         // Normalize the magnitude with respect to its expected range giving a
         // magnitude value of 0.0 to 1.0
-        //ratio = (currentValue / maxValue) / realValue
+        // ratio = (currentValue / maxValue) / realValue
         float ratio = (magnitude / (32767 - real_deadzone)) / real_magnitude;
 
         *x_out = x_val * ratio;
@@ -153,7 +153,7 @@ void XboxController::NormalizeAxis(int16_t x,
     }
 }
 
-//Pass by value should hopefully be optimized away by RVO
+// Pass by value should hopefully be optimized away by RVO
 NormalizedButtonData XboxController::GetNormalizedButtonData()
 {
     NormalizedButtonData normalData{};
