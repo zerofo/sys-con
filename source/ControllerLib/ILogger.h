@@ -3,7 +3,7 @@
 
 typedef enum LogLevel
 {
-    LogLevelDebug,
+    LogLevelDebug = 0,
     LogLevelInfo,
     LogLevelWarning,
     LogLevelError

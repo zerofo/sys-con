@@ -14,38 +14,34 @@ SwitchUSBInterface::~SwitchUSBInterface()
 
 Result SwitchUSBInterface::Open()
 {
-    UsbHsClientIfSession temp;
-    Result rc = usbHsAcquireUsbIf(&temp, &m_interface);
+    Result rc = usbHsAcquireUsbIf(&m_session, &m_interface);
     if (R_FAILED(rc))
         return rc;
 
-    m_session = temp;
-
-    if (R_SUCCEEDED(rc))
+    for (int i = 0; i < 15; i++)
     {
-
-        for (int i = 0; i != 15; ++i)
+        usb_endpoint_descriptor &epdesc = m_session.inf.inf.input_endpoint_descs[i];
+        if (epdesc.bLength != 0)
         {
-            usb_endpoint_descriptor &epdesc = m_session.inf.inf.input_endpoint_descs[i];
-            if (epdesc.bLength != 0)
-            {
-                m_inEndpoints[i] = std::make_unique<SwitchUSBEndpoint>(m_session, epdesc);
-            }
-        }
-
-        for (int i = 0; i != 15; ++i)
-        {
-            usb_endpoint_descriptor &epdesc = m_session.inf.inf.output_endpoint_descs[i];
-            if (epdesc.bLength != 0)
-            {
-                m_outEndpoints[i] = std::make_unique<SwitchUSBEndpoint>(m_session, epdesc);
-            }
+            m_inEndpoints[i] = std::make_unique<SwitchUSBEndpoint>(m_session, epdesc);
         }
     }
+
+    for (int i = 0; i < 15; i++)
+    {
+        usb_endpoint_descriptor &epdesc = m_session.inf.inf.output_endpoint_descs[i];
+        if (epdesc.bLength != 0)
+        {
+            m_outEndpoints[i] = std::make_unique<SwitchUSBEndpoint>(m_session, epdesc);
+        }
+    }
+
     return rc;
 }
+
 void SwitchUSBInterface::Close()
 {
+    /*
     for (auto &&endpoint : m_inEndpoints)
     {
         if (endpoint)
@@ -59,7 +55,16 @@ void SwitchUSBInterface::Close()
         {
             endpoint->Close();
         }
+    }*/
+
+    for (int i = 0; i < 15; i++)
+    {
+        if (m_inEndpoints[i])
+            m_inEndpoints[i]->Close();
+        if (m_outEndpoints[i])
+            m_outEndpoints[i]->Close();
     }
+
     usbHsIfClose(&m_session);
 }
 

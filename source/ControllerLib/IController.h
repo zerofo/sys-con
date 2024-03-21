@@ -20,7 +20,7 @@ protected:
 
     void LogPrint(LogLevel lvl, const char *format, ...)
     {
-        va_list vl;
+        ::std::va_list vl;
         va_start(vl, format);
         m_logger->Print(lvl, format, vl);
         va_end(vl);

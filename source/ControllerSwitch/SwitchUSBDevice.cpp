@@ -3,7 +3,6 @@
 #include "malloc.h" //for memalign
 
 SwitchUSBDevice::SwitchUSBDevice(UsbHsInterface *interfaces, int length)
-//: m_interfaces(std::vector<std::unique_ptr<IUSBInterface>>())
 {
     SetInterfaces(interfaces, length);
 }
@@ -34,9 +33,9 @@ void SwitchUSBDevice::Close()
 
 void SwitchUSBDevice::Reset()
 {
-    //I'm expecting all interfaces to point to one device decsriptor
-    // as such resetting on any of them should do the trick
-    //TODO: needs testing
+    // I'm expecting all interfaces to point to one device decsriptor
+    //  as such resetting on any of them should do the trick
+    // TODO: needs testing
     if (m_interfaces.size() != 0)
         m_interfaces[0]->Reset();
 }

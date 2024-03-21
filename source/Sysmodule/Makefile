@@ -6,8 +6,8 @@ CURRENT_DIRECTORY := $(abspath $(dir $(THIS_MAKEFILE)))
 include $(dir $(abspath $(lastword $(MAKEFILE_LIST))))/../libstratosphere/config/templates/stratosphere.mk
 
 TARGET		:=	sys-con
-SOURCES		+=	../ControllerSwitch ../ControllerLib ../ControllerLib/Controllers ../inih
-INCLUDES	+=	../ControllerSwitch ../ControllerLib ../inih
+SOURCES		+=	../ControllerSwitch ../ControllerLib ../ControllerLib/Controllers
+INCLUDES	+=	../ControllerSwitch ../ControllerLib
 
 #---------------------------------------------------------------------------------
 # no real need to edit anything past this point unless you need to add additional

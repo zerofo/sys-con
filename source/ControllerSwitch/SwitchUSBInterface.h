@@ -4,6 +4,8 @@
 #include <memory>
 #include <vector>
 
+class IUSBEndpoint;
+
 class SwitchUSBInterface : public IUSBInterface
 {
 private:

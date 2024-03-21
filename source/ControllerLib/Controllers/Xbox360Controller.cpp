@@ -55,9 +55,11 @@ Result Xbox360Controller::OpenInterfaces()
 
         if (!m_inPipe)
         {
-            LogPrint(LogLevelDebug, "Xbox360Controller: Opening USB EndPoint IN (If: %p) ...", interface.get());
+            LogPrint(LogLevelDebug, "Xbox360Controller: Opening USB EndPoint IN (If: %p)...", interface.get());
+
             for (int i = 0; i < 15; i++)
             {
+                LogPrint(LogLevelDebug, "Xbox360Controller: Getting endpoint for USB EndPoint IN (Idx: %d)", i);
                 IUSBEndpoint *inEndpoint = interface->GetEndpoint(IUSBEndpoint::USB_ENDPOINT_IN, i);
                 if (inEndpoint)
                 {

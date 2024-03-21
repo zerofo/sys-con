@@ -107,16 +107,16 @@ namespace syscon::logger
         switch (lvl)
         {
             case LogLevelDebug:
-                LogDebug(format, vl);
+                Log('D', format, vl);
                 break;
             case LogLevelInfo:
-                LogInfo(format, vl);
+                Log('I', format, vl);
                 break;
             case LogLevelWarning:
-                LogWarning(format, vl);
+                Log('W', format, vl);
                 break;
             case LogLevelError:
-                LogError(format, vl);
+                Log('E', format, vl);
                 break;
         }
     }
