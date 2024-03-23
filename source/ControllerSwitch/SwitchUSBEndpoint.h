@@ -9,28 +9,27 @@ private:
     UsbHsClientEpSession m_epSession{};
     UsbHsClientIfSession *m_ifSession;
     usb_endpoint_descriptor *m_descriptor;
-
-    void *m_buffer = nullptr;
+    alignas(0x1000) u8 m_usb_buffer[0x1000];
 
 public:
-    //Pass the necessary information to be able to open the endpoint
+    // Pass the necessary information to be able to open the endpoint
     SwitchUSBEndpoint(UsbHsClientIfSession &if_session, usb_endpoint_descriptor &desc);
     ~SwitchUSBEndpoint();
 
-    //Open and close the endpoint
+    // Open and close the endpoint
     virtual Result Open(int maxPacketSize = 0) override;
     virtual void Close() override;
 
-    //buffer should point to the data array, and only the specified size will be read.
+    // buffer should point to the data array, and only the specified size will be read.
     virtual Result Write(const void *inBuffer, size_t bufferSize) override;
 
-    //The data received will be put in the outBuffer array for the length of the specified size.
+    // The data received will be put in the outBuffer array for the length of the specified size.
     virtual Result Read(void *outBuffer, size_t bufferSize) override;
 
-    //Gets the direction of this endpoint (IN or OUT)
+    // Gets the direction of this endpoint (IN or OUT)
     virtual IUSBEndpoint::Direction GetDirection() override;
 
-    //get the endpoint descriptor
+    // get the endpoint descriptor
     virtual IUSBEndpoint::EndpointDescriptor *GetDescriptor() override;
 
     // Get the current EpSession (after it was opened)

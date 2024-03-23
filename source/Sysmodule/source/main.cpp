@@ -21,7 +21,7 @@ namespace ams
         namespace
         {
 
-            alignas(0x40) constinit u8 g_heap_memory[128_KB];
+            alignas(0x40) constinit u8 g_heap_memory[64_KB];
             constinit lmem::HeapHandle g_heap_handle;
             constinit bool g_heap_initialized;
             constinit os::SdkMutex g_heap_init_mutex;
@@ -64,6 +64,8 @@ namespace ams
 
     namespace init
     {
+        alignas(0x1000) constinit u8 g_hdls_buffer[64_KB];
+
         void InitializeSystemModuleBeforeConstructors(void)
         {
             R_ABORT_UNLESS(sm::Initialize());
@@ -75,20 +77,17 @@ namespace ams
             R_ABORT_UNLESS(hiddbgInitialize());
             R_ABORT_UNLESS(usbHsInitialize());
             R_ABORT_UNLESS(pscmInitialize());
-            // R_ABORT_UNLESS(pmdmntInitialize());
-            // R_ABORT_UNLESS(pminfoInitialize());
             R_ABORT_UNLESS(setsysInitialize());
 
             // Initialize system firmware version
-            /*
             SetSysFirmwareVersion fw;
             R_ABORT_UNLESS(setsysGetFirmwareVersion(&fw));
             hosversionSet(MAKEHOSVERSION(fw.major, fw.minor, fw.micro));
-            setsysExit();
 
             if (hosversionAtLeast(7, 0, 0))
-                R_ABORT_UNLESS(hiddbgAttachHdlsWorkBuffer(&SwitchHDLHandler::GetHdlsSessionId(), NULL, 0));
-            */
+            {
+                R_ABORT_UNLESS(hiddbgAttachHdlsWorkBuffer(&SwitchHDLHandler::GetHdlsSessionId(), g_hdls_buffer, sizeof(g_hdls_buffer)));
+            }
 
             R_ABORT_UNLESS(fs::MountSdCard("sdmc"));
         }
@@ -107,7 +106,11 @@ namespace ams
     {
         ::syscon::logger::Initialize(CONFIG_PATH "log.log");
 
-        ::syscon::logger::LogInfo("New sysmodule session started (Build: %s %s)", __DATE__, __TIME__);
+        u32 version = hosversionGet();
+
+        ::syscon::logger::LogInfo("-----------------------------------------------------");
+        ::syscon::logger::LogInfo("SYS-CON started (Build: %s %s)", __DATE__, __TIME__);
+        ::syscon::logger::LogInfo("OS version: %d.%d.%d", HOSVER_MAJOR(version), HOSVER_MINOR(version), HOSVER_MICRO(version));
 
         ::syscon::config::Initialize();
         ::syscon::controllers::Initialize();

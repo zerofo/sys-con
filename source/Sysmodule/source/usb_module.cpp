@@ -125,7 +125,7 @@ namespace syscon::usb
                 if (R_SUCCEEDED(eventWait(usbHsGetInterfaceStateChangeEvent(), UINT64_MAX)))
                 {
                     s32 total_entries;
-                    syscon::logger::LogInfo("Interface state was changed");
+                    syscon::logger::LogInfo("USB Interface state was changed");
 
                     std::scoped_lock usbLock(usbMutex);
                     std::scoped_lock controllersLock(controllers::GetScopedLock());
@@ -154,9 +154,8 @@ namespace syscon::usb
 
                             if (!found_flag)
                             {
-                                syscon::logger::LogInfo("Erasing controller");
+                                syscon::logger::LogInfo("Controller unplugged: %04X-%04X", (*it)->GetController()->GetDevice()->GetVendor(), (*it)->GetController()->GetDevice()->GetProduct());
                                 controllers::Get().erase(it--);
-                                syscon::logger::LogInfo("Controller erased!");
                             }
                         }
                     }
@@ -172,6 +171,7 @@ namespace syscon::usb
                 .bInterfaceSubClass = isubclass,
                 .bInterfaceProtocol = iprotocol,
             };
+
             s32 out_entries = 0;
             memset(interfaces, 0, sizeof(interfaces));
             usbHsQueryAvailableInterfaces(&filter, interfaces, sizeof(interfaces), &out_entries);
@@ -186,6 +186,7 @@ namespace syscon::usb
                 .idProduct = product_id,
             };
             s32 out_entries = 0;
+            memset(interfaces, 0, sizeof(interfaces));
             usbHsQueryAvailableInterfaces(&filter, interfaces, sizeof(interfaces), &out_entries);
             return out_entries;
         }

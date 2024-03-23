@@ -1,4 +1,5 @@
 #include "SwitchAbstractedPadHandler.h"
+#include "SwitchLogger.h"
 #include "ControllerHelpers.h"
 #include <cmath>
 #include <array>

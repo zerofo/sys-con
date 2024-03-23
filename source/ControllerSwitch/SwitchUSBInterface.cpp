@@ -1,5 +1,6 @@
 #include "SwitchUSBInterface.h"
 #include "SwitchUSBEndpoint.h"
+#include "SwitchLogger.h"
 #include <malloc.h>
 #include <cstring>
 
@@ -14,6 +15,8 @@ SwitchUSBInterface::~SwitchUSBInterface()
 
 Result SwitchUSBInterface::Open()
 {
+    ::syscon::logger::LogDebug("SwitchUSBInterface Openning %x-%x...", m_interface.device_desc.idVendor, m_interface.device_desc.idProduct);
+
     Result rc = usbHsAcquireUsbIf(&m_session, &m_interface);
     if (R_FAILED(rc))
         return rc;
@@ -25,6 +28,10 @@ Result SwitchUSBInterface::Open()
         {
             m_inEndpoints[i] = std::make_unique<SwitchUSBEndpoint>(m_session, epdesc);
         }
+        else
+        {
+            //::syscon::logger::LogWarning("SwitchUSBInterface: Input endpoint %d is null", i);
+        }
     }
 
     for (int i = 0; i < 15; i++)
@@ -34,6 +41,10 @@ Result SwitchUSBInterface::Open()
         {
             m_outEndpoints[i] = std::make_unique<SwitchUSBEndpoint>(m_session, epdesc);
         }
+        else
+        {
+            //::syscon::logger::LogWarning("SwitchUSBInterface: Output endpoint %d is null", i);
+        }
     }
 
     return rc;
@@ -41,21 +52,7 @@ Result SwitchUSBInterface::Open()
 
 void SwitchUSBInterface::Close()
 {
-    /*
-    for (auto &&endpoint : m_inEndpoints)
-    {
-        if (endpoint)
-        {
-            endpoint->Close();
-        }
-    }
-    for (auto &&endpoint : m_outEndpoints)
-    {
-        if (endpoint)
-        {
-            endpoint->Close();
-        }
-    }*/
+    ::syscon::logger::LogDebug("SwitchUSBInterface Closing %x-%x...", m_interface.device_desc.idVendor, m_interface.device_desc.idProduct);
 
     for (int i = 0; i < 15; i++)
     {
@@ -70,6 +67,8 @@ void SwitchUSBInterface::Close()
 
 Result SwitchUSBInterface::ControlTransfer(u8 bmRequestType, u8 bmRequest, u16 wValue, u16 wIndex, u16 wLength, void *buffer)
 {
+    ::syscon::logger::LogDebug("SwitchUSBInterface ControlTransfer1 %x-%x...", m_interface.device_desc.idVendor, m_interface.device_desc.idProduct);
+
     void *temp_buffer = memalign(0x1000, wLength);
     if (temp_buffer == nullptr)
         return -1;
@@ -90,6 +89,8 @@ Result SwitchUSBInterface::ControlTransfer(u8 bmRequestType, u8 bmRequest, u16 w
 
 Result SwitchUSBInterface::ControlTransfer(u8 bmRequestType, u8 bmRequest, u16 wValue, u16 wIndex, u16 wLength, const void *buffer)
 {
+    ::syscon::logger::LogDebug("SwitchUSBInterface ControlTransfer2 %x-%x...", m_interface.device_desc.idVendor, m_interface.device_desc.idProduct);
+
     void *temp_buffer = memalign(0x1000, wLength);
     if (temp_buffer == nullptr)
         return -1;
@@ -105,6 +106,8 @@ Result SwitchUSBInterface::ControlTransfer(u8 bmRequestType, u8 bmRequest, u16 w
 
 IUSBEndpoint *SwitchUSBInterface::GetEndpoint(IUSBEndpoint::Direction direction, uint8_t index)
 {
+    ::syscon::logger::LogDebug("SwitchUSBInterface GetEndpoint %x-%x...", m_interface.device_desc.idVendor, m_interface.device_desc.idProduct);
+
     if (direction == IUSBEndpoint::USB_ENDPOINT_IN)
         return m_inEndpoints[index].get();
     else
@@ -113,6 +116,8 @@ IUSBEndpoint *SwitchUSBInterface::GetEndpoint(IUSBEndpoint::Direction direction,
 
 Result SwitchUSBInterface::Reset()
 {
+    ::syscon::logger::LogDebug("SwitchUSBInterface Reset %x-%x...", m_interface.device_desc.idVendor, m_interface.device_desc.idProduct);
+
     usbHsIfResetDevice(&m_session);
     return 0;
 }

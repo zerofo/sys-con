@@ -1,6 +1,6 @@
 #include "SwitchUSBDevice.h"
-#include <cstring>  //for memset
-#include "malloc.h" //for memalign
+#include "SwitchLogger.h"
+#include <cstring> //for memset
 
 SwitchUSBDevice::SwitchUSBDevice(UsbHsInterface *interfaces, int length)
 {
@@ -48,7 +48,7 @@ void SwitchUSBDevice::SetInterfaces(UsbHsInterface *interfaces, int length)
         m_productID = interfaces->device_desc.idProduct;
         m_interfaces.clear();
         m_interfaces.reserve(length);
-        for (int i = 0; i != length; ++i)
+        for (int i = 0; i < length; i++)
         {
             m_interfaces.push_back(std::make_unique<SwitchUSBInterface>(interfaces[i]));
         }

@@ -55,18 +55,15 @@ Result Xbox360Controller::OpenInterfaces()
 
         if (!m_inPipe)
         {
-            LogPrint(LogLevelDebug, "Xbox360Controller: Opening USB EndPoint IN (If: %p)...", interface.get());
-
             for (int i = 0; i < 15; i++)
             {
-                LogPrint(LogLevelDebug, "Xbox360Controller: Getting endpoint for USB EndPoint IN (Idx: %d)", i);
                 IUSBEndpoint *inEndpoint = interface->GetEndpoint(IUSBEndpoint::USB_ENDPOINT_IN, i);
                 if (inEndpoint)
                 {
                     rc = inEndpoint->Open();
                     if (R_FAILED(rc))
                     {
-                        LogPrint(LogLevelDebug, "Xbox360Controller: Failed to open USB EndPoint IN (Idx: %d)", i);
+                        LogPrint(LogLevelError, "Xbox360Controller: Failed to open USB EndPoint IN (Idx: %d)", i);
                         return 55555;
                     }
 
@@ -86,7 +83,7 @@ Result Xbox360Controller::OpenInterfaces()
                     rc = outEndpoint->Open();
                     if (R_FAILED(rc))
                     {
-                        LogPrint(LogLevelDebug, "Xbox360Controller: Failed to open USB EndPoint OUT(Idx: %d)", i);
+                        LogPrint(LogLevelError, "Xbox360Controller: Failed to open USB EndPoint OUT(Idx: %d)", i);
                         return 66666;
                     }
 
@@ -99,10 +96,11 @@ Result Xbox360Controller::OpenInterfaces()
 
     if (!m_inPipe || !m_outPipe)
     {
-        LogPrint(LogLevelDebug, "Xbox360Controller: USB EndPoint IN or OUT missing !");
+        LogPrint(LogLevelError, "Xbox360Controller: USB EndPoint IN or OUT missing !");
         return 369;
     }
 
+    LogPrint(LogLevelInfo, "Xbox360Controller: USB interfaces opened successfully !");
     return rc;
 }
 void Xbox360Controller::CloseInterfaces()
@@ -184,6 +182,8 @@ void Xbox360Controller::NormalizeAxis(int16_t x,
 // Pass by value should hopefully be optimized away by RVO
 NormalizedButtonData Xbox360Controller::GetNormalizedButtonData()
 {
+    LogPrint(LogLevelDebug, "Xbox360Controller: GetNormalizedButtonData");
+
     NormalizedButtonData normalData{};
 
     normalData.triggers[0] = NormalizeTrigger(_xbox360ControllerConfig.triggerDeadzonePercent[0], m_buttonData.trigger_left);
@@ -235,6 +235,8 @@ Result Xbox360Controller::SetRumble(uint8_t strong_magnitude, uint8_t weak_magni
 
 Result Xbox360Controller::SetLED(Xbox360LEDValue value)
 {
+    LogPrint(LogLevelInfo, "Xbox360Controller: SetLED to: 0x%02X", value);
+
     uint8_t ledPacket[]{0x01, 0x03, static_cast<uint8_t>(value)};
     return m_outPipe->Write(ledPacket, sizeof(ledPacket));
 }

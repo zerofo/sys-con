@@ -1,4 +1,5 @@
 #include "SwitchHDLHandler.h"
+#include "SwitchLogger.h"
 #include "ControllerHelpers.h"
 #include <cmath>
 
@@ -16,6 +17,7 @@ SwitchHDLHandler::~SwitchHDLHandler()
 
 ams::Result SwitchHDLHandler::Initialize()
 {
+    syscon::logger::LogDebug("SwitchHDLHandler Initializing ...");
 
     R_TRY(m_controller->Initialize());
 
@@ -30,6 +32,8 @@ ams::Result SwitchHDLHandler::Initialize()
     }
 
     R_TRY(InitInputThread());
+
+    syscon::logger::LogDebug("SwitchHDLHandler Initialized !");
 
     return 0;
 }
@@ -50,6 +54,8 @@ void SwitchHDLHandler::Exit()
 
 Result SwitchHDLHandler::InitHdlState()
 {
+    syscon::logger::LogDebug("Initializing HDL state ...");
+
     m_hdlHandle = {0};
     m_deviceInfo = {0};
     m_hdlState = {0};
@@ -69,9 +75,26 @@ Result SwitchHDLHandler::InitHdlState()
     m_hdlState.analog_stick_l.y = -0x1234;
     m_hdlState.analog_stick_r.x = 0x5678;
     m_hdlState.analog_stick_r.y = -0x5678;
+    /*
+    Since 12.0
+    m_hdlState.six_axis_sensor_acceleration.x = 0x1234;
+    m_hdlState.six_axis_sensor_acceleration.y = 0x5678;
+    m_hdlState.six_axis_sensor_acceleration.z = 0x9abc;
+    m_hdlState.six_axis_sensor_angle.x = 0xdef0;
+    m_hdlState.six_axis_sensor_angle.y = 0x1234;
+    m_hdlState.six_axis_sensor_angle.z = 0x5678;
+    m_hdlState.attribute = 0x0;
+    m_hdlState.indicator = 0x0;
+    m_hdlState.padding[0] = 0x0;
+    m_hdlState.padding[1] = 0x0;
+    m_hdlState.padding[2] = 0x0;
+    */
 
     if (m_controller->IsControllerActive())
+    {
+        syscon::logger::LogInfo("SwitchHDLHandler hiddbgAttachHdlsVirtualDevice ...");
         return hiddbgAttachHdlsVirtualDevice(&m_hdlHandle, &m_deviceInfo);
+    }
 
     return 0;
 }
@@ -84,14 +107,20 @@ Result SwitchHDLHandler::ExitHdlState()
 Result SwitchHDLHandler::UpdateHdlState()
 {
     // Checks if the virtual device was erased, in which case re-attach the device
-    bool isAttached;
+    /*bool isAttached;
+
+    syscon::logger::LogDebug("SwitchHDLHandler UpdateHdlState - hiddbgIsHdlsVirtualDeviceAttached ...");
 
     if (R_SUCCEEDED(hiddbgIsHdlsVirtualDeviceAttached(GetHdlsSessionId(), m_hdlHandle, &isAttached)))
     {
         if (!isAttached)
+        {
+            syscon::logger::LogDebug("SwitchHDLHandler hiddbgAttachHdlsVirtualDevice ...");
             hiddbgAttachHdlsVirtualDevice(&m_hdlHandle, &m_deviceInfo);
+        }
     }
-
+    */
+    syscon::logger::LogDebug("SwitchHDLHandler UpdateHdlState - hiddbgSetHdlsState ...");
     return hiddbgSetHdlsState(m_hdlHandle, &m_hdlState);
 }
 

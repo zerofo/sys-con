@@ -13,8 +13,6 @@ private:
     UsbHsInterface m_interface;
     std::unique_ptr<IUSBEndpoint> m_inEndpoints[15];
     std::unique_ptr<IUSBEndpoint> m_outEndpoints[15];
-    // std::array<std::unique_ptr<IUSBEndpoint>, 15> m_inEndpoints;
-    // std::array<std::unique_ptr<IUSBEndpoint>, 15> m_outEndpoints;
 
 public:
     // Pass the specified interface to allow for opening the session
