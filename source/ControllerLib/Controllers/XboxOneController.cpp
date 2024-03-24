@@ -61,8 +61,8 @@ static constexpr VendorProductPacket init_packets[]{
     {0x24c6, 0x0000, xboxone_rumbleend_init, sizeof(xboxone_rumbleend_init)},
 };
 
-XboxOneController::XboxOneController(std::unique_ptr<IUSBDevice> &&interface, std::unique_ptr<ILogger> &&logger)
-    : IController(std::move(interface), std::move(logger))
+XboxOneController::XboxOneController(std::unique_ptr<IUSBDevice> &&device, std::unique_ptr<ILogger> &&logger)
+    : IController(std::move(device), std::move(logger))
 {
 }
 

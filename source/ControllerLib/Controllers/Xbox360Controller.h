@@ -89,7 +89,7 @@ private:
     Xbox360ButtonData m_buttonData{};
 
 public:
-    Xbox360Controller(std::unique_ptr<IUSBDevice> &&interface, std::unique_ptr<ILogger> &&logger);
+    Xbox360Controller(std::unique_ptr<IUSBDevice> &&device, std::unique_ptr<ILogger> &&logger);
     virtual ~Xbox360Controller() override;
 
     virtual Result Initialize() override;

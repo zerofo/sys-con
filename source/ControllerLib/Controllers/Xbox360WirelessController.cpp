@@ -7,8 +7,8 @@ static constexpr uint8_t poweroffPacket[]{0x00, 0x00, 0x08, 0xC0, 0x00, 0x00, 0x
 static constexpr uint8_t initDriverPacket[]{0x00, 0x00, 0x02, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
 static constexpr uint8_t ledPacketOn[]{0x00, 0x00, 0x08, 0x40 | XBOX360LED_TOPLEFT, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
 
-Xbox360WirelessController::Xbox360WirelessController(std::unique_ptr<IUSBDevice> &&interface, std::unique_ptr<ILogger> &&logger)
-    : IController(std::move(interface), std::move(logger))
+Xbox360WirelessController::Xbox360WirelessController(std::unique_ptr<IUSBDevice> &&device, std::unique_ptr<ILogger> &&logger)
+    : IController(std::move(device), std::move(logger))
 {
 }
 

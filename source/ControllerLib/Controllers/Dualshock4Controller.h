@@ -147,7 +147,7 @@ private:
     Dualshock4USBButtonData m_buttonData{};
 
 public:
-    Dualshock4Controller(std::unique_ptr<IUSBDevice> &&interface, std::unique_ptr<ILogger> &&logger);
+    Dualshock4Controller(std::unique_ptr<IUSBDevice> &&device, std::unique_ptr<ILogger> &&logger);
     virtual ~Dualshock4Controller() override;
 
     virtual Result Initialize() override;

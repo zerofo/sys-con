@@ -67,47 +67,37 @@ void SwitchUSBInterface::Close()
 
 Result SwitchUSBInterface::ControlTransfer(u8 bmRequestType, u8 bmRequest, u16 wValue, u16 wIndex, u16 wLength, void *buffer)
 {
-    ::syscon::logger::LogDebug("SwitchUSBInterface ControlTransfer1 %x-%x...", m_interface.device_desc.idVendor, m_interface.device_desc.idProduct);
-
-    void *temp_buffer = memalign(0x1000, wLength);
-    if (temp_buffer == nullptr)
-        return -1;
+    ::syscon::logger::LogDebug("SwitchUSBInterface ControlTransfer %x-%x...", m_interface.device_desc.idVendor, m_interface.device_desc.idProduct);
 
     u32 transferredSize;
 
-    memcpy(temp_buffer, buffer, wLength);
+    memcpy(m_usb_buffer, buffer, wLength);
 
-    Result rc = usbHsIfCtrlXfer(&m_session, bmRequestType, bmRequest, wValue, wIndex, wLength, temp_buffer, &transferredSize);
+    Result rc = usbHsIfCtrlXfer(&m_session, bmRequestType, bmRequest, wValue, wIndex, wLength, m_usb_buffer, &transferredSize);
 
     if (R_SUCCEEDED(rc))
     {
-        memcpy(buffer, temp_buffer, transferredSize);
+        memcpy(buffer, m_usb_buffer, transferredSize);
     }
-    free(temp_buffer);
+
     return rc;
 }
 
 Result SwitchUSBInterface::ControlTransfer(u8 bmRequestType, u8 bmRequest, u16 wValue, u16 wIndex, u16 wLength, const void *buffer)
 {
-    ::syscon::logger::LogDebug("SwitchUSBInterface ControlTransfer2 %x-%x...", m_interface.device_desc.idVendor, m_interface.device_desc.idProduct);
-
-    void *temp_buffer = memalign(0x1000, wLength);
-    if (temp_buffer == nullptr)
-        return -1;
+    ::syscon::logger::LogDebug("SwitchUSBInterface ControlTransfer %x-%x...", m_interface.device_desc.idVendor, m_interface.device_desc.idProduct);
 
     u32 transferredSize;
 
-    memcpy(temp_buffer, buffer, wLength);
+    memcpy(m_usb_buffer, buffer, wLength);
 
-    Result rc = usbHsIfCtrlXfer(&m_session, bmRequestType, bmRequest, wValue, wIndex, wLength, temp_buffer, &transferredSize);
-    free(temp_buffer);
+    Result rc = usbHsIfCtrlXfer(&m_session, bmRequestType, bmRequest, wValue, wIndex, wLength, m_usb_buffer, &transferredSize);
+
     return rc;
 }
 
 IUSBEndpoint *SwitchUSBInterface::GetEndpoint(IUSBEndpoint::Direction direction, uint8_t index)
 {
-    ::syscon::logger::LogDebug("SwitchUSBInterface GetEndpoint %x-%x...", m_interface.device_desc.idVendor, m_interface.device_desc.idProduct);
-
     if (direction == IUSBEndpoint::USB_ENDPOINT_IN)
         return m_inEndpoints[index].get();
     else

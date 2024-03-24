@@ -27,7 +27,7 @@ protected:
     }
 
 public:
-    IController(std::unique_ptr<IUSBDevice> &&interface, std::unique_ptr<ILogger> &&logger) : m_device(std::move(interface)), m_logger(std::move(logger))
+    IController(std::unique_ptr<IUSBDevice> &&device, std::unique_ptr<ILogger> &&logger) : m_device(std::move(device)), m_logger(std::move(logger))
     {
     }
     virtual ~IController() = default;

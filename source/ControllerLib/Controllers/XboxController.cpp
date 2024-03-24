@@ -3,8 +3,8 @@
 
 static ControllerConfig _xboxControllerConfig{};
 
-XboxController::XboxController(std::unique_ptr<IUSBDevice> &&interface, std::unique_ptr<ILogger> &&logger)
-    : IController(std::move(interface), std::move(logger))
+XboxController::XboxController(std::unique_ptr<IUSBDevice> &&device, std::unique_ptr<ILogger> &&logger)
+    : IController(std::move(device), std::move(logger))
 {
 }
 

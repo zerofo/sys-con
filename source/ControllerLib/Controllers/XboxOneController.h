@@ -82,7 +82,7 @@ private:
     bool m_GuidePressed{false};
 
 public:
-    XboxOneController(std::unique_ptr<IUSBDevice> &&interface, std::unique_ptr<ILogger> &&logger);
+    XboxOneController(std::unique_ptr<IUSBDevice> &&device, std::unique_ptr<ILogger> &&logger);
     virtual ~XboxOneController() override;
 
     virtual Result Initialize() override;

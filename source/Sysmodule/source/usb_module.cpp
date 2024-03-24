@@ -45,6 +45,7 @@ namespace syscon::usb
 
         s32 QueryInterfaces(u8 iclass, u8 isubclass, u8 iprotocol);
         s32 QueryVendorProduct(uint16_t vendor_id, uint16_t product_id);
+        s32 QueryHIDInterfaces();
 
         void UsbEventThreadFunc(void *arg)
         {
@@ -58,31 +59,39 @@ namespace syscon::usb
                     std::scoped_lock usbLock(usbMutex);
                     if (!controllers::IsAtControllerLimit())
                     {
-                        s32 total_entries;
+
+                        s32 total_entries = 0;
+
                         if ((total_entries = QueryInterfaces(USB_CLASS_VENDOR_SPEC, 0x5D, 0x01)) != 0)
                         {
                             syscon::logger::LogInfo("Initializing Xbox 360 controller (Interface count: %d) ...", total_entries);
                             controllers::Insert(std::make_unique<Xbox360Controller>(std::make_unique<SwitchUSBDevice>(interfaces, total_entries), std::make_unique<syscon::logger::Logger>()));
                         }
-
-                        if ((total_entries = QueryInterfaces(USB_CLASS_VENDOR_SPEC, 0x5D, 0x81)) != 0)
+                        else if ((total_entries = QueryInterfaces(USB_CLASS_VENDOR_SPEC, 0x5D, 0x81)) != 0)
                         {
                             syscon::logger::LogInfo("Initializing Xbox 360 wireless controller (Interface count: %d)...", total_entries);
 
                             for (int i = 0; i < total_entries; i++)
                                 controllers::Insert(std::make_unique<Xbox360WirelessController>(std::make_unique<SwitchUSBDevice>(interfaces + i, 1), std::make_unique<syscon::logger::Logger>()));
                         }
-
-                        if ((total_entries = QueryInterfaces(0x58, 0x42, 0x00)) != 0)
+                        else if ((total_entries = QueryInterfaces(0x58, 0x42, 0x00)) != 0)
                         {
                             syscon::logger::LogInfo("Initializing Xbox Original controller (Interface count: %d) ...", total_entries);
                             controllers::Insert(std::make_unique<XboxController>(std::make_unique<SwitchUSBDevice>(interfaces, total_entries), std::make_unique<syscon::logger::Logger>()));
                         }
-
-                        if ((total_entries = QueryInterfaces(USB_CLASS_VENDOR_SPEC, 0x47, 0xD0)) != 0)
+                        else if ((total_entries = QueryInterfaces(USB_CLASS_VENDOR_SPEC, 0x47, 0xD0)) != 0)
                         {
                             syscon::logger::LogInfo("Initializing Xbox One controller (Interface count: %d) ...", total_entries);
                             controllers::Insert(std::make_unique<XboxOneController>(std::make_unique<SwitchUSBDevice>(interfaces, total_entries), std::make_unique<syscon::logger::Logger>()));
+                        }
+                        else if ((total_entries = QueryHIDInterfaces()) != 0)
+                        {
+                            syscon::logger::LogInfo("Initializing Generic controller (Interface count: %d) ...", total_entries);
+                            controllers::Insert(std::make_unique<GenericHIDController>(std::make_unique<SwitchUSBDevice>(interfaces, total_entries), std::make_unique<syscon::logger::Logger>()));
+                        }
+                        else
+                        {
+                            syscon::logger::LogDebug("USB device detected is not a controller !");
                         }
                     }
                 }
@@ -188,6 +197,18 @@ namespace syscon::usb
             s32 out_entries = 0;
             memset(interfaces, 0, sizeof(interfaces));
             usbHsQueryAvailableInterfaces(&filter, interfaces, sizeof(interfaces), &out_entries);
+            return out_entries;
+        }
+
+        s32 QueryHIDInterfaces()
+        {
+            UsbHsInterfaceFilter filter{
+                .Flags = UsbHsInterfaceFilterFlags_bInterfaceClass,
+                .bInterfaceClass = USB_CLASS_HID};
+
+            s32 out_entries = 0;
+            memset(interfaces, 0, sizeof(interfaces));
+            usbHsQueryAllInterfaces(&filter, interfaces, sizeof(interfaces), &out_entries);
             return out_entries;
         }
 

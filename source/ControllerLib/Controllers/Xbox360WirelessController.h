@@ -3,8 +3,8 @@
 #include "IController.h"
 #include "Xbox360Controller.h"
 
-//References used:
-//https://github.com/torvalds/linux/blob/master/drivers/input/joystick/xpad.c
+// References used:
+// https://github.com/torvalds/linux/blob/master/drivers/input/joystick/xpad.c
 
 struct OutputPacket
 {
@@ -25,7 +25,7 @@ private:
     std::vector<OutputPacket> m_outputBuffer;
 
 public:
-    Xbox360WirelessController(std::unique_ptr<IUSBDevice> &&interface, std::unique_ptr<ILogger> &&logger);
+    Xbox360WirelessController(std::unique_ptr<IUSBDevice> &&device, std::unique_ptr<ILogger> &&logger);
     virtual ~Xbox360WirelessController() override;
 
     virtual Result Initialize() override;
