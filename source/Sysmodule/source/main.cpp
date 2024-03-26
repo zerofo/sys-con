@@ -117,6 +117,8 @@ namespace ams
         ::syscon::usb::Initialize();
         ::syscon::psc::Initialize();
 
+        ::syscon::logger::SetLogLevel(::syscon::config::globalConfig.log_level);
+        ::syscon::controllers::SetPollingFrequency(::syscon::config::globalConfig.polling_frequency_ms);
         while (true)
         {
             svcSleepThread(1e+8L);

@@ -116,8 +116,9 @@ void Dualshock4Controller::CloseInterfaces()
 Result Dualshock4Controller::GetInput()
 {
     uint8_t input_bytes[64];
+    size_t size = sizeof(input_bytes);
 
-    Result rc = m_inPipe->Read(input_bytes, sizeof(input_bytes));
+    Result rc = m_inPipe->Read(input_bytes, &size);
     if (R_FAILED(rc))
         return rc;
 

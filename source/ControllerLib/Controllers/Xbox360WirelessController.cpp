@@ -112,8 +112,9 @@ void Xbox360WirelessController::CloseInterfaces()
 Result Xbox360WirelessController::GetInput()
 {
     uint8_t input_bytes[64];
+    size_t size = sizeof(input_bytes);
 
-    Result rc = m_inPipe->Read(input_bytes, sizeof(input_bytes));
+    Result rc = m_inPipe->Read(input_bytes, &size);
 
     uint8_t type = input_bytes[0];
 

@@ -1,8 +1,9 @@
 #include "SwitchVirtualGamepadHandler.h"
 #include "SwitchLogger.h"
 
-SwitchVirtualGamepadHandler::SwitchVirtualGamepadHandler(std::unique_ptr<IController> &&controller)
-    : m_controller(std::move(controller))
+SwitchVirtualGamepadHandler::SwitchVirtualGamepadHandler(std::unique_ptr<IController> &&controller, int polling_frequency_ms)
+    : m_controller(std::move(controller)),
+      m_polling_frequency_ms(polling_frequency_ms)
 {
 }
 
@@ -22,13 +23,15 @@ void SwitchVirtualGamepadHandler::Exit()
 
 void SwitchVirtualGamepadHandler::InputThreadLoop(void *handler)
 {
+    SwitchVirtualGamepadHandler *gamepadHandler = static_cast<SwitchVirtualGamepadHandler *>(handler);
+
     ::syscon::logger::LogDebug("SwitchVirtualGamepadHandler InputThreadLoop running ...");
 
     do
     {
-        static_cast<SwitchVirtualGamepadHandler *>(handler)->UpdateInput();
-        svcSleepThread(10 * 1000 * 1000); // 10ms
-    } while (static_cast<SwitchVirtualGamepadHandler *>(handler)->m_inputThreadIsRunning);
+        gamepadHandler->UpdateInput();
+        svcSleepThread(gamepadHandler->m_polling_frequency_ms * 1000 * 1000); // 10ms
+    } while (gamepadHandler->m_inputThreadIsRunning);
 
     ::syscon::logger::LogDebug("SwitchVirtualGamepadHandler InputThreadLoop stopped !");
 }

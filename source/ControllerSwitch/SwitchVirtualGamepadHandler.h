@@ -9,6 +9,7 @@ class SwitchVirtualGamepadHandler
 protected:
     HidVibrationDeviceHandle m_vibrationDeviceHandle;
     std::unique_ptr<IController> m_controller;
+    int m_polling_frequency_ms;
 
     alignas(ams::os::ThreadStackAlignment) u8 input_thread_stack[0x1000];
     alignas(ams::os::ThreadStackAlignment) u8 output_thread_stack[0x1000];
@@ -23,7 +24,7 @@ protected:
     static void OutputThreadLoop(void *argument);
 
 public:
-    SwitchVirtualGamepadHandler(std::unique_ptr<IController> &&controller);
+    SwitchVirtualGamepadHandler(std::unique_ptr<IController> &&controller, int polling_frequency_ms);
     virtual ~SwitchVirtualGamepadHandler();
 
     // Override this if you want a custom init procedure

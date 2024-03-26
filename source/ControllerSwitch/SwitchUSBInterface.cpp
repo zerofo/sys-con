@@ -26,6 +26,7 @@ Result SwitchUSBInterface::Open()
         usb_endpoint_descriptor &epdesc = m_session.inf.inf.input_endpoint_descs[i];
         if (epdesc.bLength != 0)
         {
+            ::syscon::logger::LogDebug("SwitchUSBInterface: Input endpoint found 0x%x (Idx: %d)", epdesc.bEndpointAddress, i);
             m_inEndpoints[i] = std::make_unique<SwitchUSBEndpoint>(m_session, epdesc);
         }
         else
@@ -39,6 +40,7 @@ Result SwitchUSBInterface::Open()
         usb_endpoint_descriptor &epdesc = m_session.inf.inf.output_endpoint_descs[i];
         if (epdesc.bLength != 0)
         {
+            ::syscon::logger::LogDebug("SwitchUSBInterface: Output endpoint found %x (Idx: %d)", epdesc.bEndpointAddress, i);
             m_outEndpoints[i] = std::make_unique<SwitchUSBEndpoint>(m_session, epdesc);
         }
         else

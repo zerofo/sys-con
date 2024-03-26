@@ -13,7 +13,7 @@ private:
 
 public:
     // Initialize the class with specified controller
-    SwitchAbstractedPadHandler(std::unique_ptr<IController> &&controller);
+    SwitchAbstractedPadHandler(std::unique_ptr<IController> &&controller, int polling_frequency_ms);
     ~SwitchAbstractedPadHandler();
 
     // Initialize controller handler, AbstractedPadState

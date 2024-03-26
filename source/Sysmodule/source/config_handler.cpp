@@ -84,93 +84,81 @@ namespace syscon::config
             return color;
         }
 
-        int ParseConfigLine(void *dummy, const char *section, const char *name, const char *value)
+        int ParseGlobalConfigLine(void *dummy, const char *section, const char *name, const char *value)
         {
             (void)(dummy);
-            (void)(section);
-            if (strncmp(name, "KEY_", 4) == 0)
-            {
-                ControllerButton button = StringToKey(name + 4);
-                ControllerButton buttonValue = StringToKey(value);
-                if (button >= 2)
-                {
-                    tempConfig.buttons[button - 2] = buttonValue;
-                    return 1;
-                }
-            }
-            else if (strcmp(name, "left_stick_deadzone") == 0)
-            {
-                tempConfig.stickDeadzonePercent[0] = atoi(value);
-                return 1;
-            }
-            else if (strcmp(name, "right_stick_deadzone") == 0)
-            {
-                tempConfig.stickDeadzonePercent[1] = atoi(value);
-                return 1;
-            }
-            else if (strcmp(name, "left_stick_rotation") == 0)
-            {
-                tempConfig.stickRotationDegrees[0] = atoi(value);
-                return 1;
-            }
-            else if (strcmp(name, "right_stick_rotation") == 0)
-            {
-                tempConfig.stickRotationDegrees[1] = atoi(value);
-                return 1;
-            }
-            else if (strcmp(name, "left_trigger_deadzone") == 0)
-            {
-                tempConfig.triggerDeadzonePercent[0] = atoi(value);
-                return 1;
-            }
-            else if (strcmp(name, "right_trigger_deadzone") == 0)
-            {
-                tempConfig.triggerDeadzonePercent[1] = atoi(value);
-                return 1;
-            }
-            else if (strcmp(name, "swap_dpad_and_lstick") == 0)
-            {
-                tempConfig.swapDPADandLSTICK = (strcmp(value, "true") ? false : true);
-                return 1;
-            }
-            else if (strcmp(name, "firmware_path") == 0)
-            {
-                strcpy(firmwarePath, value);
-                return 1;
-            }
-            else if (strncmp(name, "color_", 6) == 0)
-            {
-                if (strcmp(name + 6, "body") == 0)
-                {
-                    tempConfig.bodyColor = DecodeColorValue(value);
-                    return 1;
-                }
-                else if (strcmp(name + 6, "buttons") == 0)
-                {
-                    tempConfig.buttonsColor = DecodeColorValue(value);
-                    return 1;
-                }
-                else if (strcmp(name + 6, "leftGrip") == 0)
-                {
-                    tempConfig.leftGripColor = DecodeColorValue(value);
-                    return 1;
-                }
-                else if (strcmp(name + 6, "rightGrip") == 0)
-                {
-                    tempConfig.rightGripColor = DecodeColorValue(value);
-                    return 1;
-                }
-                else if (strcmp(name + 6, "led") == 0)
-                {
-                    tempColor = DecodeColorValue(value);
-                    return 1;
-                }
-            }
 
-            return 0;
+            if (strcmp(section, "global") == 0)
+            {
+                if (strcmp(name, "polling_frequency_ms") == 0)
+                    tempGlobalConfig.polling_frequency_ms = atoi(value);
+                else if (strcmp(name, "log_level") == 0)
+                    tempGlobalConfig.log_level = atoi(value);
+                else
+                    return 0;
+            }
+            else
+                return 0;
+
+            return 1;
         }
 
-        Result ReadFromConfig(const char *path)
+        int ParseControllerConfigLine(void *dummy, const char *section, const char *name, const char *value)
+        {
+            (void)(dummy);
+
+            if (strcmp(section, "controller") == 0)
+            {
+                if (strncmp(name, "KEY_", 4) == 0)
+                {
+                    ControllerButton button = StringToKey(name + 4);
+                    ControllerButton buttonValue = StringToKey(value);
+                    if (button >= 2)
+                    {
+                        tempConfig.buttons[button - 2] = buttonValue;
+                        return 1;
+                    }
+                    else
+                    {
+                        syscon::logger::LogError("Invalid button name: %s", name);
+                        return 0;
+                    }
+                }
+                else if (strcmp(name, "left_stick_deadzone") == 0)
+                    tempConfig.stickDeadzonePercent[0] = atoi(value);
+                else if (strcmp(name, "right_stick_deadzone") == 0)
+                    tempConfig.stickDeadzonePercent[1] = atoi(value);
+                else if (strcmp(name, "left_stick_rotation") == 0)
+                    tempConfig.stickRotationDegrees[0] = atoi(value);
+                else if (strcmp(name, "right_stick_rotation") == 0)
+                    tempConfig.stickRotationDegrees[1] = atoi(value);
+                else if (strcmp(name, "left_trigger_deadzone") == 0)
+                    tempConfig.triggerDeadzonePercent[0] = atoi(value);
+                else if (strcmp(name, "right_trigger_deadzone") == 0)
+                    tempConfig.triggerDeadzonePercent[1] = atoi(value);
+                else if (strcmp(name, "swap_dpad_and_lstick") == 0)
+                    tempConfig.swapDPADandLSTICK = (strcmp(value, "true") ? false : true);
+                else if (strcmp(name, "firmware_path") == 0)
+                    strcpy(firmwarePath, value);
+                else if (strcmp(name, "color_body") == 0)
+                    tempConfig.bodyColor = DecodeColorValue(value);
+                else if (strcmp(name, "color_buttons") == 0)
+                    tempConfig.buttonsColor = DecodeColorValue(value);
+                else if (strcmp(name, "color_leftGrip") == 0)
+                    tempConfig.leftGripColor = DecodeColorValue(value);
+                else if (strcmp(name, "color_rightGrip") == 0)
+                    tempConfig.rightGripColor = DecodeColorValue(value);
+                else if (strcmp(name, "color_led") == 0)
+                    tempColor = DecodeColorValue(value);
+                else
+                    return 0;
+            }
+            else
+                return 0;
+            return 1;
+        }
+
+        Result ReadFromConfig(const char *path, ams::util::ini::Handler h)
         {
             tempConfig = ControllerConfig{};
 
@@ -185,7 +173,7 @@ namespace syscon::config
             ON_SCOPE_EXIT { ams::fs::CloseFile(file); };
 
             /* Parse the config. */
-            return ams::util::ini::ParseFile(file, nullptr, ParseConfigLine);
+            return ams::util::ini::ParseFile(file, nullptr, h);
         }
 
         void ConfigChangedCheckThreadFunc(void *arg)
@@ -213,26 +201,26 @@ namespace syscon::config
 
     void LoadAllConfigs()
     {
-        if (R_SUCCEEDED(ReadFromConfig(GLOBALCONFIG)))
+        if (R_SUCCEEDED(ReadFromConfig(GLOBALCONFIG, ParseGlobalConfigLine)))
         {
             LoadGlobalConfig(tempGlobalConfig);
         }
         else
             syscon::logger::LogError("Failed to read from global config (%s)!", GLOBALCONFIG);
 
-        if (R_SUCCEEDED(ReadFromConfig(XBOXCONFIG)))
+        if (R_SUCCEEDED(ReadFromConfig(XBOXCONFIG, ParseControllerConfigLine)))
         {
             XboxController::LoadConfig(&tempConfig);
         }
         else
             syscon::logger::LogError("Failed to read from xbox orig config (%s)!", XBOXCONFIG);
 
-        if (R_SUCCEEDED(ReadFromConfig(XBOXONECONFIG)))
+        if (R_SUCCEEDED(ReadFromConfig(XBOXONECONFIG, ParseControllerConfigLine)))
             XboxOneController::LoadConfig(&tempConfig);
         else
             syscon::logger::LogError("Failed to read from xbox one config (%s)!", XBOXONECONFIG);
 
-        if (R_SUCCEEDED(ReadFromConfig(XBOX360CONFIG)))
+        if (R_SUCCEEDED(ReadFromConfig(XBOX360CONFIG, ParseControllerConfigLine)))
         {
             Xbox360Controller::LoadConfig(&tempConfig);
             Xbox360WirelessController::LoadConfig(&tempConfig);
@@ -240,15 +228,20 @@ namespace syscon::config
         else
             syscon::logger::LogError("Failed to read from xbox 360 config (%s)!", XBOX360CONFIG);
 
-        if (R_SUCCEEDED(ReadFromConfig(DUALSHOCK3CONFIG)))
+        if (R_SUCCEEDED(ReadFromConfig(DUALSHOCK3CONFIG, ParseControllerConfigLine)))
             Dualshock3Controller::LoadConfig(&tempConfig);
         else
             syscon::logger::LogError("Failed to read from dualshock 3 config (%s)!", DUALSHOCK3CONFIG);
 
-        if (R_SUCCEEDED(ReadFromConfig(DUALSHOCK4CONFIG)))
+        if (R_SUCCEEDED(ReadFromConfig(DUALSHOCK4CONFIG, ParseControllerConfigLine)))
             Dualshock4Controller::LoadConfig(&tempConfig, tempColor);
         else
             syscon::logger::LogError("Failed to read from dualshock 4 config (%s)!", DUALSHOCK4CONFIG);
+
+        if (R_SUCCEEDED(ReadFromConfig(GENERICCONFIG, ParseControllerConfigLine)))
+            GenericHIDController::LoadConfig(&tempConfig);
+        else
+            syscon::logger::LogError("Failed to read from generic config (%s)!", GENERICCONFIG);
     }
 
     bool CheckForFileChanges()

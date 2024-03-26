@@ -9,34 +9,33 @@ struct GenericHIDButtonData
 {
     // byte0
     uint8_t type;
+
     // byte1
-    uint8_t pad0;
+    uint8_t dpad_left_right; // right = 0xFF left = 0x00 None = 0x80
 
     // byte2
-    bool back : 1;
-    bool stick_left_click : 1;
-    bool stick_right_click : 1;
-    bool start : 1;
-
-    bool dpad_up : 1;
-    bool dpad_right : 1;
-    bool dpad_down : 1;
-    bool dpad_left : 1;
+    uint8_t dpad_up_down; // up = 0x00 down = 0xFF None = 0x80
 
     // byte3
-    bool trigger_left : 1;
-    bool trigger_right : 1;
-    bool bumper_left : 1;
-    bool bumper_right : 1;
-
-    bool triangle : 1;
-    bool circle : 1;
-    bool cross : 1;
-    bool square : 1;
+    bool button8 : 1;
+    bool button7 : 1;
+    bool button6 : 1;
+    bool button5 : 1;
+    bool button4 : 1;
+    bool button3 : 1;
+    bool button2 : 1;
+    bool button1 : 1;
 
     // byte4
     bool guide : 1;
-    uint8_t pad1 : 7;
+    bool button15 : 1;
+    bool button14 : 1;
+    bool button13 : 1;
+    bool button12 : 1;
+    bool button11 : 1;
+    bool button10 : 1;
+    bool button9 : 1;
+
     // byte5
     uint8_t pad2;
 
@@ -60,24 +59,24 @@ struct GenericHIDButtonData
     // byte18-19
     uint8_t trigger_left_pressure;
     uint8_t trigger_right_pressure;
+    /*
+                // byte20-21
+                uint8_t bumper_left_pressure;
+                uint8_t bumper_right_pressure;
 
-    // byte20-21
-    uint8_t bumper_left_pressure;
-    uint8_t bumper_right_pressure;
+                // byte22-25
+                uint8_t triangle_pressure;
+                uint8_t circle_pressure;
+                uint8_t cross_pressure;
+                uint8_t square_pressure;
 
-    // byte22-25
-    uint8_t triangle_pressure;
-    uint8_t circle_pressure;
-    uint8_t cross_pressure;
-    uint8_t square_pressure;
+                uint8_t pad4[15];
 
-    uint8_t pad4[15];
-
-    // byte41-48
-    uint16_t accelerometer_x;
-    uint16_t accelerometer_y;
-    uint16_t accelerometer_z;
-    uint16_t gyroscope;
+                // byte41-48
+                uint16_t accelerometer_x;
+                uint16_t accelerometer_y;
+                uint16_t accelerometer_z;
+                uint16_t gyroscope;*/
 } __attribute__((packed));
 
 class GenericHIDController : public IController

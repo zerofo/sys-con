@@ -5,8 +5,8 @@
 
 static HiddbgHdlsSessionId g_hdlsSessionId;
 
-SwitchHDLHandler::SwitchHDLHandler(std::unique_ptr<IController> &&controller)
-    : SwitchVirtualGamepadHandler(std::move(controller))
+SwitchHDLHandler::SwitchHDLHandler(std::unique_ptr<IController> &&controller, int polling_frequency_ms)
+    : SwitchVirtualGamepadHandler(std::move(controller), polling_frequency_ms)
 {
 }
 
@@ -120,7 +120,7 @@ Result SwitchHDLHandler::UpdateHdlState()
         }
     }
     */
-    syscon::logger::LogDebug("SwitchHDLHandler UpdateHdlState - hiddbgSetHdlsState ...");
+    // syscon::logger::LogDebug("SwitchHDLHandler UpdateHdlState - hiddbgSetHdlsState ...");
     return hiddbgSetHdlsState(m_hdlHandle, &m_hdlState);
 }
 

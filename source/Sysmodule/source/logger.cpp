@@ -11,6 +11,7 @@ namespace syscon::logger
     static ams::os::Mutex printMutex(false);
     char logBuffer[1024];
     char logPath[255];
+    int logLevel = LOG_LEVEL_INFO;
 
     ams::Result Initialize(const char *log)
     {
@@ -18,11 +19,6 @@ namespace syscon::logger
         s64 fileOffset = 0;
 
         snprintf(logPath, sizeof(logPath), "sdmc://%s", log);
-
-        /* Create the log file if it doesn't exist. */
-        // ams::fs::CreateDirectory(CONFIG_PATH);
-
-        ams::fs::CreateFile(logPath, 0);
 
         {
             ams::fs::FileHandle file;
@@ -32,18 +28,29 @@ namespace syscon::logger
         }
 
         if (fileOffset >= (128 * 1024))
-        {
             ams::fs::DeleteFile(logPath);
-            syscon::logger::LogWarning("Deleted previous log file");
-        }
+
+        /* Create the log file if it doesn't exist. */
+        // ams::fs::CreateDirectory(CONFIG_PATH);
+
+        ams::fs::CreateFile(logPath, 0);
 
         R_SUCCEED();
     }
 
-    ams::Result Log(char lvl, const char *fmt, ::std::va_list vl)
+    void SetLogLevel(int level)
     {
+        logLevel = level;
+    }
+
+    ams::Result Log(int lvl, const char *fmt, ::std::va_list vl)
+    {
+        char logLevelStr[LOG_LEVEL_COUNT] = {'D', 'I', 'W', 'E'};
         s64 fileOffset;
         ams::fs::FileHandle file;
+
+        if (lvl < logLevel)
+            return 0; // Don't log if the level is lower than the current log level.
 
         std::scoped_lock printLock(printMutex);
 
@@ -52,7 +59,7 @@ namespace syscon::logger
         memset(logBuffer, 0, sizeof(logBuffer));
 
         /* Format log */
-        ams::util::SNPrintf(logBuffer, sizeof(logBuffer), "|%c|%02li:%02li:%02li| ", lvl, ts.GetHours() % 24, ts.GetMinutes() % 60, ts.GetSeconds() % 60);
+        ams::util::SNPrintf(logBuffer, sizeof(logBuffer), "|%c|%02li:%02li:%02li| ", logLevelStr[lvl], ts.GetHours() % 24, ts.GetMinutes() % 60, ts.GetSeconds() % 60);
         ams::util::VSNPrintf(&logBuffer[strlen(logBuffer)], ams::util::size(logBuffer) - strlen(logBuffer) - 1, fmt, vl); //-1 to leave space for the \n
         logBuffer[strlen(logBuffer)] = '\n';
         logBuffer[strlen(logBuffer) + 1] = '\0';
@@ -70,7 +77,7 @@ namespace syscon::logger
     {
         ::std::va_list vl;
         va_start(vl, fmt);
-        Log('D', fmt, vl);
+        Log(LOG_LEVEL_DEBUG, fmt, vl);
         va_end(vl);
     }
 
@@ -78,7 +85,7 @@ namespace syscon::logger
     {
         ::std::va_list vl;
         va_start(vl, fmt);
-        Log('I', fmt, vl);
+        Log(LOG_LEVEL_INFO, fmt, vl);
         va_end(vl);
     }
 
@@ -86,7 +93,7 @@ namespace syscon::logger
     {
         ::std::va_list vl;
         va_start(vl, fmt);
-        Log('W', fmt, vl);
+        Log(LOG_LEVEL_WARNING, fmt, vl);
         va_end(vl);
     }
 
@@ -94,7 +101,7 @@ namespace syscon::logger
     {
         ::std::va_list vl;
         va_start(vl, fmt);
-        Log('E', fmt, vl);
+        Log(LOG_LEVEL_ERROR, fmt, vl);
         va_end(vl);
     }
 
@@ -107,16 +114,16 @@ namespace syscon::logger
         switch (lvl)
         {
             case LogLevelDebug:
-                Log('D', format, vl);
+                Log(LOG_LEVEL_DEBUG, format, vl);
                 break;
             case LogLevelInfo:
-                Log('I', format, vl);
+                Log(LOG_LEVEL_INFO, format, vl);
                 break;
             case LogLevelWarning:
-                Log('W', format, vl);
+                Log(LOG_LEVEL_WARNING, format, vl);
                 break;
             case LogLevelError:
-                Log('E', format, vl);
+                Log(LOG_LEVEL_ERROR, format, vl);
                 break;
         }
     }

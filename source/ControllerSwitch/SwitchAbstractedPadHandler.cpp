@@ -4,8 +4,8 @@
 #include <cmath>
 #include <array>
 
-SwitchAbstractedPadHandler::SwitchAbstractedPadHandler(std::unique_ptr<IController> &&controller)
-    : SwitchVirtualGamepadHandler(std::move(controller))
+SwitchAbstractedPadHandler::SwitchAbstractedPadHandler(std::unique_ptr<IController> &&controller, int polling_frequency_ms)
+    : SwitchVirtualGamepadHandler(std::move(controller), polling_frequency_ms)
 {
 }
 

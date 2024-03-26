@@ -15,6 +15,7 @@ namespace syscon::controllers
         std::vector<std::unique_ptr<SwitchVirtualGamepadHandler>> controllerHandlers;
         bool UseAbstractedPad;
         ams::os::Mutex controllerMutex(false);
+        int polling_frequency_ms = 0;
     } // namespace
 
     bool IsAtControllerLimit()
@@ -27,12 +28,12 @@ namespace syscon::controllers
         std::unique_ptr<SwitchVirtualGamepadHandler> switchHandler;
         if (UseAbstractedPad)
         {
-            switchHandler = std::make_unique<SwitchAbstractedPadHandler>(std::move(controllerPtr));
+            switchHandler = std::make_unique<SwitchAbstractedPadHandler>(std::move(controllerPtr), polling_frequency_ms);
             syscon::logger::LogInfo("Inserting controller as abstracted pad");
         }
         else
         {
-            switchHandler = std::make_unique<SwitchHDLHandler>(std::move(controllerPtr));
+            switchHandler = std::make_unique<SwitchHDLHandler>(std::move(controllerPtr), polling_frequency_ms);
             syscon::logger::LogInfo("Inserting controller as HDLs");
         }
 
@@ -44,7 +45,7 @@ namespace syscon::controllers
         }
         else
         {
-            syscon::logger::LogError("Failed to initialize controller: Error: 0x%X", rc.GetValue());
+            syscon::logger::LogError("Failed to initialize controller: Error: 0x%X (Module: 0x%X, Desc: 0x%X)", rc.GetValue(), R_MODULE(rc.GetValue()), R_DESCRIPTION(rc.GetValue()));
         }
 
         return rc;
@@ -65,6 +66,12 @@ namespace syscon::controllers
         std::remove_if(controllerHandlers.begin(), controllerHandlers.end(), func);
     }
     */
+
+    void SetPollingFrequency(int _polling_frequency_ms)
+    {
+        std::scoped_lock scoped_lock(controllerMutex);
+        polling_frequency_ms = _polling_frequency_ms;
+    }
 
     void Initialize()
     {
