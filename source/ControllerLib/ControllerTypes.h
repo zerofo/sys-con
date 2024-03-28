@@ -1,16 +1,5 @@
 #pragma once
 
-enum ControllerType : uint8_t
-{
-    CONTROLLER_UNDEFINED,
-    CONTROLLER_XBOX360,
-    CONTROLLER_XBOX360W,
-    CONTROLLER_XBOXONE,
-    CONTROLLER_XBOXONEW,
-    CONTROLLER_DUALSHOCK3,
-    CONTROLLER_DUALSHOCK4,
-};
-
 enum VendorIDs : uint16_t
 {
     VENDOR_MICROSOFT = 0x45e,
@@ -31,7 +20,7 @@ enum ProductIDs : uint16_t
     PRODUCT_DUALSHOCK4_2X = 0x9cc,
 };
 
-enum ControllerSupport : uint8_t
+enum ControllerFeature : uint8_t
 {
     SUPPORTS_RUMBLE,
     SUPPORTS_BLUETOOTH,

@@ -188,6 +188,19 @@ Result XboxOneController::GetInput()
     return rc;
 }
 
+bool XboxOneController::Support(ControllerFeature feature)
+{
+    switch (feature)
+    {
+        case SUPPORTS_RUMBLE:
+            return true;
+        case SUPPORTS_BLUETOOTH:
+            return true;
+        default:
+            return false;
+    }
+}
+
 Result XboxOneController::SendInitBytes()
 {
     Result rc;

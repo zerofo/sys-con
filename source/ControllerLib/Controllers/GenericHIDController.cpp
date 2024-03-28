@@ -139,6 +139,15 @@ Result GenericHIDController::GetInput()
     return rc;
 }
 
+bool GenericHIDController::Support(ControllerFeature feature)
+{
+    switch (feature)
+    {
+        default:
+            return false;
+    }
+}
+
 float GenericHIDController::NormalizeTrigger(uint8_t deadzonePercent, uint8_t value)
 {
     uint8_t deadzone = (UINT8_MAX * deadzonePercent) / 100;

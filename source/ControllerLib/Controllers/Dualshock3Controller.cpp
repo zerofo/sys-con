@@ -124,6 +124,23 @@ Result Dualshock3Controller::GetInput()
     return rc;
 }
 
+bool Dualshock3Controller::Support(ControllerFeature feature)
+{
+    switch (feature)
+    {
+        case SUPPORTS_RUMBLE:
+            return true;
+        case SUPPORTS_BLUETOOTH:
+            return true;
+        case SUPPORTS_PRESSUREBUTTONS:
+            return true;
+        case SUPPORTS_SIXAXIS:
+            return true;
+        default:
+            return false;
+    }
+};
+
 float Dualshock3Controller::NormalizeTrigger(uint8_t deadzonePercent, uint8_t value)
 {
     uint8_t deadzone = (UINT8_MAX * deadzonePercent) / 100;

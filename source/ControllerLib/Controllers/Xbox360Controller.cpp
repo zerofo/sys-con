@@ -126,6 +126,13 @@ Result Xbox360Controller::GetInput()
     return rc;
 }
 
+bool Xbox360Controller::Support(ControllerFeature feature)
+{
+    if (feature == SUPPORTS_RUMBLE)
+        return true;
+    return false;
+}
+
 Result Xbox360Controller::SendInitBytes()
 {
     uint8_t init_bytes[]{

@@ -142,7 +142,7 @@ public:
 
     virtual NormalizedButtonData GetNormalizedButtonData() override;
 
-    virtual ControllerType GetType() override { return CONTROLLER_DUALSHOCK3; }
+    virtual bool Support(ControllerFeature feature) override;
 
     inline const Dualshock3ButtonData &GetButtonData() { return m_buttonData; };
 

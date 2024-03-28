@@ -110,6 +110,13 @@ Result XboxController::GetInput()
     return rc;
 }
 
+bool XboxController::Support(ControllerFeature feature)
+{
+    if (feature == SUPPORTS_RUMBLE)
+        return true;
+    return false;
+}
+
 float XboxController::NormalizeTrigger(uint8_t deadzonePercent, uint8_t value)
 {
     uint8_t deadzone = (UINT8_MAX * deadzonePercent) / 100;

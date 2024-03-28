@@ -1,6 +1,5 @@
 #include "SwitchHDLHandler.h"
 #include "SwitchLogger.h"
-#include "ControllerHelpers.h"
 #include <cmath>
 
 static HiddbgHdlsSessionId g_hdlsSessionId;
@@ -21,12 +20,12 @@ ams::Result SwitchHDLHandler::Initialize()
 
     R_TRY(m_controller->Initialize());
 
-    if (DoesControllerSupport(m_controller->GetType(), SUPPORTS_NOTHING))
+    if (GetController()->Support(SUPPORTS_NOTHING))
         return 0;
 
     R_TRY(InitHdlState());
 
-    if (DoesControllerSupport(m_controller->GetType(), SUPPORTS_PAIRING))
+    if (GetController()->Support(SUPPORTS_PAIRING))
     {
         R_TRY(InitOutputThread());
     }
@@ -40,7 +39,7 @@ ams::Result SwitchHDLHandler::Initialize()
 
 void SwitchHDLHandler::Exit()
 {
-    if (DoesControllerSupport(m_controller->GetType(), SUPPORTS_NOTHING))
+    if (GetController()->Support(SUPPORTS_NOTHING))
     {
         m_controller->Exit();
         return;
@@ -233,7 +232,7 @@ void SwitchHDLHandler::UpdateOutput()
         return;
 
     // Process rumble values if supported
-    if (DoesControllerSupport(m_controller->GetType(), SUPPORTS_RUMBLE))
+    if (GetController()->Support(SUPPORTS_RUMBLE))
     {
         Result rc;
         HidVibrationValue value;

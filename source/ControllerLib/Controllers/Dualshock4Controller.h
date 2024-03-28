@@ -160,7 +160,7 @@ public:
 
     virtual NormalizedButtonData GetNormalizedButtonData() override;
 
-    virtual ControllerType GetType() override { return CONTROLLER_DUALSHOCK4; }
+    virtual bool Support(ControllerFeature feature) override;
 
     float NormalizeTrigger(uint8_t deadzonePercent, uint8_t value);
     void NormalizeAxis(uint8_t x, uint8_t y, uint8_t deadzonePercent, float *x_out, float *y_out);

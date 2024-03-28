@@ -144,6 +144,13 @@ Result Xbox360WirelessController::GetInput()
     return rc;
 }
 
+bool Xbox360WirelessController::Support(ControllerFeature feature)
+{
+    if (feature == SUPPORTS_PAIRING)
+        return true;
+    return false;
+}
+
 float Xbox360WirelessController::NormalizeTrigger(uint8_t deadzonePercent, uint8_t value)
 {
     uint16_t deadzone = (UINT8_MAX * deadzonePercent) / 100;

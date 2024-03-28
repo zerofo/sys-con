@@ -102,7 +102,7 @@ public:
 
     virtual NormalizedButtonData GetNormalizedButtonData() override;
 
-    virtual ControllerType GetType() override { return CONTROLLER_XBOX360; }
+    virtual bool Support(ControllerFeature feature) override;
 
     inline const Xbox360ButtonData &GetButtonData() { return m_buttonData; };
 

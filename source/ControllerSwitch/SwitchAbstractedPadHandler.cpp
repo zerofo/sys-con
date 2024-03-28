@@ -1,6 +1,5 @@
 #include "SwitchAbstractedPadHandler.h"
 #include "SwitchLogger.h"
-#include "ControllerHelpers.h"
 #include <cmath>
 #include <array>
 
@@ -18,12 +17,12 @@ ams::Result SwitchAbstractedPadHandler::Initialize()
 {
     R_TRY(m_controller->Initialize());
 
-    if (DoesControllerSupport(GetController()->GetType(), SUPPORTS_NOTHING))
+    if (GetController()->Support(SUPPORTS_NOTHING))
         return 0;
 
     R_TRY(InitAbstractedPadState());
 
-    if (DoesControllerSupport(m_controller->GetType(), SUPPORTS_PAIRING))
+    if (GetController()->Support(SUPPORTS_PAIRING))
     {
         R_TRY(InitOutputThread());
     }
@@ -35,7 +34,7 @@ ams::Result SwitchAbstractedPadHandler::Initialize()
 
 void SwitchAbstractedPadHandler::Exit()
 {
-    if (DoesControllerSupport(GetController()->GetType(), SUPPORTS_NOTHING))
+    if (GetController()->Support(SUPPORTS_NOTHING))
     {
         m_controller->Exit();
         return;
@@ -187,7 +186,7 @@ void SwitchAbstractedPadHandler::UpdateOutput()
     if (R_SUCCEEDED(m_controller->OutputBuffer()))
         return;
 
-    if (DoesControllerSupport(m_controller->GetType(), SUPPORTS_RUMBLE))
+    if (GetController()->Support(SUPPORTS_RUMBLE))
     {
         Result rc;
         HidVibrationValue value;
