@@ -103,28 +103,9 @@ Result SwitchHDLHandler::ExitHdlState()
 }
 
 // Sets the state of the class's HDL controller to the state stored in class's hdl.state
-Result SwitchHDLHandler::UpdateHdlState()
+Result SwitchHDLHandler::UpdateHdlState(const NormalizedButtonData &data, uint16_t input_idx)
 {
-    // Checks if the virtual device was erased, in which case re-attach the device
-    /*bool isAttached;
-
-    syscon::logger::LogDebug("SwitchHDLHandler UpdateHdlState - hiddbgIsHdlsVirtualDeviceAttached ...");
-
-    if (R_SUCCEEDED(hiddbgIsHdlsVirtualDeviceAttached(GetHdlsSessionId(), m_hdlHandle, &isAttached)))
-    {
-        if (!isAttached)
-        {
-            syscon::logger::LogDebug("SwitchHDLHandler hiddbgAttachHdlsVirtualDevice ...");
-            hiddbgAttachHdlsVirtualDevice(&m_hdlHandle, &m_deviceInfo);
-        }
-    }
-    */
-    // syscon::logger::LogDebug("SwitchHDLHandler UpdateHdlState - hiddbgSetHdlsState ...");
-    return hiddbgSetHdlsState(m_hdlHandle, &m_hdlState);
-}
-
-void SwitchHDLHandler::FillHdlState(const NormalizedButtonData &data)
-{
+    (void)input_idx;
     // we convert the input packet into switch-specific button states
     m_hdlState.buttons = 0;
 
@@ -201,12 +182,33 @@ void SwitchHDLHandler::FillHdlState(const NormalizedButtonData &data)
 
     m_hdlState.buttons |= (data.buttons[16] ? HiddbgNpadButton_Capture : 0);
     m_hdlState.buttons |= (data.buttons[17] ? HiddbgNpadButton_Home : 0);
+
+    // Checks if the virtual device was erased, in which case re-attach the device
+    /*bool isAttached;
+
+    syscon::logger::LogDebug("SwitchHDLHandler UpdateHdlState - hiddbgIsHdlsVirtualDeviceAttached ...");
+
+    if (R_SUCCEEDED(hiddbgIsHdlsVirtualDeviceAttached(GetHdlsSessionId(), m_hdlHandle, &isAttached)))
+    {
+        if (!isAttached)
+        {
+            syscon::logger::LogDebug("SwitchHDLHandler hiddbgAttachHdlsVirtualDevice ...");
+            hiddbgAttachHdlsVirtualDevice(&m_hdlHandle, &m_deviceInfo);
+        }
+    }
+    */
+
+    syscon::logger::LogDebug("SwitchHDLHandler UpdateHdlState - Button: 0x%016X - Idx: %d ...");
+    return hiddbgSetHdlsState(m_hdlHandle, &m_hdlState);
 }
 
 void SwitchHDLHandler::UpdateInput()
 {
+    NormalizedButtonData data = {0};
+    uint16_t input_idx;
+
     // We process any input packets here. If it fails, return and try again
-    Result rc = m_controller->GetInput();
+    Result rc = m_controller->ReadInput(&data, &input_idx);
     if (R_FAILED(rc))
         return;
 
@@ -218,8 +220,7 @@ void SwitchHDLHandler::UpdateInput()
     else
     {
         // We get the button inputs from the input packet and update the state of our controller
-        FillHdlState(m_controller->GetNormalizedButtonData());
-        rc = UpdateHdlState();
+        rc = UpdateHdlState(data, input_idx);
         if (R_FAILED(rc))
             return;
     }
@@ -240,8 +241,6 @@ void SwitchHDLHandler::UpdateOutput()
         if (R_SUCCEEDED(rc))
             m_controller->SetRumble(static_cast<uint8_t>(value.amp_high * 255.0f), static_cast<uint8_t>(value.amp_low * 255.0f));
     }
-
-    svcSleepThread(1e+7L);
 }
 
 HiddbgHdlsSessionId &SwitchHDLHandler::GetHdlsSessionId()

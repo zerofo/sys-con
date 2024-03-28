@@ -38,10 +38,12 @@ void SwitchVirtualGamepadHandler::InputThreadLoop(void *handler)
 
 void SwitchVirtualGamepadHandler::OutputThreadLoop(void *handler)
 {
+    SwitchVirtualGamepadHandler *gamepadHandler = static_cast<SwitchVirtualGamepadHandler *>(handler);
     do
     {
-        static_cast<SwitchVirtualGamepadHandler *>(handler)->UpdateOutput();
-    } while (static_cast<SwitchVirtualGamepadHandler *>(handler)->m_outputThreadIsRunning);
+        gamepadHandler->UpdateOutput();
+        svcSleepThread(gamepadHandler->m_polling_frequency_ms * 1000 * 1000); // 10ms
+    } while (gamepadHandler->m_outputThreadIsRunning);
 }
 
 Result SwitchVirtualGamepadHandler::InitInputThread()

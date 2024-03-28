@@ -84,8 +84,8 @@ class GenericHIDController : public IController
 private:
     IUSBEndpoint *m_inPipe = nullptr;
     IUSBEndpoint *m_outPipe = nullptr;
-
-    GenericHIDButtonData m_buttonData{};
+    bool m_features[SUPPORTS_COUNT];
+    uint16_t m_inputCount = 0;
 
 public:
     GenericHIDController(std::unique_ptr<IUSBDevice> &&device, std::unique_ptr<ILogger> &&logger);
@@ -97,13 +97,11 @@ public:
     Result OpenInterfaces();
     void CloseInterfaces();
 
-    virtual Result GetInput() override;
+    virtual uint16_t GetInputCount() override;
 
-    virtual NormalizedButtonData GetNormalizedButtonData() override;
+    virtual Result ReadInput(NormalizedButtonData *normalData, uint16_t *input_idx) override;
 
     virtual bool Support(ControllerFeature feature) override;
-
-    inline const GenericHIDButtonData &GetButtonData() { return m_buttonData; };
 
     float NormalizeTrigger(uint8_t deadzonePercent, uint8_t value);
     void NormalizeAxis(uint8_t x, uint8_t y, uint8_t deadzonePercent, float *x_out, float *y_out);

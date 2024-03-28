@@ -1,5 +1,8 @@
 #pragma once
 
+#define CONTROLLER_MAX_INPUTS        4
+#define CONTROLLER_INPUT_BUFFER_SIZE 64
+
 enum VendorIDs : uint16_t
 {
     VENDOR_MICROSOFT = 0x45e,
@@ -22,11 +25,12 @@ enum ProductIDs : uint16_t
 
 enum ControllerFeature : uint8_t
 {
+    SUPPORTS_NOTHING = 0,
     SUPPORTS_RUMBLE,
     SUPPORTS_BLUETOOTH,
     SUPPORTS_PAIRING,
-    SUPPORTS_NOTHING,
     SUPPORTS_SIXAXIS,
     SUPPORTS_SEVENAXIS,
     SUPPORTS_PRESSUREBUTTONS,
+    SUPPORTS_COUNT
 };

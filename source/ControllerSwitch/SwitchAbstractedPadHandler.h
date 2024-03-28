@@ -29,6 +29,5 @@ public:
     Result InitAbstractedPadState();
     Result ExitAbstractedPadState();
 
-    void FillAbstractedState(const NormalizedButtonData &data);
-    Result UpdateAbstractedState();
+    Result UpdateAbstractedState(const NormalizedButtonData &data, uint16_t input_idx);
 };

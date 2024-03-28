@@ -5,7 +5,8 @@
 static ControllerConfig _GenericHIDControllerConfig{};
 
 GenericHIDController::GenericHIDController(std::unique_ptr<IUSBDevice> &&device, std::unique_ptr<ILogger> &&logger)
-    : IController(std::move(device), std::move(logger))
+    : IController(std::move(device), std::move(logger)),
+      m_inputCount(0)
 {
     LogPrint(LogLevelInfo, "GenericHIDController: Created for VID_%04X&PID_%04X", m_device->GetVendor(), m_device->GetProduct());
 }
@@ -101,19 +102,43 @@ Result GenericHIDController::OpenInterfaces()
         }
     }
 
-    if (!m_inPipe /* || !m_outPipe*/)
+    if (!m_inPipe)
         return 69;
 
+    m_features[SUPPORTS_RUMBLE] = (m_outPipe != nullptr);
+
+    // refresh input count
+    for (int i = 0; i < CONTROLLER_MAX_INPUTS; i++)
+    {
+        uint8_t input_bytes[CONTROLLER_INPUT_BUFFER_SIZE];
+        size_t size = sizeof(input_bytes);
+
+        Result rc = m_inPipe->Read(input_bytes, &size);
+        if (R_FAILED(rc))
+            return rc;
+
+        uint16_t input_idx = input_bytes[0] - 1;
+        if ((input_idx + 1) > m_inputCount && input_idx < CONTROLLER_MAX_INPUTS)
+            m_inputCount = (input_idx + 1);
+    }
+
+    LogPrint(LogLevelInfo, "GenericHIDController: USB interfaces opened successfully (%d inputs) !", m_inputCount);
     return rc;
 }
+
 void GenericHIDController::CloseInterfaces()
 {
     m_device->Close();
 }
 
-Result GenericHIDController::GetInput()
+uint16_t GenericHIDController::GetInputCount()
 {
-    uint8_t input_bytes[64];
+    return m_inputCount;
+}
+
+Result GenericHIDController::ReadInput(NormalizedButtonData *normalData, uint16_t *input_idx)
+{
+    uint8_t input_bytes[CONTROLLER_INPUT_BUFFER_SIZE];
     size_t size = sizeof(input_bytes);
 
     memset(input_bytes, 0, size);
@@ -130,10 +155,49 @@ Result GenericHIDController::GetInput()
              input_bytes[4],
              input_bytes[5]);
     */
+    *input_idx = input_bytes[0] - 1;
+    if (*input_idx >= m_inputCount)
+        return 1;
 
-    if (input_bytes[0] == 0x01)
+    GenericHIDButtonData *buttonData = reinterpret_cast<GenericHIDButtonData *>(input_bytes);
+
+    /*
+        normalData->triggers[0] = NormalizeTrigger(_GenericHIDControllerConfig.triggerDeadzonePercent[0], buttonData->trigger_left_pressure);
+        normalData->triggers[1] = NormalizeTrigger(_GenericHIDControllerConfig.triggerDeadzonePercent[1], buttonData->trigger_right_pressure);
+
+        NormalizeAxis(buttonData->stick_left_x, buttonData->stick_left_y, _GenericHIDControllerConfig.stickDeadzonePercent[0],
+                      &normalData->sticks[0].axis_x, &normalData->sticks[0].axis_y);
+        NormalizeAxis(buttonData->stick_right_x, buttonData->stick_right_y, _GenericHIDControllerConfig.stickDeadzonePercent[1],
+                      &normalData->sticks[1].axis_x, &normalData->sticks[1].axis_y);
+    */
+    bool buttons[MAX_CONTROLLER_BUTTONS] = {
+        buttonData->button1,
+        buttonData->button2,
+        buttonData->button3,
+        buttonData->button4,
+        buttonData->button5,
+        buttonData->button6,
+        buttonData->button7,
+        buttonData->button8,
+        false, // normalData->triggers[0] > 0,
+        false, // normalData->triggers[1] > 0,
+        buttonData->button9,
+        buttonData->button10,
+        buttonData->dpad_up_down == 0x00,
+        buttonData->dpad_left_right == 0xFF,
+        buttonData->dpad_up_down == 0xFF,
+        buttonData->dpad_left_right == 0x00,
+        false,
+        false, // buttonData->guide,
+    };
+
+    for (int i = 0; i < MAX_CONTROLLER_BUTTONS; i++)
     {
-        m_buttonData = *reinterpret_cast<GenericHIDButtonData *>(input_bytes);
+        ControllerButton button = _GenericHIDControllerConfig.buttons[i];
+        if (button == NONE)
+            continue;
+
+        normalData->buttons[(button != DEFAULT ? button - 2 : i)] += buttons[i];
     }
 
     return rc;
@@ -189,79 +253,6 @@ void GenericHIDController::NormalizeAxis(uint8_t x,
         // If the controller is in the deadzone zero out the magnitude.
         *x_out = *y_out = 0.0f;
     }
-}
-
-// Pass by value should hopefully be optimized away by RVO
-NormalizedButtonData GenericHIDController::GetNormalizedButtonData()
-{
-    NormalizedButtonData normalData{};
-    /*
-        normalData.triggers[0] = NormalizeTrigger(_GenericHIDControllerConfig.triggerDeadzonePercent[0], m_buttonData.trigger_left_pressure);
-        normalData.triggers[1] = NormalizeTrigger(_GenericHIDControllerConfig.triggerDeadzonePercent[1], m_buttonData.trigger_right_pressure);
-
-        NormalizeAxis(m_buttonData.stick_left_x, m_buttonData.stick_left_y, _GenericHIDControllerConfig.stickDeadzonePercent[0],
-                      &normalData.sticks[0].axis_x, &normalData.sticks[0].axis_y);
-        NormalizeAxis(m_buttonData.stick_right_x, m_buttonData.stick_right_y, _GenericHIDControllerConfig.stickDeadzonePercent[1],
-                      &normalData.sticks[1].axis_x, &normalData.sticks[1].axis_y);
-    */
-    /*FACE_UP,
-        FACE_RIGHT,
-        FACE_DOWN,
-        FACE_LEFT,
-        LSTICK_CLICK,
-        RSTICK_CLICK,
-        LEFT_BUMPER,
-        RIGHT_BUMPER,
-        LEFT_TRIGGER,
-        RIGHT_TRIGGER,
-        BACK,
-        START,
-        DPAD_UP,
-        DPAD_RIGHT,
-        DPAD_DOWN,
-        DPAD_LEFT,
-        CAPTURE,
-        HOME,
-        SYNC,
-        TOUCHPAD,*/
-    bool buttons[MAX_CONTROLLER_BUTTONS] = {
-        m_buttonData.button1,
-        m_buttonData.button2,
-        m_buttonData.button3,
-        m_buttonData.button4,
-        m_buttonData.button5,
-        m_buttonData.button6,
-        m_buttonData.button7,
-        m_buttonData.button8,
-        false, // normalData.triggers[0] > 0,
-        false, // normalData.triggers[1] > 0,
-        m_buttonData.button9,
-        m_buttonData.button10,
-        m_buttonData.dpad_up_down == 0x00,
-        m_buttonData.dpad_left_right == 0xFF,
-        m_buttonData.dpad_up_down == 0xFF,
-        m_buttonData.dpad_left_right == 0x00,
-        false,
-        m_buttonData.guide,
-    };
-    /*    DPAD_UP,
-        DPAD_RIGHT,
-        DPAD_DOWN,
-        DPAD_LEFT,
-        CAPTURE,
-        HOME,
-        SYNC,
-        TOUCHPAD,*/
-    for (int i = 0; i < MAX_CONTROLLER_BUTTONS; i++)
-    {
-        ControllerButton button = _GenericHIDControllerConfig.buttons[i];
-        if (button == NONE)
-            continue;
-
-        normalData.buttons[(button != DEFAULT ? button - 2 : i)] += buttons[i];
-    }
-
-    return normalData;
 }
 
 Result GenericHIDController::SetRumble(uint8_t strong_magnitude, uint8_t weak_magnitude)

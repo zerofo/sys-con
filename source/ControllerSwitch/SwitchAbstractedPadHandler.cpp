@@ -93,8 +93,9 @@ Result SwitchAbstractedPadHandler::ExitAbstractedPadState()
     return hiddbgUnsetAutoPilotVirtualPadState(m_abstractedPadID);
 }
 
-void SwitchAbstractedPadHandler::FillAbstractedState(const NormalizedButtonData &data)
+Result SwitchAbstractedPadHandler::UpdateAbstractedState(const NormalizedButtonData &data, uint16_t input_idx)
 {
+    (void)input_idx;
     m_state.state.buttons = 0;
     if (data.buttons[0])
         m_state.state.buttons |= HidNpadButton_X;
@@ -161,22 +162,21 @@ void SwitchAbstractedPadHandler::FillAbstractedState(const NormalizedButtonData 
 
     m_state.state.buttons |= (data.buttons[16] ? HiddbgNpadButton_Capture : 0);
     m_state.state.buttons |= (data.buttons[17] ? HiddbgNpadButton_Home : 0);
-}
 
-Result SwitchAbstractedPadHandler::UpdateAbstractedState()
-{
     return hiddbgSetAutoPilotVirtualPadState(m_abstractedPadID, &m_state);
 }
 
 void SwitchAbstractedPadHandler::UpdateInput()
 {
-    Result rc;
-    rc = GetController()->GetInput();
+    NormalizedButtonData data;
+    uint16_t input_idx;
+
+    // We process any input packets here. If it fails, return and try again
+    Result rc = m_controller->ReadInput(&data, &input_idx);
     if (R_FAILED(rc))
         return;
 
-    FillAbstractedState(GetController()->GetNormalizedButtonData());
-    rc = UpdateAbstractedState();
+    rc = UpdateAbstractedState(data, input_idx);
     if (R_FAILED(rc))
         return;
 }
@@ -194,6 +194,4 @@ void SwitchAbstractedPadHandler::UpdateOutput()
         if (R_SUCCEEDED(rc))
             GetController()->SetRumble(static_cast<uint8_t>(value.amp_high * 255.0f), static_cast<uint8_t>(value.amp_low * 255.0f));
     }
-
-    svcSleepThread(1e+7L);
 }

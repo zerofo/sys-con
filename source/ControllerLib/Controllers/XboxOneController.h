@@ -97,8 +97,6 @@ public:
 
     virtual bool Support(ControllerFeature feature) override;
 
-    inline const XboxOneButtonData &GetButtonData() { return m_buttonData; };
-
     float NormalizeTrigger(uint8_t deadzonePercent, uint16_t value);
     void NormalizeAxis(int16_t x, int16_t y, uint8_t deadzonePercent, float *x_out, float *y_out);
 

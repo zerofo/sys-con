@@ -30,10 +30,8 @@ public:
     Result InitHdlState();
     Result ExitHdlState();
 
-    // Fills out the HDL state with the specified button data
-    void FillHdlState(const NormalizedButtonData &data);
-    // Passes the HDL state to HID so that it could register the inputs
-    Result UpdateHdlState();
+    // Fills out the HDL state with the specified button data and passes it to HID
+    Result UpdateHdlState(const NormalizedButtonData &data, uint16_t input_idx);
 
     static HiddbgHdlsSessionId &GetHdlsSessionId();
 };

@@ -37,6 +37,19 @@ public:
     // Since Exit is used to clean up resources, no Result report should be needed
     virtual void Exit() = 0;
 
+    virtual uint16_t GetInputCount() { return 1; }
+
+    virtual Result ReadInput(NormalizedButtonData *normalData, uint16_t *input_idx)
+    {
+        Result rc = GetInput();
+        if (R_FAILED(rc))
+            return rc;
+
+        *normalData = GetNormalizedButtonData();
+        *input_idx = 0;
+        return rc;
+    }
+
     virtual Result GetInput() { return 1; }
 
     virtual NormalizedButtonData GetNormalizedButtonData() { return NormalizedButtonData(); }
