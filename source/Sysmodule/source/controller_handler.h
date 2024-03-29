@@ -11,7 +11,6 @@ namespace syscon::controllers
     std::vector<std::unique_ptr<SwitchVirtualGamepadHandler>> &Get();
     ams::os::Mutex &GetScopedLock();
 
-    // void Remove(void Remove(bool (*func)(std::unique_ptr<SwitchVirtualGamepadHandler> a)));;
     void SetPollingFrequency(int polling_frequency_ms);
 
     void Initialize();

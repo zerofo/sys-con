@@ -36,10 +36,12 @@ namespace syscon::psc
                         {
                             case PscPmState_Awake:
                             case PscPmState_ReadyAwaken:
+                                ::syscon::logger::LogDebug("Power management: Awake");
                                 // usb::CreateUsbEvents();
                                 break;
                             case PscPmState_ReadySleep:
                             case PscPmState_ReadyShutdown:
+                                ::syscon::logger::LogDebug("Power management: Sleep");
                                 // usb::DestroyUsbEvents();
                                 controllers::Reset();
                                 break;
@@ -52,6 +54,7 @@ namespace syscon::psc
             } while (is_psc_thread_running);
         }
     } // namespace
+
     ams::Result Initialize()
     {
         R_TRY(pscmGetPmModule(&pscModule, PscPmModuleId(126), dependencies, sizeof(dependencies) / sizeof(uint32_t), true));

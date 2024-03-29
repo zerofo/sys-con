@@ -13,10 +13,8 @@ namespace syscon::usb
 {
     namespace
     {
-        constexpr u8 CatchAllEventIndex = 0;
-
         constexpr size_t MaxUsbHsInterfacesSize = 8;
-        constexpr size_t MaxUsbHsInterfacesVendorId = 8;
+        constexpr size_t MaxUsbEvents = 8;
 
         ams::os::Mutex usbMutex(false);
 
@@ -34,12 +32,17 @@ namespace syscon::usb
         bool is_usb_event_thread_running = false;
         bool is_usb_interface_change_thread_running = false;
 
-        Event g_usbEvent[MaxUsbHsInterfacesVendorId] = {};
+        struct UsbEvent
+        {
+            Event m_usbEvent;
+            uint16_t m_usbEventVendorId;
+            int m_usbEventIndex;
+        };
+
+        UsbEvent g_usbEvent[MaxUsbEvents] = {};
+        Waiter g_usbWaiters[MaxUsbEvents] = {};
         int g_usbEventCount = 0;
         int g_usbEventIndex = 0;
-
-        uint16_t g_usbEventVendorId[MaxUsbHsInterfacesVendorId] = {};
-        Waiter g_usbWaiters[MaxUsbHsInterfacesVendorId] = {};
 
         UsbHsInterface interfaces[MaxUsbHsInterfacesSize] = {};
 
@@ -123,7 +126,7 @@ namespace syscon::usb
                             bool shouldAddHid = true;
                             for (int j = 0; j < g_usbEventCount; j++)
                             {
-                                if (interfaces[i].device_desc.idVendor == g_usbEventVendorId[j])
+                                if (interfaces[i].device_desc.idVendor == g_usbEvent[j].m_usbEventVendorId)
                                 {
                                     shouldAddHid = false;
                                     break;
@@ -235,9 +238,12 @@ namespace syscon::usb
             }
 
             syscon::logger::LogDebug("Adding HID device vendor ID to event list: %04X", vendorID);
-            Result ret = usbHsCreateInterfaceAvailableEvent(&g_usbEvent[g_usbEventCount], true, g_usbEventIndex++, &filter);
-            g_usbWaiters[g_usbEventCount] = waiterForEvent(&g_usbEvent[g_usbEventCount]);
-            g_usbEventVendorId[g_usbEventCount] = vendorID;
+            Result ret = usbHsCreateInterfaceAvailableEvent(&g_usbEvent[g_usbEventCount].m_usbEvent, true, g_usbEventIndex, &filter);
+            g_usbWaiters[g_usbEventCount] = waiterForEvent(&g_usbEvent[g_usbEventCount].m_usbEvent);
+            g_usbEvent[g_usbEventCount].m_usbEventVendorId = vendorID;
+            g_usbEvent[g_usbEventCount].m_usbEventIndex = g_usbEventIndex;
+
+            g_usbEventIndex++;
             g_usbEventCount++;
             return ret;
         }
@@ -271,7 +277,7 @@ namespace syscon::usb
         threadClose(&g_usb_interface_change_thread);
 
         for (int i = 0; i < g_usbEventCount; i++)
-            usbHsDestroyInterfaceAvailableEvent(&g_usbEvent[i], CatchAllEventIndex);
+            usbHsDestroyInterfaceAvailableEvent(&g_usbEvent[i].m_usbEvent, g_usbEvent[i].m_usbEventIndex);
 
         controllers::Reset();
     }

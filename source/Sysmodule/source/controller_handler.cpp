@@ -20,6 +20,7 @@ namespace syscon::controllers
 
     bool IsAtControllerLimit()
     {
+        std::scoped_lock scoped_lock(controllerMutex);
         return controllerHandlers.size() >= MaxControllerHandlersSize;
     }
 
@@ -60,16 +61,9 @@ namespace syscon::controllers
     {
         return controllerMutex;
     }
-    /*
-    void Remove(std::function func)
-    {
-        std::remove_if(controllerHandlers.begin(), controllerHandlers.end(), func);
-    }
-    */
 
     void SetPollingFrequency(int _polling_frequency_ms)
     {
-        std::scoped_lock scoped_lock(controllerMutex);
         polling_frequency_ms = _polling_frequency_ms;
     }
 
