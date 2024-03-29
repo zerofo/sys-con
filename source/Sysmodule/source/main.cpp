@@ -112,13 +112,22 @@ namespace ams
         ::syscon::logger::LogInfo("SYS-CON started (Build: %s %s)", __DATE__, __TIME__);
         ::syscon::logger::LogInfo("OS version: %d.%d.%d", HOSVER_MAJOR(version), HOSVER_MINOR(version), HOSVER_MICRO(version));
 
+        ::syscon::logger::LogDebug("Initializing configuration ...");
         ::syscon::config::Initialize();
-        ::syscon::controllers::Initialize();
-        ::syscon::usb::Initialize();
-        ::syscon::psc::Initialize();
 
         ::syscon::logger::SetLogLevel(::syscon::config::globalConfig.log_level);
+
+        ::syscon::logger::LogDebug("Initializing controllers ...");
+        ::syscon::controllers::Initialize();
+
         ::syscon::controllers::SetPollingFrequency(::syscon::config::globalConfig.polling_frequency_ms);
+
+        ::syscon::logger::LogDebug("Initializing USB stack ...");
+        ::syscon::usb::Initialize();
+
+        ::syscon::logger::LogDebug("Initializing power supply managment ...");
+        ::syscon::psc::Initialize();
+
         while (true)
         {
             svcSleepThread(1e+8L);

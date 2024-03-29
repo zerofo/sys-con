@@ -34,14 +34,16 @@ namespace syscon::usb
         bool is_usb_event_thread_running = false;
         bool is_usb_interface_change_thread_running = false;
 
-        Event g_usbCatchAllEvent[MaxUsbHsInterfacesVendorId] = {};
-        uint16_t g_usbCatchAllEventVendorId[MaxUsbHsInterfacesVendorId] = {};
-        int g_usbCatchAllEventCount = 0;
+        Event g_usbEvent[MaxUsbHsInterfacesVendorId] = {};
+        int g_usbEventCount = 0;
+        int g_usbEventIndex = 0;
+
+        uint16_t g_usbEventVendorId[MaxUsbHsInterfacesVendorId] = {};
+        Waiter g_usbWaiters[MaxUsbHsInterfacesVendorId] = {};
 
         UsbHsInterface interfaces[MaxUsbHsInterfacesSize] = {};
 
         s32 QueryInterfaces(UsbHsInterface *interfaces, size_t interfaces_maxsize, u8 iclass, u8 isubclass, u8 iprotocol);
-        // s32 QueryVendorProduct(uint16_t vendor_id, uint16_t product_id);
         s32 QueryAllHIDInterfaces(UsbHsInterface *interfaces, size_t interfaces_maxsize);
         Result AddAvailableEventVendorId(uint16_t aVendorID);
 
@@ -50,57 +52,56 @@ namespace syscon::usb
             (void)arg;
             do
             {
-                for (int i = 0; i < g_usbCatchAllEventCount; i++)
+                s32 idx_out = 0;
+
+                if (R_SUCCEEDED(waitObjects(&idx_out, g_usbWaiters, g_usbEventCount, UINT64_MAX)))
                 {
-                    if (R_SUCCEEDED(eventWait(&g_usbCatchAllEvent[i], 1 * 1000 * 1000 * 1000)))
+                    syscon::logger::LogInfo("New USB device detected, checking for controllers ...");
+
+                    std::scoped_lock usbLock(usbMutex);
+                    if (!controllers::IsAtControllerLimit())
                     {
-                        syscon::logger::LogInfo("New USB device detected, checking for controllers ...");
+                        s32 total_entries = 0;
 
-                        std::scoped_lock usbLock(usbMutex);
-                        if (!controllers::IsAtControllerLimit())
+                        if ((total_entries = QueryInterfaces(interfaces, sizeof(interfaces), USB_CLASS_VENDOR_SPEC, 0x5D, 0x01)) != 0)
                         {
-                            s32 total_entries = 0;
+                            syscon::logger::LogInfo("Initializing Xbox 360 controller (Interface count: %d) ...", total_entries);
+                            controllers::Insert(std::make_unique<Xbox360Controller>(std::make_unique<SwitchUSBDevice>(interfaces, total_entries), std::make_unique<syscon::logger::Logger>()));
+                        }
+                        else if ((total_entries = QueryInterfaces(interfaces, sizeof(interfaces), USB_CLASS_VENDOR_SPEC, 0x5D, 0x81)) != 0)
+                        {
+                            syscon::logger::LogInfo("Initializing Xbox 360 wireless controller (Interface count: %d)...", total_entries);
 
-                            if ((total_entries = QueryInterfaces(interfaces, sizeof(interfaces), USB_CLASS_VENDOR_SPEC, 0x5D, 0x01)) != 0)
-                            {
-                                syscon::logger::LogInfo("Initializing Xbox 360 controller (Interface count: %d) ...", total_entries);
-                                controllers::Insert(std::make_unique<Xbox360Controller>(std::make_unique<SwitchUSBDevice>(interfaces, total_entries), std::make_unique<syscon::logger::Logger>()));
-                            }
-                            else if ((total_entries = QueryInterfaces(interfaces, sizeof(interfaces), USB_CLASS_VENDOR_SPEC, 0x5D, 0x81)) != 0)
-                            {
-                                syscon::logger::LogInfo("Initializing Xbox 360 wireless controller (Interface count: %d)...", total_entries);
+                            for (int i = 0; i < total_entries; i++)
+                                controllers::Insert(std::make_unique<Xbox360WirelessController>(std::make_unique<SwitchUSBDevice>(interfaces + i, 1), std::make_unique<syscon::logger::Logger>()));
+                        }
+                        else if ((total_entries = QueryInterfaces(interfaces, sizeof(interfaces), 0x58, 0x42, 0x00)) != 0)
+                        {
+                            syscon::logger::LogInfo("Initializing Xbox Original controller (Interface count: %d) ...", total_entries);
+                            controllers::Insert(std::make_unique<XboxController>(std::make_unique<SwitchUSBDevice>(interfaces, total_entries), std::make_unique<syscon::logger::Logger>()));
+                        }
+                        else if ((total_entries = QueryInterfaces(interfaces, sizeof(interfaces), USB_CLASS_VENDOR_SPEC, 0x47, 0xD0)) != 0)
+                        {
+                            syscon::logger::LogInfo("Initializing Xbox One controller (Interface count: %d) ...", total_entries);
+                            controllers::Insert(std::make_unique<XboxOneController>(std::make_unique<SwitchUSBDevice>(interfaces, total_entries), std::make_unique<syscon::logger::Logger>()));
+                        }
+                        else if ((total_entries = QueryInterfaces(interfaces, sizeof(interfaces), USB_CLASS_HID, 0, 0)) != 0)
+                        {
 
-                                for (int i = 0; i < total_entries; i++)
-                                    controllers::Insert(std::make_unique<Xbox360WirelessController>(std::make_unique<SwitchUSBDevice>(interfaces + i, 1), std::make_unique<syscon::logger::Logger>()));
-                            }
-                            else if ((total_entries = QueryInterfaces(interfaces, sizeof(interfaces), 0x58, 0x42, 0x00)) != 0)
+                            if (interfaces[0].device_desc.idVendor == VENDOR_SONY && interfaces[0].device_desc.idProduct == PRODUCT_DUALSHOCK3)
                             {
-                                syscon::logger::LogInfo("Initializing Xbox Original controller (Interface count: %d) ...", total_entries);
-                                controllers::Insert(std::make_unique<XboxController>(std::make_unique<SwitchUSBDevice>(interfaces, total_entries), std::make_unique<syscon::logger::Logger>()));
+                                syscon::logger::LogInfo("Initializing Dualshock 3 controller (Interface count: %d) ...", total_entries);
+                                controllers::Insert(std::make_unique<Dualshock3Controller>(std::make_unique<SwitchUSBDevice>(interfaces, total_entries), std::make_unique<syscon::logger::Logger>()));
                             }
-                            else if ((total_entries = QueryInterfaces(interfaces, sizeof(interfaces), USB_CLASS_VENDOR_SPEC, 0x47, 0xD0)) != 0)
+                            else if (interfaces[0].device_desc.idVendor == VENDOR_SONY && (interfaces[0].device_desc.idProduct == PRODUCT_DUALSHOCK4_1X || interfaces[0].device_desc.idProduct == PRODUCT_DUALSHOCK4_2X))
                             {
-                                syscon::logger::LogInfo("Initializing Xbox One controller (Interface count: %d) ...", total_entries);
-                                controllers::Insert(std::make_unique<XboxOneController>(std::make_unique<SwitchUSBDevice>(interfaces, total_entries), std::make_unique<syscon::logger::Logger>()));
+                                syscon::logger::LogInfo("Initializing Dualshock 4 controller (Interface count: %d) ...", total_entries);
+                                controllers::Insert(std::make_unique<Dualshock4Controller>(std::make_unique<SwitchUSBDevice>(interfaces, total_entries), std::make_unique<syscon::logger::Logger>()));
                             }
-                            else if ((total_entries = QueryInterfaces(interfaces, sizeof(interfaces), USB_CLASS_HID, 0, 0)) != 0)
+                            else
                             {
-
-                                if (interfaces[0].device_desc.idVendor == VENDOR_SONY && interfaces[0].device_desc.idProduct == PRODUCT_DUALSHOCK3)
-                                {
-                                    syscon::logger::LogInfo("Initializing Dualshock 3 controller (Interface count: %d) ...", total_entries);
-                                    controllers::Insert(std::make_unique<Dualshock3Controller>(std::make_unique<SwitchUSBDevice>(interfaces, total_entries), std::make_unique<syscon::logger::Logger>()));
-                                }
-                                else if (interfaces[0].device_desc.idVendor == VENDOR_SONY && (interfaces[0].device_desc.idProduct == PRODUCT_DUALSHOCK4_1X || interfaces[0].device_desc.idProduct == PRODUCT_DUALSHOCK4_2X))
-                                {
-                                    syscon::logger::LogInfo("Initializing Dualshock 4 controller (Interface count: %d) ...", total_entries);
-                                    controllers::Insert(std::make_unique<Dualshock4Controller>(std::make_unique<SwitchUSBDevice>(interfaces, total_entries), std::make_unique<syscon::logger::Logger>()));
-                                }
-                                else
-                                {
-                                    syscon::logger::LogInfo("Initializing Generic controller (Interface count: %d) ...", total_entries);
-                                    controllers::Insert(std::make_unique<GenericHIDController>(std::make_unique<SwitchUSBDevice>(interfaces, total_entries), std::make_unique<syscon::logger::Logger>()));
-                                }
+                                syscon::logger::LogInfo("Initializing Generic controller (Interface count: %d) ...", total_entries);
+                                controllers::Insert(std::make_unique<GenericHIDController>(std::make_unique<SwitchUSBDevice>(interfaces, total_entries), std::make_unique<syscon::logger::Logger>()));
                             }
                         }
                         else
@@ -108,30 +109,29 @@ namespace syscon::usb
                             syscon::logger::LogDebug("USB device detected is not a controller !");
                         }
                     }
-                }
-
-                if (g_usbCatchAllEventCount == 0)
-                    svcSleepThread(1 * 1000 * 1000 * 1000);
-
-                s32 interfaceHIDCount = QueryAllHIDInterfaces(interfaces, sizeof(interfaces));
-                if (interfaceHIDCount > 0)
-                {
-                    for (int i = 0; i < interfaceHIDCount; i++)
+                    else
                     {
-                        // if the interfacesHID[i].device_desc.idVendor is already in the list of event we skip it otherwise we add it
-                        bool shouldAddHid = true;
-                        for (int j = 0; j < g_usbCatchAllEventCount; j++)
-                        {
-                            if (interfaces[i].device_desc.idVendor == g_usbCatchAllEventVendorId[j])
-                            {
-                                shouldAddHid = false;
-                                break;
-                            }
-                        }
+                        syscon::logger::LogWarning("Reach controller limit (%d) - Can't add anymore controller !", controllers::Get().size());
+                    }
 
-                        if (shouldAddHid)
+                    s32 interfaceHIDCount = QueryAllHIDInterfaces(interfaces, sizeof(interfaces));
+                    if (interfaceHIDCount > 0)
+                    {
+                        for (int i = 0; i < interfaceHIDCount; i++)
                         {
-                            AddAvailableEventVendorId(interfaces[i].device_desc.idVendor);
+                            // if the interfacesHID[i].device_desc.idVendor is already in the list of event we skip it otherwise we add it
+                            bool shouldAddHid = true;
+                            for (int j = 0; j < g_usbEventCount; j++)
+                            {
+                                if (interfaces[i].device_desc.idVendor == g_usbEventVendorId[j])
+                                {
+                                    shouldAddHid = false;
+                                    break;
+                                }
+                            }
+
+                            if (shouldAddHid)
+                                AddAvailableEventVendorId(interfaces[i].device_desc.idVendor);
                         }
                     }
                 }
@@ -197,8 +197,9 @@ namespace syscon::usb
 
             s32 out_entries = 0;
             memset(interfaces, 0, interfaces_maxsize);
+
             usbHsQueryAvailableInterfaces(&filter, interfaces, interfaces_maxsize, &out_entries);
-            // usbHsQueryAllInterfaces(&filter, interfaces, sizeof(interfaces), &out_entries);
+
             return out_entries;
         }
 
@@ -213,64 +214,50 @@ namespace syscon::usb
 
             usbHsQueryAllInterfaces(&filter, interfaces, interfaces_maxsize, &out_entries);
 
-            syscon::logger::LogDebug("QueryAllHIDInterfaces: %d", out_entries);
+            syscon::logger::LogDebug("QueryAllHIDInterfaces: %d HID interfaces found", out_entries);
 
             return out_entries;
         }
 
-        inline Result AddAvailableEventVendorId(uint16_t vendorID)
+        inline Result AddAvailableEventVendorId(uint16_t vendorID) // 0x0000 means all devices
         {
-            UsbHsInterfaceFilter filter{
-                .Flags = UsbHsInterfaceFilterFlags_idVendor};
-            filter.idVendor = vendorID;
+            UsbHsInterfaceFilter filter;
 
-            syscon::logger::LogInfo("Adding HID device vendor ID to event list: %04X", vendorID);
-            Result ret = usbHsCreateInterfaceAvailableEvent(&g_usbCatchAllEvent[g_usbCatchAllEventCount], true, CatchAllEventIndex, &filter);
-            g_usbCatchAllEventVendorId[g_usbCatchAllEventCount] = vendorID;
-            g_usbCatchAllEventCount++;
+            if (vendorID == 0)
+            {
+                filter.Flags = UsbHsInterfaceFilterFlags_bcdDevice_Min;
+                filter.bcdDevice_Min = 0x0000;
+            }
+            else
+            {
+                filter.Flags = UsbHsInterfaceFilterFlags_idVendor;
+                filter.idVendor = vendorID;
+            }
+
+            syscon::logger::LogDebug("Adding HID device vendor ID to event list: %04X", vendorID);
+            Result ret = usbHsCreateInterfaceAvailableEvent(&g_usbEvent[g_usbEventCount], true, g_usbEventIndex++, &filter);
+            g_usbWaiters[g_usbEventCount] = waiterForEvent(&g_usbEvent[g_usbEventCount]);
+            g_usbEventVendorId[g_usbEventCount] = vendorID;
+            g_usbEventCount++;
             return ret;
         }
 
-        inline Result AddFirstEvent()
-        {
-            UsbHsInterfaceFilter filter{
-                .Flags = UsbHsInterfaceFilterFlags_bcdDevice_Min,
-                .bcdDevice_Min = 0x0000};
-
-            syscon::logger::LogInfo("Adding event...");
-            Result ret = usbHsCreateInterfaceAvailableEvent(&g_usbCatchAllEvent[g_usbCatchAllEventCount], true, CatchAllEventIndex, &filter);
-            g_usbCatchAllEventVendorId[g_usbCatchAllEventCount] = 0;
-            g_usbCatchAllEventCount++;
-            return ret;
-        }
     } // namespace
 
     void Initialize()
     {
-        R_ABORT_UNLESS(Enable());
-    }
-
-    void Exit()
-    {
-        Disable();
-    }
-
-    ams::Result Enable()
-    {
-        // R_TRY(CreateUsbEvents());
         is_usb_event_thread_running = true;
         R_ABORT_UNLESS(threadCreate(&g_usb_event_thread, &UsbEventThreadFunc, nullptr, usb_event_thread_stack, sizeof(usb_event_thread_stack), 0x3A, -2));
         R_ABORT_UNLESS(threadStart(&g_usb_event_thread));
-        AddFirstEvent();
+
+        AddAvailableEventVendorId(0);
 
         is_usb_interface_change_thread_running = true;
         R_ABORT_UNLESS(threadCreate(&g_usb_interface_change_thread, &UsbInterfaceChangeThreadFunc, nullptr, usb_interface_change_thread_stack, sizeof(usb_interface_change_thread_stack), 0x2C, -2));
         R_ABORT_UNLESS(threadStart(&g_usb_interface_change_thread));
-
-        return 0;
     }
 
-    void Disable()
+    void Exit()
     {
         is_usb_event_thread_running = false;
         is_usb_interface_change_thread_running = false;
@@ -283,12 +270,10 @@ namespace syscon::usb
         threadWaitForExit(&g_usb_interface_change_thread);
         threadClose(&g_usb_interface_change_thread);
 
-        DestroyUsbEvents();
+        for (int i = 0; i < g_usbEventCount; i++)
+            usbHsDestroyInterfaceAvailableEvent(&g_usbEvent[i], CatchAllEventIndex);
+
         controllers::Reset();
     }
 
-    void DestroyUsbEvents()
-    {
-        usbHsDestroyInterfaceAvailableEvent(&g_usbCatchAllEvent[0], CatchAllEventIndex);
-    }
 } // namespace syscon::usb

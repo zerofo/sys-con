@@ -2,6 +2,8 @@
 #include <cmath>
 #include <string.h>
 
+// https://www.usb.org/sites/default/files/documents/hid1_11.pdf  p55
+
 static ControllerConfig _GenericHIDControllerConfig{};
 
 GenericHIDController::GenericHIDController(std::unique_ptr<IUSBDevice> &&device, std::unique_ptr<ILogger> &&logger)
@@ -49,20 +51,15 @@ Result GenericHIDController::OpenInterfaces()
         if (R_FAILED(rc))
             return rc;
 
-        LogPrint(LogLevelDebug, "GenericHIDController: bInterfaceClass: %d, bInterfaceProtocol: %d, bNumEndpoints: %d",
+        LogPrint(LogLevelDebug, "GenericHIDController: bDescriptorType: %d, bInterfaceNumber: %d, bAlternateSetting:%d, bNumEndpoints: %d, bInterfaceClass: %d, bInterfaceSubClass: %d, bInterfaceProtocol: %d, ",
+                 interface->GetDescriptor()->bDescriptorType,
+                 interface->GetDescriptor()->bInterfaceNumber,
+                 interface->GetDescriptor()->bAlternateSetting,
+                 interface->GetDescriptor()->bNumEndpoints,
                  interface->GetDescriptor()->bInterfaceClass,
-                 interface->GetDescriptor()->bInterfaceProtocol,
-                 interface->GetDescriptor()->bNumEndpoints);
+                 interface->GetDescriptor()->bInterfaceSubClass,
+                 interface->GetDescriptor()->bInterfaceProtocol);
 
-        /*if (interface->GetDescriptor()->bInterfaceClass != 3)
-            continue;
-
-        if (interface->GetDescriptor()->bInterfaceProtocol != 0)
-            continue;
-
-        if (interface->GetDescriptor()->bNumEndpoints < 2)
-            continue;
-*/
         if (!m_inPipe)
         {
             for (int i = 0; i < 15; i++)
@@ -172,11 +169,12 @@ Result GenericHIDController::ReadInput(NormalizedButtonData *normalData, uint16_
         NormalizeAxis(buttonData->stick_right_x, buttonData->stick_right_y, _GenericHIDControllerConfig.stickDeadzonePercent[1],
                       &normalData->sticks[1].axis_x, &normalData->sticks[1].axis_y);
     */
+    // Button 1, 2, 3, 4 has been mapped according to remote control: Guilikit, Xbox360
     bool buttons[MAX_CONTROLLER_BUTTONS] = {
-        buttonData->button1,                 // X
+        buttonData->button4,                 // X
         buttonData->button2,                 // A
-        buttonData->button3,                 // B
-        buttonData->button4,                 // Y
+        buttonData->button1,                 // B
+        buttonData->button3,                 // Y
         false,                               // buttonData->stick_left_click,
         false,                               // buttonData->stick_right_click,
         buttonData->button5,                 // L

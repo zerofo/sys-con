@@ -198,24 +198,24 @@ NormalizedButtonData Dualshock3Controller::GetNormalizedButtonData()
                   &normalData.sticks[1].axis_x, &normalData.sticks[1].axis_y);
 
     bool buttons[MAX_CONTROLLER_BUTTONS] = {
-        m_buttonData.triangle,
-        m_buttonData.circle,
-        m_buttonData.cross,
-        m_buttonData.square,
+        m_buttonData.triangle, // X
+        m_buttonData.circle,   // A
+        m_buttonData.cross,    // B
+        m_buttonData.square,   // Y
         m_buttonData.stick_left_click,
         m_buttonData.stick_right_click,
-        m_buttonData.bumper_left,
-        m_buttonData.bumper_right,
-        normalData.triggers[0] > 0,
-        normalData.triggers[1] > 0,
-        m_buttonData.back,
-        m_buttonData.start,
-        m_buttonData.dpad_up,
-        m_buttonData.dpad_right,
-        m_buttonData.dpad_down,
-        m_buttonData.dpad_left,
-        false,
-        m_buttonData.guide,
+        m_buttonData.bumper_left,   // L
+        m_buttonData.bumper_right,  // R
+        normalData.triggers[0] > 0, // ZL
+        normalData.triggers[1] > 0, // ZR
+        m_buttonData.back,          // Minus
+        m_buttonData.start,         // Plus
+        m_buttonData.dpad_up,       // UP
+        m_buttonData.dpad_right,    // RIGHT
+        m_buttonData.dpad_down,     // DOWN
+        m_buttonData.dpad_left,     // LEFT
+        false,                      // Capture
+        m_buttonData.guide,         // Home
     };
 
     for (int i = 0; i != MAX_CONTROLLER_BUTTONS; ++i)

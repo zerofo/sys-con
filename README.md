@@ -67,3 +67,18 @@ For an in-depth explanation of how sys-con works, see [here](source).
 
 ### Debug the application
 All crash report goes to /atmosphere/fatal_errors/report_xxxxx.bin (e6)
+
+# TODO
+ - Remove usb vendor id event when we unplug controller
+ - Fix SwitchAbstractedPadHandler to support multiple remote
+ - Change remote style don't works
+ - Add more generic HID decoding (According to protocol etc...)
+ - Merge config files
+ - Remove config file thread and load when needed
+ - Config according de vendorid/productid
+ - Change mapping to something like button 1, 2 etc...
+ - Merge  GetInput() / GetNormalizedButtonData() 
+ - Improve error code on controllers
+ - m_vibrationDeviceHandle not initialized
+ - Add logs in controllers
+ - Reorder folders libs...

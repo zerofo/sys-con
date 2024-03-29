@@ -55,12 +55,6 @@ Result SwitchHDLHandler::InitHdlState()
 {
     syscon::logger::LogDebug("SwitchHDLHandler: Initializing HDL state ...");
 
-    /*memset(m_hdlHandle, 0x00, sizeof(m_hdlHandle));
-    memset(m_deviceInfo, 0x00, sizeof(m_deviceInfo));
-    memset(m_hdlState, 0x00, sizeof(m_hdlState));*/
-
-    syscon::logger::LogDebug("SwitchHDLHandler Initializing HDL state for n devices ...");
-
     for (int i = 0; i < m_controller->GetInputCount(); i++)
     {
         m_hdlHandle[i] = {0};
