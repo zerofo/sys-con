@@ -2,11 +2,10 @@
 #include "usb_module.h"
 #include "controller_handler.h"
 #include "config_handler.h"
-
+#include "Controllers.h"
 #include <stratosphere.hpp>
 
 #include "SwitchUSBDevice.h"
-#include "ControllerHelpers.h"
 #include "logger.h"
 #include <string.h>
 

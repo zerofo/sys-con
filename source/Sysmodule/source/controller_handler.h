@@ -1,6 +1,5 @@
 #pragma once
 
-#include "ControllerHelpers.h"
 #include "SwitchVirtualGamepadHandler.h"
 #include <stratosphere.hpp>
 

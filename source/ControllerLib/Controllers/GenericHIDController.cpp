@@ -19,6 +19,8 @@ Result GenericHIDController::Initialize()
 {
     Result rc;
 
+    LogPrint(LogLevelDebug, "GenericHIDController Initializing ...");
+
     rc = OpenInterfaces();
     if (R_FAILED(rc))
         return rc;
@@ -32,6 +34,8 @@ void GenericHIDController::Exit()
 
 Result GenericHIDController::OpenInterfaces()
 {
+    LogPrint(LogLevelDebug, "GenericHIDController: Opening interfaces ...");
+
     Result rc;
     rc = m_device->Open();
     if (R_FAILED(rc))
@@ -41,8 +45,6 @@ Result GenericHIDController::OpenInterfaces()
     std::vector<std::unique_ptr<IUSBInterface>> &interfaces = m_device->GetInterfaces();
     for (auto &&interface : interfaces)
     {
-        LogPrint(LogLevelDebug, "GenericHIDController: Opening device interface (If: %p) ...", interface.get());
-
         rc = interface->Open();
         if (R_FAILED(rc))
             return rc;
@@ -105,9 +107,7 @@ Result GenericHIDController::OpenInterfaces()
     if (!m_inPipe)
         return 69;
 
-    m_features[SUPPORTS_RUMBLE] = (m_outPipe != nullptr);
-
-    // refresh input count
+    m_features[SUPPORTS_RUMBLE] = (m_outPipe != nullptr); // refresh input count
     for (int i = 0; i < CONTROLLER_MAX_INPUTS; i++)
     {
         uint8_t input_bytes[CONTROLLER_INPUT_BUFFER_SIZE];
@@ -121,8 +121,10 @@ Result GenericHIDController::OpenInterfaces()
         if ((input_idx + 1) > m_inputCount && input_idx < CONTROLLER_MAX_INPUTS)
             m_inputCount = (input_idx + 1);
     }
+    // m_inputCount = 1;
 
     LogPrint(LogLevelInfo, "GenericHIDController: USB interfaces opened successfully (%d inputs) !", m_inputCount);
+
     return rc;
 }
 
@@ -147,14 +149,14 @@ Result GenericHIDController::ReadInput(NormalizedButtonData *normalData, uint16_
     if (R_FAILED(rc))
         return rc;
 
-    /*LogPrint(LogLevelDebug, "GenericHIDController (size: %d - buffer: %02X %02X %02X %02X %02X %02X)", size,
+    LogPrint(LogLevelDebug, "GenericHIDController (size: %d - buffer: %02X %02X %02X %02X %02X %02X)", size,
              input_bytes[0],
              input_bytes[1],
              input_bytes[2],
              input_bytes[3],
              input_bytes[4],
              input_bytes[5]);
-    */
+
     *input_idx = input_bytes[0] - 1;
     if (*input_idx >= m_inputCount)
         return 1;
@@ -171,24 +173,24 @@ Result GenericHIDController::ReadInput(NormalizedButtonData *normalData, uint16_
                       &normalData->sticks[1].axis_x, &normalData->sticks[1].axis_y);
     */
     bool buttons[MAX_CONTROLLER_BUTTONS] = {
-        buttonData->button1,
-        buttonData->button2,
-        buttonData->button3,
-        buttonData->button4,
-        buttonData->button5,
-        buttonData->button6,
-        buttonData->button7,
-        buttonData->button8,
-        false, // normalData->triggers[0] > 0,
-        false, // normalData->triggers[1] > 0,
-        buttonData->button9,
-        buttonData->button10,
-        buttonData->dpad_up_down == 0x00,
-        buttonData->dpad_left_right == 0xFF,
-        buttonData->dpad_up_down == 0xFF,
-        buttonData->dpad_left_right == 0x00,
-        false,
-        false, // buttonData->guide,
+        buttonData->button1,                 // X
+        buttonData->button2,                 // A
+        buttonData->button3,                 // B
+        buttonData->button4,                 // Y
+        false,                               // buttonData->stick_left_click,
+        false,                               // buttonData->stick_right_click,
+        buttonData->button5,                 // L
+        buttonData->button6,                 // R
+        buttonData->button7,                 // ZL
+        buttonData->button8,                 // ZR
+        buttonData->button9,                 // Minus
+        buttonData->button10,                // Plus
+        buttonData->dpad_up_down == 0x00,    // UP
+        buttonData->dpad_left_right == 0xFF, // RIGHT
+        buttonData->dpad_up_down == 0xFF,    // DOWN
+        buttonData->dpad_left_right == 0x00, // LEFT
+        false,                               // Capture
+        false,                               // Home
     };
 
     for (int i = 0; i < MAX_CONTROLLER_BUTTONS; i++)

@@ -17,24 +17,24 @@ struct GenericHIDButtonData
     uint8_t dpad_up_down; // up = 0x00 down = 0xFF None = 0x80
 
     // byte3
-    bool button8 : 1;
-    bool button7 : 1;
-    bool button6 : 1;
-    bool button5 : 1;
-    bool button4 : 1;
-    bool button3 : 1;
-    bool button2 : 1;
     bool button1 : 1;
+    bool button2 : 1;
+    bool button3 : 1;
+    bool button4 : 1;
+    bool button5 : 1;
+    bool button6 : 1;
+    bool button7 : 1;
+    bool button8 : 1;
 
     // byte4
-    bool guide : 1;
-    bool button15 : 1;
-    bool button14 : 1;
-    bool button13 : 1;
-    bool button12 : 1;
-    bool button11 : 1;
-    bool button10 : 1;
     bool button9 : 1;
+    bool button10 : 1;
+    bool button11 : 1;
+    bool button12 : 1;
+    bool button13 : 1;
+    bool button14 : 1;
+    bool button15 : 1;
+    bool button16 : 1;
 
     // byte5
     uint8_t pad2;

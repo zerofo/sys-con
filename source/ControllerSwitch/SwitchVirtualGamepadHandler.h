@@ -7,7 +7,7 @@
 class SwitchVirtualGamepadHandler
 {
 protected:
-    HidVibrationDeviceHandle m_vibrationDeviceHandle;
+    HidVibrationDeviceHandle m_vibrationDeviceHandle[CONTROLLER_MAX_INPUTS];
     std::unique_ptr<IController> m_controller;
     int m_polling_frequency_ms;
 
@@ -53,5 +53,4 @@ public:
 
     // Get the raw controller pointer
     inline IController *GetController() { return m_controller.get(); }
-    inline HidVibrationDeviceHandle *GetVibrationHandle() { return &m_vibrationDeviceHandle; }
 };

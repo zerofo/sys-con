@@ -190,7 +190,7 @@ void SwitchAbstractedPadHandler::UpdateOutput()
     {
         Result rc;
         HidVibrationValue value;
-        rc = hidGetActualVibrationValue(m_vibrationDeviceHandle, &value);
+        rc = hidGetActualVibrationValue(m_vibrationDeviceHandle[0], &value);
         if (R_SUCCEEDED(rc))
             GetController()->SetRumble(static_cast<uint8_t>(value.amp_high * 255.0f), static_cast<uint8_t>(value.amp_low * 255.0f));
     }

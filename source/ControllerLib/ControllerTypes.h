@@ -1,6 +1,6 @@
 #pragma once
 
-#define CONTROLLER_MAX_INPUTS        4
+#define CONTROLLER_MAX_INPUTS        2
 #define CONTROLLER_INPUT_BUFFER_SIZE 64
 
 enum VendorIDs : uint16_t
