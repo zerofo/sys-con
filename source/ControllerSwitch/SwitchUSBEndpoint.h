@@ -17,14 +17,14 @@ public:
     ~SwitchUSBEndpoint();
 
     // Open and close the endpoint
-    virtual Result Open(int maxPacketSize = 0) override;
+    virtual ams::Result Open(int maxPacketSize = 0) override;
     virtual void Close() override;
 
     // buffer should point to the data array, and only the specified size will be read.
-    virtual Result Write(const void *inBuffer, size_t bufferSize) override;
+    virtual ams::Result Write(const void *inBuffer, size_t bufferSize) override;
 
     // The data received will be put in the outBuffer array for the length of the specified size.
-    virtual Result Read(void *outBuffer, size_t *bufferSizeInOut) override;
+    virtual ams::Result Read(void *outBuffer, size_t *bufferSizeInOut) override;
 
     // Gets the direction of this endpoint (IN or OUT)
     virtual IUSBEndpoint::Direction GetDirection() override;

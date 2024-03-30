@@ -51,7 +51,7 @@ void SwitchHDLHandler::Exit()
     UninitHdlState();
 }
 
-Result SwitchHDLHandler::InitHdlState()
+ams::Result SwitchHDLHandler::InitHdlState()
 {
     syscon::logger::LogDebug("SwitchHDLHandler: Initializing HDL state ...");
 
@@ -78,46 +78,30 @@ Result SwitchHDLHandler::InitHdlState()
         m_hdlState[i].analog_stick_l.y = -0x1234;
         m_hdlState[i].analog_stick_r.x = 0x5678;
         m_hdlState[i].analog_stick_r.y = -0x5678;
-        /*
-        Since 12.0
-        m_hdlState[i].six_axis_sensor_acceleration.x = 0x1234;
-        m_hdlState[i].six_axis_sensor_acceleration.y = 0x5678;
-        m_hdlState[i].six_axis_sensor_acceleration.z = 0x9abc;
-        m_hdlState[i].six_axis_sensor_angle.x = 0xdef0;
-        m_hdlState[i].six_axis_sensor_angle.y = 0x1234;
-        m_hdlState[i].six_axis_sensor_angle.z = 0x5678;
-        m_hdlState[i].attribute = 0x0;
-        m_hdlState[i].indicator = 0x0;
-        m_hdlState[i].padding[0] = 0x0;
-        m_hdlState[i].padding[1] = 0x0;
-        m_hdlState[i].padding[2] = 0x0;
-        */
 
         if (m_controller->IsControllerActive())
         {
             syscon::logger::LogDebug("SwitchHDLHandler hiddbgAttachHdlsVirtualDevice ...");
-            Result rc = hiddbgAttachHdlsVirtualDevice(&m_hdlHandle[i], &m_deviceInfo[i]);
-            if (R_FAILED(rc))
-                return rc;
+            R_TRY(hiddbgAttachHdlsVirtualDevice(&m_hdlHandle[i], &m_deviceInfo[i]));
         }
     }
 
     syscon::logger::LogDebug("SwitchHDLHandler HDL state successfully initialized !");
-    return 0;
+    R_SUCCEED();
 }
 
-Result SwitchHDLHandler::UninitHdlState()
+ams::Result SwitchHDLHandler::UninitHdlState()
 {
     syscon::logger::LogDebug("SwitchHDLHandler UninitHdlState .. !");
 
     for (int i = 0; i < m_controller->GetInputCount(); i++)
         hiddbgDetachHdlsVirtualDevice(m_hdlHandle[i]);
 
-    return 0;
+    R_SUCCEED();
 }
 
 // Sets the state of the class's HDL controller to the state stored in class's hdl.state
-Result SwitchHDLHandler::UpdateHdlState(const NormalizedButtonData &data, uint16_t input_idx)
+ams::Result SwitchHDLHandler::UpdateHdlState(const NormalizedButtonData &data, uint16_t input_idx)
 {
     HiddbgHdlsState *hdlState = &m_hdlState[input_idx];
 
@@ -195,26 +179,24 @@ Result SwitchHDLHandler::UpdateHdlState(const NormalizedButtonData &data, uint16
 
     ConvertAxisToSwitchAxis(data.sticks[1].axis_x, data.sticks[1].axis_y, 0, &hdlState->analog_stick_r.x, &hdlState->analog_stick_r.y);
 
-    hdlState->buttons |= (data.buttons[16] ? HiddbgNpadButton_Capture : 0);
-    hdlState->buttons |= (data.buttons[17] ? HiddbgNpadButton_Home : 0);
-
-    // Checks if the virtual device was erased, in which case re-attach the device
-    /*bool isAttached;
-
-    syscon::logger::LogDebug("SwitchHDLHandler UpdateHdlState - hiddbgIsHdlsVirtualDeviceAttached ...");
-
-    if (R_SUCCEEDED(hiddbgIsHdlsVirtualDeviceAttached(GetHdlsSessionId(), m_hdlHandle, &isAttached)))
-    {
-        if (!isAttached)
-        {
-            syscon::logger::LogDebug("SwitchHDLHandler hiddbgAttachHdlsVirtualDevice ...");
-            hiddbgAttachHdlsVirtualDevice(&m_hdlHandle, &m_deviceInfo);
-        }
-    }
-    */
+    if (data.buttons[16])
+        hdlState->buttons |= HiddbgNpadButton_Capture;
+    if (data.buttons[17])
+        hdlState->buttons |= HiddbgNpadButton_Home;
 
     syscon::logger::LogDebug("SwitchHDLHandler UpdateHdlState - Button: 0x%016X - Idx: %d ...", hdlState->buttons, input_idx);
-    return hiddbgSetHdlsState(m_hdlHandle[input_idx], hdlState);
+
+    ams::Result rc = hiddbgSetHdlsState(m_hdlHandle[input_idx], hdlState);
+    if (rc.GetValue() == 0x1c24ca)
+    {
+        syscon::logger::LogInfo("SwitchHDLHandler Re-attaching device...");
+
+        // Re-attach virtual gamepad and set state
+        R_TRY(hiddbgAttachHdlsVirtualDevice(&m_hdlHandle[input_idx], &m_deviceInfo[input_idx]));
+        R_TRY(hiddbgSetHdlsState(m_hdlHandle[input_idx], hdlState));
+    }
+
+    R_SUCCEED();
 }
 
 void SwitchHDLHandler::UpdateInput()
@@ -223,8 +205,7 @@ void SwitchHDLHandler::UpdateInput()
     uint16_t input_idx = 0;
 
     // We process any input packets here. If it fails, return and try again
-    Result rc = m_controller->ReadInput(&data, &input_idx);
-    if (R_FAILED(rc))
+    if (R_FAILED(m_controller->ReadInput(&data, &input_idx)))
         return;
 
     // This is a check for controllers that can prompt themselves to go inactive - e.g. wireless Xbox 360 controllers
@@ -236,8 +217,7 @@ void SwitchHDLHandler::UpdateInput()
     else
     {
         // We get the button inputs from the input packet and update the state of our controller
-        rc = UpdateHdlState(data, input_idx);
-        if (R_FAILED(rc))
+        if (R_FAILED(UpdateHdlState(data, input_idx)))
             return;
     }
 }
@@ -251,7 +231,7 @@ void SwitchHDLHandler::UpdateOutput()
     // Process rumble values if supported
     if (GetController()->Support(SUPPORTS_RUMBLE))
     {
-        Result rc;
+        ams::Result rc;
         HidVibrationValue value;
 
         for (int i = 0; i < m_controller->GetInputCount(); i++)

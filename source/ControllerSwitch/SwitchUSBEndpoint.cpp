@@ -13,19 +13,17 @@ SwitchUSBEndpoint::~SwitchUSBEndpoint()
 {
 }
 
-Result SwitchUSBEndpoint::Open(int maxPacketSize)
+ams::Result SwitchUSBEndpoint::Open(int maxPacketSize)
 {
     maxPacketSize = maxPacketSize != 0 ? maxPacketSize : m_descriptor->wMaxPacketSize;
 
     ::syscon::logger::LogDebug("SwitchUSBEndpoint Opening 0x%x (Pkt size: %d)...", m_descriptor->bEndpointAddress, maxPacketSize);
 
-    Result rc = usbHsIfOpenUsbEp(m_ifSession, &m_epSession, 1, maxPacketSize, m_descriptor);
-    if (R_FAILED(rc))
-        return 73011;
+    R_TRY(usbHsIfOpenUsbEp(m_ifSession, &m_epSession, 1, maxPacketSize, m_descriptor));
 
     ::syscon::logger::LogDebug("SwitchUSBEndpoint successfully opened!");
 
-    return rc;
+    R_SUCCEED();
 }
 
 void SwitchUSBEndpoint::Close()
@@ -33,7 +31,7 @@ void SwitchUSBEndpoint::Close()
     usbHsEpClose(&m_epSession);
 }
 
-Result SwitchUSBEndpoint::Write(const void *inBuffer, size_t bufferSize)
+ams::Result SwitchUSBEndpoint::Write(const void *inBuffer, size_t bufferSize)
 {
     u32 transferredSize = 0;
 
@@ -57,14 +55,14 @@ Result SwitchUSBEndpoint::Write(const void *inBuffer, size_t bufferSize)
     return rc;
 }
 
-Result SwitchUSBEndpoint::Read(void *outBuffer, size_t *bufferSizeInOut)
+ams::Result SwitchUSBEndpoint::Read(void *outBuffer, size_t *bufferSizeInOut)
 {
     u32 transferredSize;
 
     if (GetDirection() == USB_ENDPOINT_OUT)
         ::syscon::logger::LogError("SwitchUSBEndpoint::Read: Trying to read on an OUT endpoint!");
 
-    Result rc = usbHsEpPostBuffer(&m_epSession, m_usb_buffer, *bufferSizeInOut, &transferredSize);
+    ams::Result rc = usbHsEpPostBuffer(&m_epSession, m_usb_buffer, *bufferSizeInOut, &transferredSize);
 
     //::syscon::logger::LogDebug("SwitchUSBEndpoint::Read: bufferSize: %d transferredSize: %d error_module: %x error_desc: %x", bufferSize, transferredSize, R_MODULE(rc), R_DESCRIPTION(rc));
 

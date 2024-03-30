@@ -33,12 +33,12 @@ public:
     virtual void Exit();
 
     // Separately init the input-reading thread
-    Result InitInputThread();
+    ams::Result InitInputThread();
     // Separately close the input-reading thread
     void ExitInputThread();
 
     // Separately init the rumble sending thread
-    Result InitOutputThread();
+    ams::Result InitOutputThread();
     // Separately close the rumble sending thread
     void ExitOutputThread();
 
@@ -49,7 +49,7 @@ public:
 
     void ConvertAxisToSwitchAxis(float x, float y, float deadzone, s32 *x_out, s32 *y_out);
 
-    Result SetControllerVibration(float strong_mag, float weak_mag);
+    ams::Result SetControllerVibration(float strong_mag, float weak_mag);
 
     // Get the raw controller pointer
     inline IController *GetController() { return m_controller.get(); }

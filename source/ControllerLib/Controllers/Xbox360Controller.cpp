@@ -13,39 +13,28 @@ Xbox360Controller::~Xbox360Controller()
     // Exit();
 }
 
-Result Xbox360Controller::Initialize()
+ams::Result Xbox360Controller::Initialize()
 {
-    Result rc;
-
-    rc = OpenInterfaces();
-    if (R_FAILED(rc))
-        return rc;
+    R_TRY(OpenInterfaces());
 
     SetLED(XBOX360LED_TOPLEFT);
-    return rc;
+
+    R_SUCCEED();
 }
 void Xbox360Controller::Exit()
 {
     CloseInterfaces();
 }
 
-Result Xbox360Controller::OpenInterfaces()
+ams::Result Xbox360Controller::OpenInterfaces()
 {
-    LogPrint(LogLevelDebug, "Xbox360Controller: Opening USB interfaces ...");
-
-    Result rc;
-    rc = m_device->Open();
-    if (R_FAILED(rc))
-        return rc;
+    R_TRY(m_device->Open());
 
     // This will open each interface and try to acquire Xbox One controller's in and out endpoints, if it hasn't already
     std::vector<std::unique_ptr<IUSBInterface>> &interfaces = m_device->GetInterfaces();
     for (auto &&interface : interfaces)
     {
-        LogPrint(LogLevelDebug, "Xbox360Controller: Opening device interface (If: %p) ...", interface.get());
-        rc = interface->Open();
-        if (R_FAILED(rc))
-            return rc;
+        R_TRY(interface->Open());
 
         if (interface->GetDescriptor()->bInterfaceProtocol != 1)
             continue;
@@ -55,17 +44,12 @@ Result Xbox360Controller::OpenInterfaces()
 
         if (!m_inPipe)
         {
-            for (int i = 0; i < 15; i++)
+            for (int i = 0; i != 15; ++i)
             {
                 IUSBEndpoint *inEndpoint = interface->GetEndpoint(IUSBEndpoint::USB_ENDPOINT_IN, i);
                 if (inEndpoint)
                 {
-                    rc = inEndpoint->Open();
-                    if (R_FAILED(rc))
-                    {
-                        LogPrint(LogLevelError, "Xbox360Controller: Failed to open USB EndPoint IN (Idx: %d)", i);
-                        return 55555;
-                    }
+                    R_TRY(inEndpoint->Open());
 
                     m_inPipe = inEndpoint;
                     break;
@@ -75,17 +59,12 @@ Result Xbox360Controller::OpenInterfaces()
 
         if (!m_outPipe)
         {
-            for (int i = 0; i < 15; i++)
+            for (int i = 0; i != 15; ++i)
             {
                 IUSBEndpoint *outEndpoint = interface->GetEndpoint(IUSBEndpoint::USB_ENDPOINT_OUT, i);
                 if (outEndpoint)
                 {
-                    rc = outEndpoint->Open();
-                    if (R_FAILED(rc))
-                    {
-                        LogPrint(LogLevelError, "Xbox360Controller: Failed to open USB EndPoint OUT(Idx: %d)", i);
-                        return 66666;
-                    }
+                    R_TRY(outEndpoint->Open());
 
                     m_outPipe = outEndpoint;
                     break;
@@ -95,26 +74,23 @@ Result Xbox360Controller::OpenInterfaces()
     }
 
     if (!m_inPipe || !m_outPipe)
-    {
-        LogPrint(LogLevelError, "Xbox360Controller: USB EndPoint IN or OUT missing !");
-        return 369;
-    }
+        R_RETURN(369);
 
-    LogPrint(LogLevelInfo, "Xbox360Controller: USB interfaces opened successfully !");
-    return rc;
+    R_SUCCEED();
 }
+
 void Xbox360Controller::CloseInterfaces()
 {
     // m_device->Reset();
     m_device->Close();
 }
 
-Result Xbox360Controller::GetInput()
+ams::Result Xbox360Controller::GetInput()
 {
     uint8_t input_bytes[64];
     size_t size = sizeof(input_bytes);
 
-    Result rc = m_inPipe->Read(input_bytes, &size);
+    R_TRY(m_inPipe->Read(input_bytes, &size));
 
     uint8_t type = input_bytes[0];
 
@@ -123,7 +99,7 @@ Result Xbox360Controller::GetInput()
         m_buttonData = *reinterpret_cast<Xbox360ButtonData *>(input_bytes);
     }
 
-    return rc;
+    R_SUCCEED();
 }
 
 bool Xbox360Controller::Support(ControllerFeature feature)
@@ -133,14 +109,13 @@ bool Xbox360Controller::Support(ControllerFeature feature)
     return false;
 }
 
-Result Xbox360Controller::SendInitBytes()
+ams::Result Xbox360Controller::SendInitBytes()
 {
     uint8_t init_bytes[]{
         0x05,
         0x20, 0x00, 0x01, 0x00};
 
-    Result rc = m_outPipe->Write(init_bytes, sizeof(init_bytes));
-    return rc;
+    R_RETURN(m_outPipe->Write(init_bytes, sizeof(init_bytes)));
 }
 
 float Xbox360Controller::NormalizeTrigger(uint8_t deadzonePercent, uint8_t value)
@@ -190,8 +165,6 @@ void Xbox360Controller::NormalizeAxis(int16_t x,
 // Pass by value should hopefully be optimized away by RVO
 NormalizedButtonData Xbox360Controller::GetNormalizedButtonData()
 {
-    LogPrint(LogLevelDebug, "Xbox360Controller: GetNormalizedButtonData");
-
     NormalizedButtonData normalData{};
 
     normalData.triggers[0] = NormalizeTrigger(_xbox360ControllerConfig.triggerDeadzonePercent[0], m_buttonData.trigger_left);
@@ -235,18 +208,16 @@ NormalizedButtonData Xbox360Controller::GetNormalizedButtonData()
     return normalData;
 }
 
-Result Xbox360Controller::SetRumble(uint8_t strong_magnitude, uint8_t weak_magnitude)
+ams::Result Xbox360Controller::SetRumble(uint8_t strong_magnitude, uint8_t weak_magnitude)
 {
     uint8_t rumbleData[]{0x00, sizeof(Xbox360RumbleData), 0x00, strong_magnitude, weak_magnitude, 0x00, 0x00, 0x00};
-    return m_outPipe->Write(rumbleData, sizeof(rumbleData));
+    R_RETURN(m_outPipe->Write(rumbleData, sizeof(rumbleData)));
 }
 
-Result Xbox360Controller::SetLED(Xbox360LEDValue value)
+ams::Result Xbox360Controller::SetLED(Xbox360LEDValue value)
 {
-    LogPrint(LogLevelInfo, "Xbox360Controller: SetLED to: 0x%02X", value);
-
     uint8_t ledPacket[]{0x01, 0x03, static_cast<uint8_t>(value)};
-    return m_outPipe->Write(ledPacket, sizeof(ledPacket));
+    R_RETURN(m_outPipe->Write(ledPacket, sizeof(ledPacket)));
 }
 
 void Xbox360Controller::LoadConfig(const ControllerConfig *config)

@@ -30,7 +30,7 @@ void SwitchVirtualGamepadHandler::InputThreadLoop(void *handler)
     do
     {
         gamepadHandler->UpdateInput();
-        svcSleepThread(gamepadHandler->m_polling_frequency_ms * 1000 * 1000); // 10ms
+        svcSleepThread(gamepadHandler->m_polling_frequency_ms * 1000 * 1000);
     } while (gamepadHandler->m_inputThreadIsRunning);
 
     ::syscon::logger::LogDebug("SwitchVirtualGamepadHandler InputThreadLoop stopped !");
@@ -46,7 +46,7 @@ void SwitchVirtualGamepadHandler::OutputThreadLoop(void *handler)
     } while (gamepadHandler->m_outputThreadIsRunning);
 }
 
-Result SwitchVirtualGamepadHandler::InitInputThread()
+ams::Result SwitchVirtualGamepadHandler::InitInputThread()
 {
     m_inputThreadIsRunning = true;
     R_ABORT_UNLESS(threadCreate(&m_inputThread, &SwitchVirtualGamepadHandler::InputThreadLoop, this, input_thread_stack, sizeof(input_thread_stack), 0x30, -2));
@@ -62,7 +62,7 @@ void SwitchVirtualGamepadHandler::ExitInputThread()
     threadClose(&m_inputThread);
 }
 
-Result SwitchVirtualGamepadHandler::InitOutputThread()
+ams::Result SwitchVirtualGamepadHandler::InitOutputThread()
 {
     m_outputThreadIsRunning = true;
     R_ABORT_UNLESS(threadCreate(&m_outputThread, &SwitchVirtualGamepadHandler::OutputThreadLoop, this, output_thread_stack, sizeof(output_thread_stack), 0x30, -2));
@@ -97,7 +97,7 @@ void SwitchVirtualGamepadHandler::ConvertAxisToSwitchAxis(float x, float y, floa
     */
 }
 
-Result SwitchVirtualGamepadHandler::SetControllerVibration(float strong_mag, float weak_mag)
+ams::Result SwitchVirtualGamepadHandler::SetControllerVibration(float strong_mag, float weak_mag)
 {
     strong_mag = std::max<float>(0.0f, std::min<float>(strong_mag, 1.0f));
     weak_mag = std::max<float>(0.0f, std::min<float>(weak_mag, 1.0f));

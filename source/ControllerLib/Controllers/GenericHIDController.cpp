@@ -17,39 +17,30 @@ GenericHIDController::~GenericHIDController()
 {
 }
 
-Result GenericHIDController::Initialize()
+ams::Result GenericHIDController::Initialize()
 {
-    Result rc;
-
     LogPrint(LogLevelDebug, "GenericHIDController Initializing ...");
 
-    rc = OpenInterfaces();
-    if (R_FAILED(rc))
-        return rc;
+    R_TRY(OpenInterfaces());
 
-    return rc;
+    R_SUCCEED();
 }
 void GenericHIDController::Exit()
 {
     CloseInterfaces();
 }
 
-Result GenericHIDController::OpenInterfaces()
+ams::Result GenericHIDController::OpenInterfaces()
 {
     LogPrint(LogLevelDebug, "GenericHIDController: Opening interfaces ...");
 
-    Result rc;
-    rc = m_device->Open();
-    if (R_FAILED(rc))
-        return rc;
+    R_TRY(m_device->Open());
 
     // Open each interface, send it a setup packet and get the endpoints if it succeeds
     std::vector<std::unique_ptr<IUSBInterface>> &interfaces = m_device->GetInterfaces();
     for (auto &&interface : interfaces)
     {
-        rc = interface->Open();
-        if (R_FAILED(rc))
-            return rc;
+        R_TRY(interface->Open());
 
         LogPrint(LogLevelDebug, "GenericHIDController: bDescriptorType: %d, bInterfaceNumber: %d, bAlternateSetting:%d, bNumEndpoints: %d, bInterfaceClass: %d, bInterfaceSubClass: %d, bInterfaceProtocol: %d, ",
                  interface->GetDescriptor()->bDescriptorType,
@@ -67,12 +58,7 @@ Result GenericHIDController::OpenInterfaces()
                 IUSBEndpoint *inEndpoint = interface->GetEndpoint(IUSBEndpoint::USB_ENDPOINT_IN, i);
                 if (inEndpoint)
                 {
-                    rc = inEndpoint->Open();
-                    if (R_FAILED(rc))
-                    {
-                        LogPrint(LogLevelError, "GenericHIDController: Failed to open USB EndPoint IN (Idx: %d)", i);
-                        return 61;
-                    }
+                    R_TRY(inEndpoint->Open());
 
                     m_inPipe = inEndpoint;
                     break;
@@ -87,12 +73,7 @@ Result GenericHIDController::OpenInterfaces()
                 IUSBEndpoint *outEndpoint = interface->GetEndpoint(IUSBEndpoint::USB_ENDPOINT_OUT, i);
                 if (outEndpoint)
                 {
-                    rc = outEndpoint->Open();
-                    if (R_FAILED(rc))
-                    {
-                        LogPrint(LogLevelError, "GenericHIDController: Failed to open USB EndPoint OUT (Idx: %d)", i);
-                        return 62;
-                    }
+                    R_TRY(outEndpoint->Open());
 
                     m_outPipe = outEndpoint;
                     break;
@@ -102,7 +83,7 @@ Result GenericHIDController::OpenInterfaces()
     }
 
     if (!m_inPipe)
-        return 69;
+        R_RETURN(69);
 
     m_features[SUPPORTS_RUMBLE] = (m_outPipe != nullptr); // refresh input count
     for (int i = 0; i < CONTROLLER_MAX_INPUTS; i++)
@@ -110,19 +91,16 @@ Result GenericHIDController::OpenInterfaces()
         uint8_t input_bytes[CONTROLLER_INPUT_BUFFER_SIZE];
         size_t size = sizeof(input_bytes);
 
-        Result rc = m_inPipe->Read(input_bytes, &size);
-        if (R_FAILED(rc))
-            return rc;
+        R_TRY(m_inPipe->Read(input_bytes, &size));
 
         uint16_t input_idx = input_bytes[0] - 1;
         if ((input_idx + 1) > m_inputCount && input_idx < CONTROLLER_MAX_INPUTS)
             m_inputCount = (input_idx + 1);
     }
-    // m_inputCount = 1;
 
     LogPrint(LogLevelInfo, "GenericHIDController: USB interfaces opened successfully (%d inputs) !", m_inputCount);
 
-    return rc;
+    R_SUCCEED();
 }
 
 void GenericHIDController::CloseInterfaces()
@@ -135,16 +113,14 @@ uint16_t GenericHIDController::GetInputCount()
     return m_inputCount;
 }
 
-Result GenericHIDController::ReadInput(NormalizedButtonData *normalData, uint16_t *input_idx)
+ams::Result GenericHIDController::ReadInput(NormalizedButtonData *normalData, uint16_t *input_idx)
 {
     uint8_t input_bytes[CONTROLLER_INPUT_BUFFER_SIZE];
     size_t size = sizeof(input_bytes);
 
     memset(input_bytes, 0, size);
 
-    Result rc = m_inPipe->Read(input_bytes, &size);
-    if (R_FAILED(rc))
-        return rc;
+    R_TRY(m_inPipe->Read(input_bytes, &size));
 
     LogPrint(LogLevelDebug, "GenericHIDController (size: %d - buffer: %02X %02X %02X %02X %02X %02X)", size,
              input_bytes[0],
@@ -156,7 +132,7 @@ Result GenericHIDController::ReadInput(NormalizedButtonData *normalData, uint16_
 
     *input_idx = input_bytes[0] - 1;
     if (*input_idx >= m_inputCount)
-        return 1;
+        R_RETURN(1);
 
     GenericHIDButtonData *buttonData = reinterpret_cast<GenericHIDButtonData *>(input_bytes);
 
@@ -200,7 +176,7 @@ Result GenericHIDController::ReadInput(NormalizedButtonData *normalData, uint16_
         normalData->buttons[(button != DEFAULT ? button - 2 : i)] += buttons[i];
     }
 
-    return rc;
+    R_SUCCEED();
 }
 
 bool GenericHIDController::Support(ControllerFeature feature)
@@ -255,7 +231,7 @@ void GenericHIDController::NormalizeAxis(uint8_t x,
     }
 }
 
-Result GenericHIDController::SetRumble(uint8_t strong_magnitude, uint8_t weak_magnitude)
+ams::Result GenericHIDController::SetRumble(uint8_t strong_magnitude, uint8_t weak_magnitude)
 {
     (void)strong_magnitude;
     (void)weak_magnitude;
@@ -263,7 +239,7 @@ Result GenericHIDController::SetRumble(uint8_t strong_magnitude, uint8_t weak_ma
     return 9;
 }
 /*
-Result GenericHIDController::SendCommand(IUSBInterface *interface, GenericHIDFeatureValue feature, const void *buffer, uint16_t size)
+ams::Result GenericHIDController::SendCommand(IUSBInterface *interface, GenericHIDFeatureValue feature, const void *buffer, uint16_t size)
 {
     return interface->ControlTransfer(0x21, 0x09, static_cast<uint16_t>(feature), 0, size, buffer);
 }

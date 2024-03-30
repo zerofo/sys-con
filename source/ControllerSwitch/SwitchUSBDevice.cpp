@@ -15,7 +15,7 @@ SwitchUSBDevice::SwitchUSBDevice()
 {
 }
 
-Result SwitchUSBDevice::Open()
+ams::Result SwitchUSBDevice::Open()
 {
     if (m_interfaces.size() != 0)
         return 0;

@@ -47,7 +47,7 @@ namespace syscon::usb
         UsbHsInterface interfaces[MaxUsbHsInterfacesSize] = {};
 
         s32 QueryInterfaces(UsbHsInterface *interfaces, size_t interfaces_maxsize, u8 iclass, u8 isubclass, u8 iprotocol);
-        s32 QueryAllHIDInterfaces(UsbHsInterface *interfaces, size_t interfaces_maxsize);
+        // s32 QueryAllHIDInterfaces(UsbHsInterface *interfaces, size_t interfaces_maxsize);
         Result AddAvailableEventVendorId(uint16_t aVendorID);
 
         void UsbEventThreadFunc(void *arg)
@@ -66,7 +66,7 @@ namespace syscon::usb
                     {
                         s32 total_entries = 0;
 
-                        if ((total_entries = QueryInterfaces(interfaces, sizeof(interfaces), USB_CLASS_VENDOR_SPEC, 0x5D, 0x01)) != 0)
+                        if ((total_entries = QueryInterfaces(interfaces, sizeof(interfaces), USB_CLASS_VENDOR_SPEC, 0x5D, 0x01)) != 0) //0x045E    0x028E
                         {
                             syscon::logger::LogInfo("Initializing Xbox 360 controller (Interface count: %d) ...", total_entries);
                             controllers::Insert(std::make_unique<Xbox360Controller>(std::make_unique<SwitchUSBDevice>(interfaces, total_entries), std::make_unique<syscon::logger::Logger>()));
@@ -117,7 +117,7 @@ namespace syscon::usb
                         syscon::logger::LogWarning("Reach controller limit (%d) - Can't add anymore controller !", controllers::Get().size());
                     }
 
-                    s32 interfaceHIDCount = QueryAllHIDInterfaces(interfaces, sizeof(interfaces));
+                    /*s32 interfaceHIDCount = QueryAllHIDInterfaces(interfaces, sizeof(interfaces));
                     if (interfaceHIDCount > 0)
                     {
                         for (int i = 0; i < interfaceHIDCount; i++)
@@ -136,7 +136,7 @@ namespace syscon::usb
                             if (shouldAddHid)
                                 AddAvailableEventVendorId(interfaces[i].device_desc.idVendor);
                         }
-                    }
+                    }*/
                 }
 
             } while (is_usb_event_thread_running);
@@ -206,7 +206,7 @@ namespace syscon::usb
             return out_entries;
         }
 
-        s32 QueryAllHIDInterfaces(UsbHsInterface *interfaces, size_t interfaces_maxsize)
+        /*s32 QueryAllHIDInterfaces(UsbHsInterface *interfaces, size_t interfaces_maxsize)
         {
             UsbHsInterfaceFilter filter{
                 .Flags = UsbHsInterfaceFilterFlags_bInterfaceClass,
@@ -220,7 +220,7 @@ namespace syscon::usb
             syscon::logger::LogDebug("QueryAllHIDInterfaces: %d HID interfaces found", out_entries);
 
             return out_entries;
-        }
+        }*/
 
         inline Result AddAvailableEventVendorId(uint16_t vendorID) // 0x0000 means all devices
         {
@@ -228,8 +228,9 @@ namespace syscon::usb
 
             if (vendorID == 0)
             {
-                filter.Flags = UsbHsInterfaceFilterFlags_bcdDevice_Min;
+                filter.Flags = UsbHsInterfaceFilterFlags_bInterfaceClass | UsbHsInterfaceFilterFlags_bcdDevice_Min;
                 filter.bcdDevice_Min = 0x0000;
+                filter.bInterfaceClass = USB_CLASS_HID;
             }
             else
             {

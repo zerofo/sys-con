@@ -27,11 +27,11 @@ public:
     virtual void UpdateOutput() override;
 
     // Separately init and close the HDL state
-    Result InitHdlState();
-    Result UninitHdlState();
+    ams::Result InitHdlState();
+    ams::Result UninitHdlState();
 
     // Fills out the HDL state with the specified button data and passes it to HID
-    Result UpdateHdlState(const NormalizedButtonData &data, uint16_t input_idx);
+    ams::Result UpdateHdlState(const NormalizedButtonData &data, uint16_t input_idx);
 
     static HiddbgHdlsSessionId &GetHdlsSessionId();
 };

@@ -13,35 +13,25 @@ XboxController::~XboxController()
     // Exit();
 }
 
-Result XboxController::Initialize()
+ams::Result XboxController::Initialize()
 {
-    Result rc;
-
-    rc = OpenInterfaces();
-    if (R_FAILED(rc))
-        return rc;
-
-    return rc;
+    R_RETURN(OpenInterfaces());
 }
+
 void XboxController::Exit()
 {
     CloseInterfaces();
 }
 
-Result XboxController::OpenInterfaces()
+ams::Result XboxController::OpenInterfaces()
 {
-    Result rc;
-    rc = m_device->Open();
-    if (R_FAILED(rc))
-        return rc;
+    R_TRY(m_device->Open());
 
     // This will open each interface and try to acquire Xbox controller's in and out endpoints, if it hasn't already
     std::vector<std::unique_ptr<IUSBInterface>> &interfaces = m_device->GetInterfaces();
     for (auto &&interface : interfaces)
     {
-        rc = interface->Open();
-        if (R_FAILED(rc))
-            return rc;
+        R_TRY(interface->Open());
 
         if (interface->GetDescriptor()->bInterfaceProtocol != 0)
             continue;
@@ -56,9 +46,7 @@ Result XboxController::OpenInterfaces()
                 IUSBEndpoint *inEndpoint = interface->GetEndpoint(IUSBEndpoint::USB_ENDPOINT_IN, i);
                 if (inEndpoint)
                 {
-                    rc = inEndpoint->Open();
-                    if (R_FAILED(rc))
-                        return 55555;
+                    R_TRY(inEndpoint->Open());
 
                     m_inPipe = inEndpoint;
                     break;
@@ -73,9 +61,7 @@ Result XboxController::OpenInterfaces()
                 IUSBEndpoint *outEndpoint = interface->GetEndpoint(IUSBEndpoint::USB_ENDPOINT_OUT, i);
                 if (outEndpoint)
                 {
-                    rc = outEndpoint->Open();
-                    if (R_FAILED(rc))
-                        return 66666;
+                    R_TRY(outEndpoint->Open());
 
                     m_outPipe = outEndpoint;
                     break;
@@ -85,29 +71,27 @@ Result XboxController::OpenInterfaces()
     }
 
     if (!m_inPipe || !m_outPipe)
-        return 69;
+        R_RETURN(69);
 
-    return rc;
+    R_SUCCEED();
 }
+
 void XboxController::CloseInterfaces()
 {
     // m_device->Reset();
     m_device->Close();
 }
 
-Result XboxController::GetInput()
+ams::Result XboxController::GetInput()
 {
     uint8_t input_bytes[64];
     size_t size = sizeof(input_bytes);
 
-    Result rc = m_inPipe->Read(input_bytes, &size);
+    R_TRY(m_inPipe->Read(input_bytes, &size));
 
-    if (R_SUCCEEDED(rc))
-    {
-        m_buttonData = *reinterpret_cast<XboxButtonData *>(input_bytes);
-    }
+    m_buttonData = *reinterpret_cast<XboxButtonData *>(input_bytes);
 
-    return rc;
+    R_SUCCEED();
 }
 
 bool XboxController::Support(ControllerFeature feature)
@@ -207,11 +191,12 @@ NormalizedButtonData XboxController::GetNormalizedButtonData()
     return normalData;
 }
 
-Result XboxController::SetRumble(uint8_t strong_magnitude, uint8_t weak_magnitude)
+ams::Result XboxController::SetRumble(uint8_t strong_magnitude, uint8_t weak_magnitude)
 {
     uint8_t rumbleData[]{0x00, 0x06, 0x00, strong_magnitude, weak_magnitude, 0x00, 0x00, 0x00};
-    return m_outPipe->Write(rumbleData, sizeof(rumbleData));
+    R_RETURN(m_outPipe->Write(rumbleData, sizeof(rumbleData)));
 }
+
 void XboxController::LoadConfig(const ControllerConfig *config)
 {
     _xboxControllerConfig = *config;

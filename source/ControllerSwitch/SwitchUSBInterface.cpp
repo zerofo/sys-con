@@ -13,13 +13,11 @@ SwitchUSBInterface::~SwitchUSBInterface()
 {
 }
 
-Result SwitchUSBInterface::Open()
+ams::Result SwitchUSBInterface::Open()
 {
     ::syscon::logger::LogDebug("SwitchUSBInterface Openning %x-%x...", m_interface.device_desc.idVendor, m_interface.device_desc.idProduct);
 
-    Result rc = usbHsAcquireUsbIf(&m_session, &m_interface);
-    if (R_FAILED(rc))
-        return rc;
+    R_TRY(usbHsAcquireUsbIf(&m_session, &m_interface));
 
     for (int i = 0; i < 15; i++)
     {
@@ -49,7 +47,7 @@ Result SwitchUSBInterface::Open()
         }
     }
 
-    return rc;
+    R_SUCCEED();
 }
 
 void SwitchUSBInterface::Close()
@@ -67,7 +65,7 @@ void SwitchUSBInterface::Close()
     usbHsIfClose(&m_session);
 }
 
-Result SwitchUSBInterface::ControlTransfer(u8 bmRequestType, u8 bmRequest, u16 wValue, u16 wIndex, u16 wLength, void *buffer)
+ams::Result SwitchUSBInterface::ControlTransfer(u8 bmRequestType, u8 bmRequest, u16 wValue, u16 wIndex, u16 wLength, void *buffer)
 {
     ::syscon::logger::LogDebug("SwitchUSBInterface ControlTransfer %x-%x...", m_interface.device_desc.idVendor, m_interface.device_desc.idProduct);
 
@@ -75,7 +73,7 @@ Result SwitchUSBInterface::ControlTransfer(u8 bmRequestType, u8 bmRequest, u16 w
 
     memcpy(m_usb_buffer, buffer, wLength);
 
-    Result rc = usbHsIfCtrlXfer(&m_session, bmRequestType, bmRequest, wValue, wIndex, wLength, m_usb_buffer, &transferredSize);
+    ams::Result rc = usbHsIfCtrlXfer(&m_session, bmRequestType, bmRequest, wValue, wIndex, wLength, m_usb_buffer, &transferredSize);
 
     if (R_SUCCEEDED(rc))
     {
@@ -85,7 +83,7 @@ Result SwitchUSBInterface::ControlTransfer(u8 bmRequestType, u8 bmRequest, u16 w
     return rc;
 }
 
-Result SwitchUSBInterface::ControlTransfer(u8 bmRequestType, u8 bmRequest, u16 wValue, u16 wIndex, u16 wLength, const void *buffer)
+ams::Result SwitchUSBInterface::ControlTransfer(u8 bmRequestType, u8 bmRequest, u16 wValue, u16 wIndex, u16 wLength, const void *buffer)
 {
     ::syscon::logger::LogDebug("SwitchUSBInterface ControlTransfer %x-%x...", m_interface.device_desc.idVendor, m_interface.device_desc.idProduct);
 
@@ -93,9 +91,9 @@ Result SwitchUSBInterface::ControlTransfer(u8 bmRequestType, u8 bmRequest, u16 w
 
     memcpy(m_usb_buffer, buffer, wLength);
 
-    Result rc = usbHsIfCtrlXfer(&m_session, bmRequestType, bmRequest, wValue, wIndex, wLength, m_usb_buffer, &transferredSize);
+    R_TRY(usbHsIfCtrlXfer(&m_session, bmRequestType, bmRequest, wValue, wIndex, wLength, m_usb_buffer, &transferredSize));
 
-    return rc;
+    R_SUCCEED();
 }
 
 IUSBEndpoint *SwitchUSBInterface::GetEndpoint(IUSBEndpoint::Direction direction, uint8_t index)
@@ -106,10 +104,11 @@ IUSBEndpoint *SwitchUSBInterface::GetEndpoint(IUSBEndpoint::Direction direction,
         return m_outEndpoints[index].get();
 }
 
-Result SwitchUSBInterface::Reset()
+ams::Result SwitchUSBInterface::Reset()
 {
     ::syscon::logger::LogDebug("SwitchUSBInterface Reset %x-%x...", m_interface.device_desc.idVendor, m_interface.device_desc.idProduct);
 
     usbHsIfResetDevice(&m_session);
-    return 0;
+
+    R_SUCCEED();
 }

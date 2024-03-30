@@ -6,9 +6,8 @@
 #include "controller_handler.h"
 #include "config_handler.h"
 #include "psc_module.h"
+#include "version.h"
 #include "SwitchHDLHandler.h"
-
-#define APP_VERSION "0.6.4"
 
 // libstratosphere variables
 namespace ams
@@ -72,7 +71,6 @@ namespace ams
             fs::SetAllocator(syscon::Allocate, syscon::Deallocate);
             fs::SetEnabledAutoAbort(false);
 
-            R_ABORT_UNLESS(hiddbgInitialize());
             R_ABORT_UNLESS(usbHsInitialize());
             R_ABORT_UNLESS(pscmInitialize());
             R_ABORT_UNLESS(setsysInitialize());
@@ -82,16 +80,19 @@ namespace ams
             R_ABORT_UNLESS(setsysGetFirmwareVersion(&fw));
             hosversionSet(MAKEHOSVERSION(fw.major, fw.minor, fw.micro));
 
+            R_ABORT_UNLESS(hiddbgInitialize());
             if (hosversionAtLeast(7, 0, 0))
-            {
                 R_ABORT_UNLESS(hiddbgAttachHdlsWorkBuffer(&SwitchHDLHandler::GetHdlsSessionId(), g_hdls_buffer, sizeof(g_hdls_buffer)));
-            }
 
             R_ABORT_UNLESS(fs::MountSdCard("sdmc"));
         }
 
         void FinalizeSystemModule()
-        { /* ... */
+        {
+            hiddbgReleaseHdlsWorkBuffer(SwitchHDLHandler::GetHdlsSessionId());
+            hiddbgExit();
+            usbHsExit();
+            pscmExit();
         }
 
         void Startup()
@@ -107,7 +108,7 @@ namespace ams
         u32 version = hosversionGet();
 
         ::syscon::logger::LogInfo("-----------------------------------------------------");
-        ::syscon::logger::LogInfo("SYS-CON started (Build: %s %s)", __DATE__, __TIME__);
+        ::syscon::logger::LogInfo("SYS-CON started %s+%d-%s (Build date: %s %s)", ::syscon::version::syscon_tag, ::syscon::version::syscon_commit_count, ::syscon::version::syscon_git_hash, __DATE__, __TIME__);
         ::syscon::logger::LogInfo("OS version: %d.%d.%d", HOSVER_MAJOR(version), HOSVER_MINOR(version), HOSVER_MICRO(version));
 
         ::syscon::logger::LogDebug("Initializing configuration ...");

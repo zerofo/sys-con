@@ -71,38 +71,28 @@ XboxOneController::~XboxOneController()
     // Exit();
 }
 
-Result XboxOneController::Initialize()
+ams::Result XboxOneController::Initialize()
 {
-    Result rc;
+    R_TRY(OpenInterfaces());
+    R_TRY(SendInitBytes());
 
-    rc = OpenInterfaces();
-    if (R_FAILED(rc))
-        return rc;
-
-    rc = SendInitBytes();
-    if (R_FAILED(rc))
-        return rc;
-    return rc;
+    R_SUCCEED();
 }
+
 void XboxOneController::Exit()
 {
     CloseInterfaces();
 }
 
-Result XboxOneController::OpenInterfaces()
+ams::Result XboxOneController::OpenInterfaces()
 {
-    Result rc;
-    rc = m_device->Open();
-    if (R_FAILED(rc))
-        return rc;
+    R_TRY(m_device->Open());
 
     // This will open each interface and try to acquire Xbox One controller's in and out endpoints, if it hasn't already
     std::vector<std::unique_ptr<IUSBInterface>> &interfaces = m_device->GetInterfaces();
     for (auto &&interface : interfaces)
     {
-        rc = interface->Open();
-        if (R_FAILED(rc))
-            return rc;
+        R_TRY(interface->Open());
 
         if (interface->GetDescriptor()->bInterfaceProtocol != 208)
             continue;
@@ -117,9 +107,7 @@ Result XboxOneController::OpenInterfaces()
                 IUSBEndpoint *inEndpoint = interface->GetEndpoint(IUSBEndpoint::USB_ENDPOINT_IN, i);
                 if (inEndpoint)
                 {
-                    rc = inEndpoint->Open();
-                    if (R_FAILED(rc))
-                        return 5555;
+                    R_TRY(inEndpoint->Open());
 
                     m_inPipe = inEndpoint;
                     break;
@@ -134,9 +122,7 @@ Result XboxOneController::OpenInterfaces()
                 IUSBEndpoint *outEndpoint = interface->GetEndpoint(IUSBEndpoint::USB_ENDPOINT_OUT, i);
                 if (outEndpoint)
                 {
-                    rc = outEndpoint->Open();
-                    if (R_FAILED(rc))
-                        return 6666;
+                    R_TRY(outEndpoint->Open());
 
                     m_outPipe = outEndpoint;
                     break;
@@ -146,9 +132,9 @@ Result XboxOneController::OpenInterfaces()
     }
 
     if (!m_inPipe || !m_outPipe)
-        return 69;
+        R_RETURN(69);
 
-    return rc;
+    R_SUCCEED();
 }
 void XboxOneController::CloseInterfaces()
 {
@@ -156,14 +142,12 @@ void XboxOneController::CloseInterfaces()
     m_device->Close();
 }
 
-Result XboxOneController::GetInput()
+ams::Result XboxOneController::GetInput()
 {
     uint8_t input_bytes[64];
     size_t size = sizeof(input_bytes);
 
-    Result rc = m_inPipe->Read(input_bytes, &size);
-    if (R_FAILED(rc))
-        return rc;
+    R_TRY(m_inPipe->Read(input_bytes, &size));
 
     uint8_t type = input_bytes[0];
 
@@ -179,13 +163,11 @@ Result XboxOneController::GetInput()
         // TODO: needs testing
         if (input_bytes[1] == 0x30)
         {
-            rc = WriteAckGuideReport(input_bytes[2]);
-            if (R_FAILED(rc))
-                return rc;
+            R_TRY(WriteAckGuideReport(input_bytes[2]));
         }
     }
 
-    return rc;
+    R_SUCCEED();
 }
 
 bool XboxOneController::Support(ControllerFeature feature)
@@ -201,9 +183,8 @@ bool XboxOneController::Support(ControllerFeature feature)
     }
 }
 
-Result XboxOneController::SendInitBytes()
+ams::Result XboxOneController::SendInitBytes()
 {
-    Result rc;
     uint16_t vendor = m_device->GetVendor();
     uint16_t product = m_device->GetProduct();
     for (int i = 0; i != (sizeof(init_packets) / sizeof(VendorProductPacket)); ++i)
@@ -213,11 +194,10 @@ Result XboxOneController::SendInitBytes()
         if (init_packets[i].ProductID != 0 && init_packets[i].ProductID != product)
             continue;
 
-        rc = m_outPipe->Write(init_packets[i].Packet, init_packets[i].Length);
-        if (R_FAILED(rc))
-            break;
+        R_TRY(m_outPipe->Write(init_packets[i].Packet, init_packets[i].Length));
     }
-    return rc;
+
+    R_SUCCEED();
 }
 
 float XboxOneController::NormalizeTrigger(uint8_t deadzonePercent, uint16_t value)
@@ -310,19 +290,16 @@ NormalizedButtonData XboxOneController::GetNormalizedButtonData()
     return normalData;
 }
 
-Result XboxOneController::WriteAckGuideReport(uint8_t sequence)
+ams::Result XboxOneController::WriteAckGuideReport(uint8_t sequence)
 {
-    Result rc;
     uint8_t report[] = {
         0x01, 0x20,
         sequence,
         0x09, 0x00, 0x07, 0x20, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00};
-
-    rc = m_outPipe->Write(report, sizeof(report));
-    return rc;
+    R_RETURN(m_outPipe->Write(report, sizeof(report)));
 }
 
-Result XboxOneController::SetRumble(uint8_t strong_magnitude, uint8_t weak_magnitude)
+ams::Result XboxOneController::SetRumble(uint8_t strong_magnitude, uint8_t weak_magnitude)
 {
     const uint8_t rumble_data[]{
         0x09, 0x00, 0x00,
@@ -330,7 +307,7 @@ Result XboxOneController::SetRumble(uint8_t strong_magnitude, uint8_t weak_magni
         strong_magnitude,
         weak_magnitude,
         0xff, 0x00, 0x00};
-    return m_outPipe->Write(rumble_data, sizeof(rumble_data));
+    R_RETURN(m_outPipe->Write(rumble_data, sizeof(rumble_data)));
 }
 
 void XboxOneController::LoadConfig(const ControllerConfig *config)

@@ -21,17 +21,17 @@ public:
     ~SwitchUSBInterface();
 
     // Open and close the interface
-    virtual Result Open() override;
+    virtual ams::Result Open() override;
     virtual void Close() override;
 
-    virtual Result ControlTransfer(u8 bmRequestType, u8 bmRequest, u16 wValue, u16 wIndex, u16 wLength, void *buffer) override;
-    virtual Result ControlTransfer(u8 bmRequestType, u8 bmRequest, u16 wValue, u16 wIndex, u16 wLength, const void *buffer) override;
+    virtual ams::Result ControlTransfer(u8 bmRequestType, u8 bmRequest, u16 wValue, u16 wIndex, u16 wLength, void *buffer) override;
+    virtual ams::Result ControlTransfer(u8 bmRequestType, u8 bmRequest, u16 wValue, u16 wIndex, u16 wLength, const void *buffer) override;
 
     // There are a total of 15 endpoints on a switch interface for each direction, get them by passing the desired parameters
     virtual IUSBEndpoint *GetEndpoint(IUSBEndpoint::Direction direction, uint8_t index) override;
 
     // Reset the device
-    virtual Result Reset() override;
+    virtual ams::Result Reset() override;
 
     // Get the unique session ID for this interface
     inline s32 GetID() { return m_session.ID; }
