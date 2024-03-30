@@ -15,7 +15,6 @@ namespace syscon::config
         ControllerConfig tempConfig;
         GlobalConfig tempGlobalConfig;
         RGBAColor tempColor;
-        char firmwarePath[100];
 
         UTimer filecheckTimer;
         Waiter filecheckTimerWaiter = waiterForUTimer(&filecheckTimer);
@@ -138,8 +137,6 @@ namespace syscon::config
                     tempConfig.triggerDeadzonePercent[1] = atoi(value);
                 else if (strcmp(name, "swap_dpad_and_lstick") == 0)
                     tempConfig.swapDPADandLSTICK = (strcmp(value, "true") ? false : true);
-                else if (strcmp(name, "firmware_path") == 0)
-                    strcpy(firmwarePath, value);
                 else if (strcmp(name, "color_body") == 0)
                     tempConfig.bodyColor = DecodeColorValue(value);
                 else if (strcmp(name, "color_buttons") == 0)

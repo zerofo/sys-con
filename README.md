@@ -1,14 +1,12 @@
 # sys-con
 
 #### A Nintendo Switch custom sysmodule for third-party controller support. No man-in-the-middle required! 
-###### \[Switch FW 5.0.0+\] [Atmosphère only]
+###### \[Switch FW 7.0.0+\] [Atmosphère only]
 Tested on Switch FW 17.0.0
 
 ## Description
 This sysmodule aims to provide complete functionality for most popular game controllers not supported by Nintendo Switch.
-At the current moment, **only USB connection** is supported.
-
-This app is missing a lot of features. For more information, see the [issues page](https://github.com/o0zz/sys-con/issues).
+Only USB connection is supported - For bluetooth connection you can use ndeadly's [MissionControl](https://github.com/ndeadly/MissionControl)
 
 ## Install
 
@@ -21,12 +19,13 @@ sys-con comes with a config folder located at `sdmc:/config/sys-con/`. It contai
 ## Logs
 
 In case of issue, you can look at the logs in `sdmc:/config/sys-con/logs.txt`
+For more verbose logs, edit config_global.ini and set :
 
-## Debug ?
-
-You will need to get logs from UART:
-https://gbatemp.net/threads/how-to-make-a-joycon-rail-uart-to-capture-boot-log.625784/
-https://github.com/dekuNukem/Nintendo_Switch_Reverse_Engineering
+```
+polling_frequency_ms=50
+;log_level Debug=0, Info=1, Warning=2, Error=3
+log_level=0
+```
 
 ## Supported controller
 - [x] Xbox 360 Controller
@@ -49,7 +48,7 @@ Open MSYS2 console from devkitA64 and type below command
 ```
 pacman -S switch-libjpeg-turbo
 
-make -C source/libnx install
+make -C lib/libnx install
 ```
 
 ### Build the project
@@ -70,7 +69,6 @@ All crash report goes to /atmosphere/fatal_errors/report_xxxxx.bin (e6)
 
 # TODO
  - Remove usb vendor id event when we unplug controller
- - Fix SwitchAbstractedPadHandler to support multiple remote
  - Change remote style don't works
  - Add more generic HID decoding (According to protocol etc...)
  - Merge config files
@@ -81,4 +79,3 @@ All crash report goes to /atmosphere/fatal_errors/report_xxxxx.bin (e6)
  - Improve error code on controllers
  - m_vibrationDeviceHandle not initialized
  - Add logs in controllers
- - Reorder folders libs...

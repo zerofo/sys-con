@@ -12,12 +12,9 @@ A clear and concise description of what the bug is.
 
 **How to reproduce**
 1. Go to '...'
-2. Click on '....'
-3. Scroll down to '....'
-4. See error
+2. Plug the remote control XXX (Exact reference)
+3. Click on '....'
+4. See errors/crashes...
 
-**Environment**
-- Your Switch Firmware version
-- Your version of Atmosphere
-- Your version of sys-con
-- If you have any other sysmodules enabled, list them here.
+**Logs**
+- Enable the logs in debug mode (See README.md) and provide the logs.

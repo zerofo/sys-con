@@ -3,7 +3,7 @@
 #---------------------------------------------------------------------------------
 THIS_MAKEFILE := $(abspath $(lastword $(MAKEFILE_LIST)))
 CURRENT_DIRECTORY := $(abspath $(dir $(THIS_MAKEFILE)))
-include $(dir $(abspath $(lastword $(MAKEFILE_LIST))))/../libstratosphere/config/templates/stratosphere.mk
+include $(dir $(abspath $(lastword $(MAKEFILE_LIST))))/../../lib/Atmosphere-libs/config/templates/stratosphere.mk
 
 TARGET		:=	sys-con
 SOURCES		+=	../ControllerSwitch ../ControllerLib ../ControllerLib/Controllers

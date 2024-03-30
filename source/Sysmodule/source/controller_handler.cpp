@@ -1,7 +1,6 @@
 #include "switch.h"
 #include "controller_handler.h"
 #include "SwitchHDLHandler.h"
-#include "SwitchAbstractedPadHandler.h"
 #include <algorithm>
 #include <functional>
 
@@ -13,7 +12,6 @@ namespace syscon::controllers
     {
         constexpr size_t MaxControllerHandlersSize = 10;
         std::vector<std::unique_ptr<SwitchVirtualGamepadHandler>> controllerHandlers;
-        bool UseAbstractedPad;
         ams::os::Mutex controllerMutex(false);
         int polling_frequency_ms = 0;
     } // namespace
@@ -26,17 +24,7 @@ namespace syscon::controllers
 
     ams::Result Insert(std::unique_ptr<IController> &&controllerPtr)
     {
-        std::unique_ptr<SwitchVirtualGamepadHandler> switchHandler;
-        if (UseAbstractedPad)
-        {
-            switchHandler = std::make_unique<SwitchAbstractedPadHandler>(std::move(controllerPtr), polling_frequency_ms);
-            syscon::logger::LogInfo("Inserting controller as abstracted pad");
-        }
-        else
-        {
-            switchHandler = std::make_unique<SwitchHDLHandler>(std::move(controllerPtr), polling_frequency_ms);
-            syscon::logger::LogInfo("Inserting controller as HDLs");
-        }
+        std::unique_ptr<SwitchVirtualGamepadHandler> switchHandler = std::make_unique<SwitchHDLHandler>(std::move(controllerPtr), polling_frequency_ms);
 
         ams::Result rc = switchHandler->Initialize();
         if (R_SUCCEEDED(rc))
@@ -69,7 +57,6 @@ namespace syscon::controllers
 
     void Initialize()
     {
-        UseAbstractedPad = hosversionBetween(5, 7);
         controllerHandlers.reserve(MaxControllerHandlersSize);
     }
 

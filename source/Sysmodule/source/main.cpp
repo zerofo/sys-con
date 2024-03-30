@@ -10,8 +10,6 @@
 
 #define APP_VERSION "0.6.4"
 
-// example: https://github.com/ndeadly/MissionControl/blob/master/mc_mitm/source/mcmitm_main.cpp
-
 // libstratosphere variables
 namespace ams
 {
