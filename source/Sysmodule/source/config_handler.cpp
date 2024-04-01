@@ -77,18 +77,19 @@ namespace syscon::config
                 else if (strcmp(name, "log_level") == 0)
                     config->log_level = atoi(value);
                 else
-                    return 0;
+                {
+                    syscon::logger::LogError("Unknown key: %s", name);
+                    return 0; // Unknown key, return error
+                }
             }
-            else
-                return 0;
 
-            return 1;
+            return 1; // Success
         }
 
         int ParseControllerConfigLine(void *data, const char *section, const char *name, const char *value)
         {
             ControllerConfig *config = static_cast<ControllerConfig *>(data);
-
+            // syscon::logger::LogDebug("Parsing controller config line: %s, %s, %s (expect: %s)", section, name, value, config->ini_section);
             if (strcmp(section, config->ini_section) == 0)
             {
                 if (strcmp(name, "driver") == 0)
@@ -102,7 +103,7 @@ namespace syscon::config
                     if (button >= 2)
                     {
                         config->buttons[button - 2] = buttonValue;
-                        return 1;
+                        return 1; // Success
                     }
                     else
                     {
@@ -135,11 +136,13 @@ namespace syscon::config
                 else if (strcmp(name, "color_led") == 0)
                     config->ledColor = DecodeColorValue(value);
                 else
-                    return 0;
+                {
+                    syscon::logger::LogError("Unknown key: %s", name);
+                    return 0; // Unknown key, return error
+                }
             }
-            else
-                return 0;
-            return 1;
+
+            return 1; // Success
         }
 
         Result ReadFromConfig(const char *path, ams::util::ini::Handler h, void *config)

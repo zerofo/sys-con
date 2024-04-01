@@ -38,7 +38,7 @@ namespace syscon::usb
 
         UsbHsInterface interfaces[MaxUsbHsInterfacesSize] = {};
 
-        s32 QueryInterfaces(UsbHsInterface *interfaces, size_t interfaces_maxsize, u8 iclass, u8 isubclass, u8 iprotocol);
+        s32 QueryAvailableInterfacesByClass(UsbHsInterface *interfaces, size_t interfaces_maxsize, u8 iclass);
         Result AddEvent(UsbHsInterfaceFilter *filter);
 
         void UsbEventThreadFunc(void *arg)
@@ -61,59 +61,56 @@ namespace syscon::usb
                         continue;
                     }
 
-                    if ((total_entries = QueryInterfaces(interfaces, sizeof(interfaces), USB_CLASS_HID, 0, 0)) != 0)
+                    if ((total_entries = QueryAvailableInterfacesByClass(interfaces, sizeof(interfaces), USB_CLASS_HID)) != 0 || (total_entries = QueryAvailableInterfacesByClass(interfaces, sizeof(interfaces), USB_CLASS_VENDOR_SPEC)))
                     {
-                        syscon::logger::LogInfo("Trying to find configuration for USB device: [%04x-%04x] ...", interfaces[0].device_desc.idVendor, interfaces[0].device_desc.idProduct);
+                        for (int i = 0; i < total_entries; i++)
+                        {
+                            syscon::logger::LogInfo("Trying to find configuration for USB device: [%04x-%04x] ...", interfaces[i].device_desc.idVendor, interfaces[i].device_desc.idProduct);
 
-                        ControllerConfig config = {0};
-                        ::syscon::config::LoadControllerConfig(&config, interfaces[0].device_desc.idVendor, interfaces[0].device_desc.idProduct);
+                            ControllerConfig config = {0};
+                            ::syscon::config::LoadControllerConfig(&config, interfaces[i].device_desc.idVendor, interfaces[i].device_desc.idProduct);
 
-                        if (strcmp(config.driver, "dualshock3") == 0)
-                        {
-                            syscon::logger::LogInfo("Initializing Dualshock 3 controller (Interface count: %d) ...", total_entries);
-                            controllers::Insert(std::make_unique<Dualshock3Controller>(std::make_unique<SwitchUSBDevice>(interfaces, total_entries), config, std::make_unique<syscon::logger::Logger>()));
-                        }
-                        else if (strcmp(config.driver, "dualshock4") == 0)
-                        {
-                            syscon::logger::LogInfo("Initializing Dualshock 4 controller (Interface count: %d) ...", total_entries);
-                            controllers::Insert(std::make_unique<Dualshock4Controller>(std::make_unique<SwitchUSBDevice>(interfaces, total_entries), config, std::make_unique<syscon::logger::Logger>()));
-                        }
-                        else if (strcmp(config.driver, "generic") == 0)
-                        {
-                            syscon::logger::LogInfo("Initializing Generic controller (Interface count: %d) ...", total_entries);
-                            controllers::Insert(std::make_unique<GenericHIDController>(std::make_unique<SwitchUSBDevice>(interfaces, total_entries), config, std::make_unique<syscon::logger::Logger>()));
-                        }
-                        else
-                        {
-                            syscon::logger::LogError("Unable to initial controller for device [%04x-%04x], driver: '%s' not found !", interfaces[0].device_desc.idVendor, interfaces[0].device_desc.idProduct, config.driver);
-                        }
+                            if (strcmp(config.driver, "dualshock3") == 0)
+                            {
+                                syscon::logger::LogInfo("Initializing Dualshock 3 controller ...");
+                                controllers::Insert(std::make_unique<Dualshock3Controller>(std::make_unique<SwitchUSBDevice>(&interfaces[i], 1), config, std::make_unique<syscon::logger::Logger>()));
+                            }
+                            else if (strcmp(config.driver, "dualshock4") == 0)
+                            {
+                                syscon::logger::LogInfo("Initializing Dualshock 4 controller ...");
+                                controllers::Insert(std::make_unique<Dualshock4Controller>(std::make_unique<SwitchUSBDevice>(&interfaces[i], 1), config, std::make_unique<syscon::logger::Logger>()));
+                            }
+                            else if (strcmp(config.driver, "xbox360") == 0)
+                            {
+                                syscon::logger::LogInfo("Initializing Xbox 360 controller ...");
+                                controllers::Insert(std::make_unique<Xbox360Controller>(std::make_unique<SwitchUSBDevice>(&interfaces[i], 1), config, std::make_unique<syscon::logger::Logger>()));
+                            }
+                            else if (strcmp(config.driver, "xboxone") == 0)
+                            {
+                                syscon::logger::LogInfo("Initializing Xbox One controller ...");
+                                controllers::Insert(std::make_unique<XboxOneController>(std::make_unique<SwitchUSBDevice>(&interfaces[i], 1), config, std::make_unique<syscon::logger::Logger>()));
+                            }
+                            else if (strcmp(config.driver, "generic") == 0)
+                            {
+                                syscon::logger::LogInfo("Initializing Generic controller ...");
+                                controllers::Insert(std::make_unique<GenericHIDController>(std::make_unique<SwitchUSBDevice>(&interfaces[i], 1), config, std::make_unique<syscon::logger::Logger>()));
+                            }
+                            else
+                            {
+                                syscon::logger::LogError("Unable to initial controller for device [%04x-%04x], driver: '%s' not found !", interfaces[i].device_desc.idVendor, interfaces[i].device_desc.idProduct, config.driver);
+                                continue;
+                            }
 
-                        /*
-
-
-                        if ((total_entries = QueryInterfaces(interfaces, sizeof(interfaces), USB_CLASS_VENDOR_SPEC, 0x5D, 0x01)) != 0) // 0x045E    0x028E
-                        {
-                            syscon::logger::LogInfo("Initializing Xbox 360 controller (Interface count: %d) ...", total_entries);
-                            controllers::Insert(std::make_unique<Xbox360Controller>(std::make_unique<SwitchUSBDevice>(interfaces, total_entries), std::make_unique<syscon::logger::Logger>()));
+                            break;
                         }
-                        else if ((total_entries = QueryInterfaces(interfaces, sizeof(interfaces), USB_CLASS_VENDOR_SPEC, 0x5D, 0x81)) != 0)
-                        {
-                            syscon::logger::LogInfo("Initializing Xbox 360 wireless controller (Interface count: %d)...", total_entries);
-
-                            for (int i = 0; i < total_entries; i++)
-                                controllers::Insert(std::make_unique<Xbox360WirelessController>(std::make_unique<SwitchUSBDevice>(interfaces + i, 1), std::make_unique<syscon::logger::Logger>()));
-                        }
-                        else if ((total_entries = QueryInterfaces(interfaces, sizeof(interfaces), 0x58, 0x42, 0x00)) != 0)
-                        {
-                            syscon::logger::LogInfo("Initializing Xbox Original controller (Interface count: %d) ...", total_entries);
-                            controllers::Insert(std::make_unique<XboxController>(std::make_unique<SwitchUSBDevice>(interfaces, total_entries), std::make_unique<syscon::logger::Logger>()));
-                        }
-                        else if ((total_entries = QueryInterfaces(interfaces, sizeof(interfaces), USB_CLASS_VENDOR_SPEC, 0x47, 0xD0)) != 0)
-                        {
-                            syscon::logger::LogInfo("Initializing Xbox One controller (Interface count: %d) ...", total_entries);
-                            controllers::Insert(std::make_unique<XboxOneController>(std::make_unique<SwitchUSBDevice>(interfaces, total_entries), std::make_unique<syscon::logger::Logger>()));
-                        }*/
                     }
+                    /*else if ((total_entries = QueryInterfaces(interfaces, sizeof(interfaces), 0x58, 0x42, 0x00)) != 0)
+                    {
+
+                        syscon::logger::LogInfo("Initializing Xbox Original controller (Interface count: %d) ...", total_entries);
+                        controllers::Insert(std::make_unique<XboxController>(std::make_unique<SwitchUSBDevice>(interfaces, total_entries), std::make_unique<syscon::logger::Logger>()));
+                    }*/
+
                     else
                     {
                         syscon::logger::LogError("No HID interfaces found for this USB device !");
@@ -170,14 +167,11 @@ namespace syscon::usb
             } while (is_usb_interface_change_thread_running);
         }
 
-        s32 QueryInterfaces(UsbHsInterface *interfaces, size_t interfaces_maxsize, u8 iclass, u8 isubclass, u8 iprotocol)
+        s32 QueryAvailableInterfacesByClass(UsbHsInterface *interfaces, size_t interfaces_maxsize, u8 iclass)
         {
             UsbHsInterfaceFilter filter{
-                .Flags = UsbHsInterfaceFilterFlags_bInterfaceClass | UsbHsInterfaceFilterFlags_bInterfaceSubClass | UsbHsInterfaceFilterFlags_bInterfaceProtocol,
-                .bInterfaceClass = iclass,
-                .bInterfaceSubClass = isubclass,
-                .bInterfaceProtocol = iprotocol,
-            };
+                .Flags = UsbHsInterfaceFilterFlags_bInterfaceClass,
+                .bInterfaceClass = iclass};
 
             s32 out_entries = 0;
             memset(interfaces, 0, interfaces_maxsize);

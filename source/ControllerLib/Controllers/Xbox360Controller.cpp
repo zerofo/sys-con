@@ -1,6 +1,11 @@
 #include "Controllers/Xbox360Controller.h"
 #include <cmath>
 
+static constexpr uint8_t reconnectPacket[]{0x08, 0x00, 0x0F, 0xC0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+static constexpr uint8_t poweroffPacket[]{0x00, 0x00, 0x08, 0xC0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+static constexpr uint8_t initDriverPacket[]{0x00, 0x00, 0x02, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+static constexpr uint8_t ledPacketOn[]{0x00, 0x00, 0x08, 0x40 | XBOX360LED_TOPLEFT, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+
 Xbox360Controller::Xbox360Controller(std::unique_ptr<IUSBDevice> &&interface, const ControllerConfig &config, std::unique_ptr<ILogger> &&logger)
     : IController(std::move(interface), config, std::move(logger))
 {
@@ -14,6 +19,9 @@ Xbox360Controller::~Xbox360Controller()
 ams::Result Xbox360Controller::Initialize()
 {
     R_TRY(OpenInterfaces());
+
+    if (m_is_wireless)
+        R_TRY(m_outPipe->Write(reconnectPacket, sizeof(reconnectPacket)));
 
     SetLED(XBOX360LED_TOPLEFT);
 
@@ -34,11 +42,13 @@ ams::Result Xbox360Controller::OpenInterfaces()
     {
         R_TRY(interface->Open());
 
-        if (interface->GetDescriptor()->bInterfaceProtocol != 1)
+        if ((interface->GetDescriptor()->bInterfaceProtocol & 0x7F) != 0x01)
             continue;
 
         if (interface->GetDescriptor()->bNumEndpoints < 2)
             continue;
+
+        m_is_wireless = interface->GetDescriptor()->bInterfaceProtocol & 0x80;
 
         if (!m_inPipe)
         {
@@ -79,6 +89,9 @@ ams::Result Xbox360Controller::OpenInterfaces()
 
 void Xbox360Controller::CloseInterfaces()
 {
+    if (m_is_wireless && m_is_present)
+        m_outPipe->Write(poweroffPacket, sizeof(poweroffPacket));
+
     // m_device->Reset();
     m_device->Close();
 }
@@ -92,6 +105,27 @@ ams::Result Xbox360Controller::GetInput()
 
     uint8_t type = input_bytes[0];
 
+    if (m_is_wireless)
+    {
+        if (type & 0x08)
+        {
+            bool newPresence = (input_bytes[1] & 0x80) != 0;
+
+            if (m_is_present != newPresence)
+            {
+                m_is_present = newPresence;
+
+                if (m_is_present)
+                    OnControllerConnect();
+                else
+                    OnControllerDisconnect();
+            }
+        }
+
+        if (input_bytes[1] != 0x1)
+            R_RETURN(1);
+    }
+
     if (type == XBOX360INPUT_BUTTON) // Button data
     {
         m_buttonData = *reinterpret_cast<Xbox360ButtonData *>(input_bytes);
@@ -104,16 +138,11 @@ bool Xbox360Controller::Support(ControllerFeature feature)
 {
     if (feature == SUPPORTS_RUMBLE)
         return true;
+
+    if (feature == SUPPORTS_PAIRING)
+        return m_is_wireless ? true : false;
+
     return false;
-}
-
-ams::Result Xbox360Controller::SendInitBytes()
-{
-    uint8_t init_bytes[]{
-        0x05,
-        0x20, 0x00, 0x01, 0x00};
-
-    R_RETURN(m_outPipe->Write(init_bytes, sizeof(init_bytes)));
 }
 
 float Xbox360Controller::NormalizeTrigger(uint8_t deadzonePercent, uint8_t value)
@@ -208,12 +237,54 @@ NormalizedButtonData Xbox360Controller::GetNormalizedButtonData()
 
 ams::Result Xbox360Controller::SetRumble(uint8_t strong_magnitude, uint8_t weak_magnitude)
 {
-    uint8_t rumbleData[]{0x00, sizeof(Xbox360RumbleData), 0x00, strong_magnitude, weak_magnitude, 0x00, 0x00, 0x00};
-    R_RETURN(m_outPipe->Write(rumbleData, sizeof(rumbleData)));
+    if (m_is_wireless)
+    {
+        uint8_t rumbleData[]{0x00, 0x01, 0x0F, 0xC0, 0x00, strong_magnitude, weak_magnitude, 0x00, 0x00, 0x00, 0x00, 0x00};
+        R_RETURN(m_outPipe->Write(rumbleData, sizeof(rumbleData)));
+    }
+    else
+    {
+        uint8_t rumbleData[]{0x00, sizeof(Xbox360RumbleData), 0x00, strong_magnitude, weak_magnitude, 0x00, 0x00, 0x00};
+        R_RETURN(m_outPipe->Write(rumbleData, sizeof(rumbleData)));
+    }
 }
 
 ams::Result Xbox360Controller::SetLED(Xbox360LEDValue value)
 {
-    uint8_t ledPacket[]{0x01, 0x03, static_cast<uint8_t>(value)};
-    R_RETURN(m_outPipe->Write(ledPacket, sizeof(ledPacket)));
+    if (m_is_wireless)
+    {
+        uint8_t customLEDPacket[]{0x00, 0x00, 0x08, static_cast<uint8_t>(value | 0x40), 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+        R_RETURN(m_outPipe->Write(customLEDPacket, sizeof(customLEDPacket)));
+    }
+    else
+    {
+        uint8_t ledPacket[]{0x01, 0x03, static_cast<uint8_t>(value)};
+        R_RETURN(m_outPipe->Write(ledPacket, sizeof(ledPacket)));
+    }
+}
+
+ams::Result Xbox360Controller::OnControllerConnect()
+{
+    m_outputBuffer.push_back(OutputPacket{reconnectPacket, sizeof(reconnectPacket)});
+    m_outputBuffer.push_back(OutputPacket{initDriverPacket, sizeof(initDriverPacket)});
+    m_outputBuffer.push_back(OutputPacket{ledPacketOn, sizeof(ledPacketOn)});
+    R_SUCCEED();
+}
+
+ams::Result Xbox360Controller::OnControllerDisconnect()
+{
+    m_outputBuffer.push_back(OutputPacket{poweroffPacket, sizeof(poweroffPacket)});
+    R_SUCCEED();
+}
+
+ams::Result Xbox360Controller::OutputBuffer()
+{
+    if (m_outputBuffer.empty())
+        R_RETURN(1);
+
+    auto it = m_outputBuffer.begin();
+    R_TRY(m_outPipe->Write(it->packet, it->length));
+    m_outputBuffer.erase(it);
+
+    R_SUCCEED();
 }

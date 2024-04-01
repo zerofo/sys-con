@@ -1,7 +1,7 @@
 #pragma once
 
 #include "IController.h"
-
+#include <vector>
 // References used:
 // https://cs.chromium.org/chromium/src/device/gamepad/xbox_controller_mac.mm
 
@@ -80,12 +80,20 @@ enum Xbox360LEDValue : uint8_t
     XBOX360LED_BLINKONCE,
 };
 
+struct OutputPacket
+{
+    const uint8_t *packet;
+    uint8_t length;
+};
+
 class Xbox360Controller : public IController
 {
 private:
     IUSBEndpoint *m_inPipe = nullptr;
     IUSBEndpoint *m_outPipe = nullptr;
-
+    bool m_is_wireless = false;
+    bool m_is_present = false;
+    std::vector<OutputPacket> m_outputBuffer;
     Xbox360ButtonData m_buttonData{};
 
 public:
@@ -107,8 +115,14 @@ public:
     float NormalizeTrigger(uint8_t deadzonePercent, uint8_t value);
     void NormalizeAxis(int16_t x, int16_t y, uint8_t deadzonePercent, float *x_out, float *y_out);
 
-    ams::Result SendInitBytes();
     ams::Result SetRumble(uint8_t strong_magnitude, uint8_t weak_magnitude);
 
     ams::Result SetLED(Xbox360LEDValue value);
+
+    ams::Result OnControllerConnect();
+    ams::Result OnControllerDisconnect();
+
+    virtual ams::Result OutputBuffer() override;
+
+    bool IsControllerActive() override { return m_is_present; }
 };
