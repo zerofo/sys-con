@@ -89,7 +89,7 @@ private:
     Xbox360ButtonData m_buttonData{};
 
 public:
-    Xbox360Controller(std::unique_ptr<IUSBDevice> &&device, std::unique_ptr<ILogger> &&logger);
+    Xbox360Controller(std::unique_ptr<IUSBDevice> &&device, const ControllerConfig &config, std::unique_ptr<ILogger> &&logger);
     virtual ~Xbox360Controller() override;
 
     virtual ams::Result Initialize() override;
@@ -111,7 +111,4 @@ public:
     ams::Result SetRumble(uint8_t strong_magnitude, uint8_t weak_magnitude);
 
     ams::Result SetLED(Xbox360LEDValue value);
-
-    static void LoadConfig(const ControllerConfig *config);
-    virtual ControllerConfig *GetConfig() override;
 };

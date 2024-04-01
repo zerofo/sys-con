@@ -147,7 +147,7 @@ private:
     Dualshock4USBButtonData m_buttonData{};
 
 public:
-    Dualshock4Controller(std::unique_ptr<IUSBDevice> &&device, std::unique_ptr<ILogger> &&logger);
+    Dualshock4Controller(std::unique_ptr<IUSBDevice> &&device, const ControllerConfig &config, std::unique_ptr<ILogger> &&logger);
     virtual ~Dualshock4Controller() override;
 
     virtual ams::Result Initialize() override;
@@ -167,7 +167,4 @@ public:
 
     ams::Result SendInitBytes();
     ams::Result SetRumble(uint8_t strong_magnitude, uint8_t weak_magnitude);
-
-    static void LoadConfig(const ControllerConfig *config, RGBAColor ledValue);
-    virtual ControllerConfig *GetConfig() override;
 };

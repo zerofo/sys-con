@@ -1,10 +1,8 @@
 #include "Controllers/Dualshock3Controller.h"
 #include <cmath>
 
-static ControllerConfig _dualshock3ControllerConfig{};
-
-Dualshock3Controller::Dualshock3Controller(std::unique_ptr<IUSBDevice> &&device, std::unique_ptr<ILogger> &&logger)
-    : IController(std::move(device), std::move(logger))
+Dualshock3Controller::Dualshock3Controller(std::unique_ptr<IUSBDevice> &&device, const ControllerConfig &config, std::unique_ptr<ILogger> &&logger)
+    : IController(std::move(device), config, std::move(logger))
 {
 }
 
@@ -174,12 +172,12 @@ NormalizedButtonData Dualshock3Controller::GetNormalizedButtonData()
 {
     NormalizedButtonData normalData{};
 
-    normalData.triggers[0] = NormalizeTrigger(_dualshock3ControllerConfig.triggerDeadzonePercent[0], m_buttonData.trigger_left_pressure);
-    normalData.triggers[1] = NormalizeTrigger(_dualshock3ControllerConfig.triggerDeadzonePercent[1], m_buttonData.trigger_right_pressure);
+    normalData.triggers[0] = NormalizeTrigger(GetConfig().triggerDeadzonePercent[0], m_buttonData.trigger_left_pressure);
+    normalData.triggers[1] = NormalizeTrigger(GetConfig().triggerDeadzonePercent[1], m_buttonData.trigger_right_pressure);
 
-    NormalizeAxis(m_buttonData.stick_left_x, m_buttonData.stick_left_y, _dualshock3ControllerConfig.stickDeadzonePercent[0],
+    NormalizeAxis(m_buttonData.stick_left_x, m_buttonData.stick_left_y, GetConfig().stickDeadzonePercent[0],
                   &normalData.sticks[0].axis_x, &normalData.sticks[0].axis_y);
-    NormalizeAxis(m_buttonData.stick_right_x, m_buttonData.stick_right_y, _dualshock3ControllerConfig.stickDeadzonePercent[1],
+    NormalizeAxis(m_buttonData.stick_right_x, m_buttonData.stick_right_y, GetConfig().stickDeadzonePercent[1],
                   &normalData.sticks[1].axis_x, &normalData.sticks[1].axis_y);
 
     bool buttons[MAX_CONTROLLER_BUTTONS] = {
@@ -205,7 +203,7 @@ NormalizedButtonData Dualshock3Controller::GetNormalizedButtonData()
 
     for (int i = 0; i != MAX_CONTROLLER_BUTTONS; ++i)
     {
-        ControllerButton button = _dualshock3ControllerConfig.buttons[i];
+        ControllerButton button = GetConfig().buttons[i];
         if (button == NONE)
             continue;
 
@@ -239,14 +237,4 @@ ams::Result Dualshock3Controller::SetLED(Dualshock3LEDValue value)
         LED_PERMANENT,
         LED_PERMANENT};
     R_RETURN(SendCommand(m_interface, Ds3FeatureUnknown1, ledPacket, sizeof(ledPacket)));
-}
-
-void Dualshock3Controller::LoadConfig(const ControllerConfig *config)
-{
-    _dualshock3ControllerConfig = *config;
-}
-
-ControllerConfig *Dualshock3Controller::GetConfig()
-{
-    return &_dualshock3ControllerConfig;
 }

@@ -37,7 +37,8 @@ struct NormalizedStick
     float axis_y;
 };
 
-union RGBAColor {
+union RGBAColor
+{
     struct
     {
         uint8_t r;
@@ -51,6 +52,9 @@ union RGBAColor {
 
 struct ControllerConfig
 {
+    char ini_section[32]{};
+
+    char driver[32]{};
     uint8_t stickDeadzonePercent[MAX_JOYSTICKS]{};
     uint16_t stickRotationDegrees[MAX_JOYSTICKS]{};
     uint8_t triggerDeadzonePercent[MAX_TRIGGERS]{};
@@ -62,4 +66,5 @@ struct ControllerConfig
     RGBAColor buttonsColor{0, 0, 0, 255};
     RGBAColor leftGripColor{70, 70, 70, 255};
     RGBAColor rightGripColor{70, 70, 70, 255};
+    RGBAColor ledColor{0, 0, 64, 255};
 };

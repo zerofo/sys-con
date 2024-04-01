@@ -4,13 +4,11 @@
 
 // https://www.usb.org/sites/default/files/documents/hid1_11.pdf  p55
 
-static ControllerConfig _GenericHIDControllerConfig{};
-
-GenericHIDController::GenericHIDController(std::unique_ptr<IUSBDevice> &&device, std::unique_ptr<ILogger> &&logger)
-    : IController(std::move(device), std::move(logger)),
+GenericHIDController::GenericHIDController(std::unique_ptr<IUSBDevice> &&device, const ControllerConfig &config, std::unique_ptr<ILogger> &&logger)
+    : IController(std::move(device), config, std::move(logger)),
       m_inputCount(0)
 {
-    LogPrint(LogLevelInfo, "GenericHIDController: Created for VID_%04X&PID_%04X", m_device->GetVendor(), m_device->GetProduct());
+    LogPrint(LogLevelInfo, "GenericHIDController: Created for VID_%04x&PID_%04x", m_device->GetVendor(), m_device->GetProduct());
 }
 
 GenericHIDController::~GenericHIDController()
@@ -137,12 +135,12 @@ ams::Result GenericHIDController::ReadInput(NormalizedButtonData *normalData, ui
     GenericHIDButtonData *buttonData = reinterpret_cast<GenericHIDButtonData *>(input_bytes);
 
     /*
-        normalData->triggers[0] = NormalizeTrigger(_GenericHIDControllerConfig.triggerDeadzonePercent[0], buttonData->trigger_left_pressure);
-        normalData->triggers[1] = NormalizeTrigger(_GenericHIDControllerConfig.triggerDeadzonePercent[1], buttonData->trigger_right_pressure);
+        normalData->triggers[0] = NormalizeTrigger(GetConfig().triggerDeadzonePercent[0], buttonData->trigger_left_pressure);
+        normalData->triggers[1] = NormalizeTrigger(GetConfig().triggerDeadzonePercent[1], buttonData->trigger_right_pressure);
 
-        NormalizeAxis(buttonData->stick_left_x, buttonData->stick_left_y, _GenericHIDControllerConfig.stickDeadzonePercent[0],
+        NormalizeAxis(buttonData->stick_left_x, buttonData->stick_left_y, GetConfig().stickDeadzonePercent[0],
                       &normalData->sticks[0].axis_x, &normalData->sticks[0].axis_y);
-        NormalizeAxis(buttonData->stick_right_x, buttonData->stick_right_y, _GenericHIDControllerConfig.stickDeadzonePercent[1],
+        NormalizeAxis(buttonData->stick_right_x, buttonData->stick_right_y, GetConfig().stickDeadzonePercent[1],
                       &normalData->sticks[1].axis_x, &normalData->sticks[1].axis_y);
     */
     // Button 1, 2, 3, 4 has been mapped according to remote control: Guilikit, Xbox360
@@ -169,7 +167,7 @@ ams::Result GenericHIDController::ReadInput(NormalizedButtonData *normalData, ui
 
     for (int i = 0; i < MAX_CONTROLLER_BUTTONS; i++)
     {
-        ControllerButton button = _GenericHIDControllerConfig.buttons[i];
+        ControllerButton button = GetConfig().buttons[i];
         if (button == NONE)
             continue;
 
@@ -237,19 +235,4 @@ ams::Result GenericHIDController::SetRumble(uint8_t strong_magnitude, uint8_t we
     (void)weak_magnitude;
     // Not implemented yet
     return 9;
-}
-/*
-ams::Result GenericHIDController::SendCommand(IUSBInterface *interface, GenericHIDFeatureValue feature, const void *buffer, uint16_t size)
-{
-    return interface->ControlTransfer(0x21, 0x09, static_cast<uint16_t>(feature), 0, size, buffer);
-}
-*/
-void GenericHIDController::LoadConfig(const ControllerConfig *config)
-{
-    _GenericHIDControllerConfig = *config;
-}
-
-ControllerConfig *GenericHIDController::GetConfig()
-{
-    return &_GenericHIDControllerConfig;
 }

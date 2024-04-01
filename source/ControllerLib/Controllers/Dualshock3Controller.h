@@ -129,7 +129,7 @@ private:
     Dualshock3ButtonData m_buttonData{};
 
 public:
-    Dualshock3Controller(std::unique_ptr<IUSBDevice> &&device, std::unique_ptr<ILogger> &&logger);
+    Dualshock3Controller(std::unique_ptr<IUSBDevice> &&device, const ControllerConfig &config, std::unique_ptr<ILogger> &&logger);
     virtual ~Dualshock3Controller() override;
 
     virtual ams::Result Initialize() override;
@@ -153,7 +153,4 @@ public:
     static ams::Result SendCommand(IUSBInterface *interface, Dualshock3FeatureValue feature, const void *buffer, uint16_t size);
 
     ams::Result SetLED(Dualshock3LEDValue value);
-
-    static void LoadConfig(const ControllerConfig *config);
-    virtual ControllerConfig *GetConfig() override;
 };

@@ -1,14 +1,13 @@
 #include "Controllers/Xbox360WirelessController.h"
 #include <cmath>
 
-static ControllerConfig _xbox360WControllerConfig{};
 static constexpr uint8_t reconnectPacket[]{0x08, 0x00, 0x0F, 0xC0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
 static constexpr uint8_t poweroffPacket[]{0x00, 0x00, 0x08, 0xC0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
 static constexpr uint8_t initDriverPacket[]{0x00, 0x00, 0x02, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
 static constexpr uint8_t ledPacketOn[]{0x00, 0x00, 0x08, 0x40 | XBOX360LED_TOPLEFT, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
 
-Xbox360WirelessController::Xbox360WirelessController(std::unique_ptr<IUSBDevice> &&device, std::unique_ptr<ILogger> &&logger)
-    : IController(std::move(device), std::move(logger))
+Xbox360WirelessController::Xbox360WirelessController(std::unique_ptr<IUSBDevice> &&device, const ControllerConfig &config, std::unique_ptr<ILogger> &&logger)
+    : IController(std::move(device), config, std::move(logger))
 {
 }
 
@@ -16,6 +15,7 @@ Xbox360WirelessController::~Xbox360WirelessController()
 {
     // Exit();
 }
+
 
 ams::Result Xbox360WirelessController::Initialize()
 {
@@ -188,12 +188,12 @@ NormalizedButtonData Xbox360WirelessController::GetNormalizedButtonData()
 {
     NormalizedButtonData normalData{};
 
-    normalData.triggers[0] = NormalizeTrigger(_xbox360WControllerConfig.triggerDeadzonePercent[0], m_buttonData.trigger_left);
-    normalData.triggers[1] = NormalizeTrigger(_xbox360WControllerConfig.triggerDeadzonePercent[1], m_buttonData.trigger_right);
+    normalData.triggers[0] = NormalizeTrigger(GetConfig().triggerDeadzonePercent[0], m_buttonData.trigger_left);
+    normalData.triggers[1] = NormalizeTrigger(GetConfig().triggerDeadzonePercent[1], m_buttonData.trigger_right);
 
-    NormalizeAxis(m_buttonData.stick_left_x, m_buttonData.stick_left_y, _xbox360WControllerConfig.stickDeadzonePercent[0],
+    NormalizeAxis(m_buttonData.stick_left_x, m_buttonData.stick_left_y, GetConfig().stickDeadzonePercent[0],
                   &normalData.sticks[0].axis_x, &normalData.sticks[0].axis_y);
-    NormalizeAxis(m_buttonData.stick_right_x, m_buttonData.stick_right_y, _xbox360WControllerConfig.stickDeadzonePercent[1],
+    NormalizeAxis(m_buttonData.stick_right_x, m_buttonData.stick_right_y, GetConfig().stickDeadzonePercent[1],
                   &normalData.sticks[1].axis_x, &normalData.sticks[1].axis_y);
 
     bool buttons[MAX_CONTROLLER_BUTTONS]{
@@ -219,7 +219,7 @@ NormalizedButtonData Xbox360WirelessController::GetNormalizedButtonData()
 
     for (int i = 0; i != MAX_CONTROLLER_BUTTONS; ++i)
     {
-        ControllerButton button = _xbox360WControllerConfig.buttons[i];
+        ControllerButton button = GetConfig().buttons[i];
         if (button == NONE)
             continue;
 
@@ -239,16 +239,6 @@ ams::Result Xbox360WirelessController::SetLED(Xbox360LEDValue value)
 {
     uint8_t customLEDPacket[]{0x00, 0x00, 0x08, static_cast<uint8_t>(value | 0x40), 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
     R_RETURN(WriteToEndpoint(customLEDPacket, sizeof(customLEDPacket)));
-}
-
-void Xbox360WirelessController::LoadConfig(const ControllerConfig *config)
-{
-    _xbox360WControllerConfig = *config;
-}
-
-ControllerConfig *Xbox360WirelessController::GetConfig()
-{
-    return &_xbox360WControllerConfig;
 }
 
 ams::Result Xbox360WirelessController::OnControllerConnect()

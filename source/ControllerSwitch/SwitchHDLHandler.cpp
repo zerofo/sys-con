@@ -67,11 +67,11 @@ ams::Result SwitchHDLHandler::InitHdlState()
         m_deviceInfo[i].deviceType = HidDeviceType_FullKey15;
         m_deviceInfo[i].npadInterfaceType = HidNpadInterfaceType_USB;
         // Set the controller colors. The grip colors are for Pro-Controller on [9.0.0+].
-        ControllerConfig *config = m_controller->GetConfig();
-        m_deviceInfo[i].singleColorBody = config->bodyColor.rgbaValue;
-        m_deviceInfo[i].singleColorButtons = config->buttonsColor.rgbaValue;
-        m_deviceInfo[i].colorLeftGrip = config->leftGripColor.rgbaValue;
-        m_deviceInfo[i].colorRightGrip = config->rightGripColor.rgbaValue;
+        const ControllerConfig &config = m_controller->GetConfig();
+        m_deviceInfo[i].singleColorBody = config.bodyColor.rgbaValue;
+        m_deviceInfo[i].singleColorButtons = config.buttonsColor.rgbaValue;
+        m_deviceInfo[i].colorLeftGrip = config.leftGripColor.rgbaValue;
+        m_deviceInfo[i].colorRightGrip = config.rightGripColor.rgbaValue;
 
         m_hdlState[i].battery_level = 4; // Set battery charge to full.
         m_hdlState[i].analog_stick_l.x = 0x1234;
@@ -133,9 +133,9 @@ ams::Result SwitchHDLHandler::UpdateHdlState(const NormalizedButtonData &data, u
     if (data.buttons[11])
         hdlState->buttons |= HidNpadButton_Plus;
 
-    ControllerConfig *config = m_controller->GetConfig();
+    const ControllerConfig &config = m_controller->GetConfig();
 
-    if (config && config->swapDPADandLSTICK)
+    if (config.swapDPADandLSTICK)
     {
         if (data.sticks[0].axis_y > 0.5f)
             hdlState->buttons |= HidNpadButton_Up;

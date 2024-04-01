@@ -112,14 +112,16 @@ namespace ams
         ::syscon::logger::LogInfo("OS version: %d.%d.%d", HOSVER_MAJOR(version), HOSVER_MINOR(version), HOSVER_MICRO(version));
 
         ::syscon::logger::LogDebug("Initializing configuration ...");
-        ::syscon::config::Initialize();
 
-        ::syscon::logger::SetLogLevel(::syscon::config::globalConfig.log_level);
+        ::syscon::config::GlobalConfig globalConfig;
+        ::syscon::config::LoadGlobalConfig(&globalConfig);
+
+        ::syscon::logger::SetLogLevel(globalConfig.log_level);
 
         ::syscon::logger::LogDebug("Initializing controllers ...");
         ::syscon::controllers::Initialize();
 
-        ::syscon::controllers::SetPollingFrequency(::syscon::config::globalConfig.polling_frequency_ms);
+        ::syscon::controllers::SetPollingFrequency(globalConfig.polling_frequency_ms);
 
         ::syscon::logger::LogDebug("Initializing USB stack ...");
         ::syscon::usb::Initialize();
@@ -135,7 +137,6 @@ namespace ams
         ::syscon::psc::Exit();
         ::syscon::usb::Exit();
         ::syscon::controllers::Exit();
-        ::syscon::config::Exit();
     }
 
 } // namespace ams

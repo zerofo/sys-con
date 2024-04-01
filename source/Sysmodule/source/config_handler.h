@@ -1,33 +1,22 @@
 #pragma once
 #include "ControllerTypes.h"
+#include "ControllerConfig.h"
+#include <string>
+#include <switch.h>
 
-#define CONFIG_PATH "/config/sys-con/"
-
-#define GLOBALCONFIG     "sdmc://" CONFIG_PATH "config_global.ini"
-#define XBOXCONFIG       "sdmc://" CONFIG_PATH "config_xboxorig.ini"
-#define XBOX360CONFIG    "sdmc://" CONFIG_PATH "config_xbox360.ini"
-#define XBOXONECONFIG    "sdmc://" CONFIG_PATH "config_xboxone.ini"
-#define DUALSHOCK3CONFIG "sdmc://" CONFIG_PATH "config_dualshock3.ini"
-#define DUALSHOCK4CONFIG "sdmc://" CONFIG_PATH "config_dualshock4.ini"
-#define GENERICCONFIG    "sdmc://" CONFIG_PATH "config_generic.ini"
+#define CONFIG_PATH  "sdmc:///config/sys-con/"
+#define GLOBALCONFIG CONFIG_PATH "config_global.ini"
 
 namespace syscon::config
 {
     struct GlobalConfig
     {
+        char ini_section[32]{};
         uint16_t polling_frequency_ms;
         int log_level;
     };
 
-    inline GlobalConfig globalConfig{};
+    Result LoadGlobalConfig(GlobalConfig *config);
 
-    void LoadGlobalConfig(const GlobalConfig &config);
-    void LoadAllConfigs();
-    bool CheckForFileChanges();
-
-    Result Initialize();
-    void Exit();
-
-    Result Enable();
-    void Disable();
+    Result LoadControllerConfig(ControllerConfig *config, uint16_t vendor_id, uint16_t product_id);
 }; // namespace syscon::config

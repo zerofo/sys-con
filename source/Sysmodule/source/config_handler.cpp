@@ -5,28 +5,12 @@
 #include "logger.h"
 #include <cstring>
 #include <stratosphere.hpp>
-#include "usb_module.h"
 #include <stratosphere/util/util_ini.hpp>
 
 namespace syscon::config
 {
     namespace
     {
-        ControllerConfig tempConfig;
-        GlobalConfig tempGlobalConfig;
-        RGBAColor tempColor;
-
-        UTimer filecheckTimer;
-        Waiter filecheckTimerWaiter = waiterForUTimer(&filecheckTimer);
-
-        // Thread to check for any config changes
-        void ConfigChangedCheckThreadFunc(void *arg);
-
-        alignas(ams::os::ThreadStackAlignment) u8 config_thread_stack[0x2000];
-        Thread g_config_changed_check_thread;
-
-        bool is_config_changed_check_thread_running = false;
-
         constexpr std::array keyNames{
             "DEFAULT",
             "NONE",
@@ -83,16 +67,15 @@ namespace syscon::config
             return color;
         }
 
-        int ParseGlobalConfigLine(void *dummy, const char *section, const char *name, const char *value)
+        int ParseGlobalConfigLine(void *data, const char *section, const char *name, const char *value)
         {
-            (void)(dummy);
-
-            if (strcmp(section, "global") == 0)
+            GlobalConfig *config = static_cast<GlobalConfig *>(data);
+            if (strcmp(section, config->ini_section) == 0)
             {
                 if (strcmp(name, "polling_frequency_ms") == 0)
-                    tempGlobalConfig.polling_frequency_ms = atoi(value);
+                    config->polling_frequency_ms = atoi(value);
                 else if (strcmp(name, "log_level") == 0)
-                    tempGlobalConfig.log_level = atoi(value);
+                    config->log_level = atoi(value);
                 else
                     return 0;
             }
@@ -102,19 +85,23 @@ namespace syscon::config
             return 1;
         }
 
-        int ParseControllerConfigLine(void *dummy, const char *section, const char *name, const char *value)
+        int ParseControllerConfigLine(void *data, const char *section, const char *name, const char *value)
         {
-            (void)(dummy);
+            ControllerConfig *config = static_cast<ControllerConfig *>(data);
 
-            if (strcmp(section, "controller") == 0)
+            if (strcmp(section, config->ini_section) == 0)
             {
-                if (strncmp(name, "KEY_", 4) == 0)
+                if (strcmp(name, "driver") == 0)
+                {
+                    strncpy(config->driver, value, sizeof(config->driver));
+                }
+                else if (strncmp(name, "KEY_", 4) == 0)
                 {
                     ControllerButton button = StringToKey(name + 4);
                     ControllerButton buttonValue = StringToKey(value);
                     if (button >= 2)
                     {
-                        tempConfig.buttons[button - 2] = buttonValue;
+                        config->buttons[button - 2] = buttonValue;
                         return 1;
                     }
                     else
@@ -124,29 +111,29 @@ namespace syscon::config
                     }
                 }
                 else if (strcmp(name, "left_stick_deadzone") == 0)
-                    tempConfig.stickDeadzonePercent[0] = atoi(value);
+                    config->stickDeadzonePercent[0] = atoi(value);
                 else if (strcmp(name, "right_stick_deadzone") == 0)
-                    tempConfig.stickDeadzonePercent[1] = atoi(value);
+                    config->stickDeadzonePercent[1] = atoi(value);
                 else if (strcmp(name, "left_stick_rotation") == 0)
-                    tempConfig.stickRotationDegrees[0] = atoi(value);
+                    config->stickRotationDegrees[0] = atoi(value);
                 else if (strcmp(name, "right_stick_rotation") == 0)
-                    tempConfig.stickRotationDegrees[1] = atoi(value);
+                    config->stickRotationDegrees[1] = atoi(value);
                 else if (strcmp(name, "left_trigger_deadzone") == 0)
-                    tempConfig.triggerDeadzonePercent[0] = atoi(value);
+                    config->triggerDeadzonePercent[0] = atoi(value);
                 else if (strcmp(name, "right_trigger_deadzone") == 0)
-                    tempConfig.triggerDeadzonePercent[1] = atoi(value);
+                    config->triggerDeadzonePercent[1] = atoi(value);
                 else if (strcmp(name, "swap_dpad_and_lstick") == 0)
-                    tempConfig.swapDPADandLSTICK = (strcmp(value, "true") ? false : true);
+                    config->swapDPADandLSTICK = (strcmp(value, "true") ? false : true);
                 else if (strcmp(name, "color_body") == 0)
-                    tempConfig.bodyColor = DecodeColorValue(value);
+                    config->bodyColor = DecodeColorValue(value);
                 else if (strcmp(name, "color_buttons") == 0)
-                    tempConfig.buttonsColor = DecodeColorValue(value);
+                    config->buttonsColor = DecodeColorValue(value);
                 else if (strcmp(name, "color_leftGrip") == 0)
-                    tempConfig.leftGripColor = DecodeColorValue(value);
+                    config->leftGripColor = DecodeColorValue(value);
                 else if (strcmp(name, "color_rightGrip") == 0)
-                    tempConfig.rightGripColor = DecodeColorValue(value);
+                    config->rightGripColor = DecodeColorValue(value);
                 else if (strcmp(name, "color_led") == 0)
-                    tempColor = DecodeColorValue(value);
+                    config->ledColor = DecodeColorValue(value);
                 else
                     return 0;
             }
@@ -155,185 +142,45 @@ namespace syscon::config
             return 1;
         }
 
-        Result ReadFromConfig(const char *path, ams::util::ini::Handler h)
+        Result ReadFromConfig(const char *path, ams::util::ini::Handler h, void *config)
         {
-            tempConfig = ControllerConfig{};
-
-            /* Open the file. */
             ams::fs::FileHandle file;
             {
                 if (R_FAILED(ams::fs::OpenFile(std::addressof(file), path, ams::fs::OpenMode_Read)))
                 {
+                    syscon::logger::LogError("Unable to open configuration file: '%s' !", path);
                     return 1;
                 }
             }
             ON_SCOPE_EXIT { ams::fs::CloseFile(file); };
 
             /* Parse the config. */
-            return ams::util::ini::ParseFile(file, nullptr, h);
-        }
-
-        void ConfigChangedCheckThreadFunc(void *arg)
-        {
-            (void)(arg);
-            syscon::logger::LogInfo("Starting config check thread!");
-            do
-            {
-                if (R_SUCCEEDED(waitSingle(filecheckTimerWaiter, UINT64_MAX)))
-                {
-                    if (config::CheckForFileChanges())
-                    {
-                        syscon::logger::LogInfo("File check succeeded! Loading configs...");
-                        config::LoadAllConfigs();
-                    }
-                }
-            } while (is_config_changed_check_thread_running);
+            syscon::logger::LogDebug("Parsing configuration file: '%s' ...", path);
+            return ams::util::ini::ParseFile(file, config, h);
         }
     } // namespace
 
-    void LoadGlobalConfig(const GlobalConfig &config)
+    Result LoadGlobalConfig(GlobalConfig *config)
     {
-        config::globalConfig = config;
-    }
-
-    void LoadAllConfigs()
-    {
-        if (R_SUCCEEDED(ReadFromConfig(GLOBALCONFIG, ParseGlobalConfigLine)))
-        {
-            LoadGlobalConfig(tempGlobalConfig);
-        }
-        else
-            syscon::logger::LogError("Failed to read from global config (%s)!", GLOBALCONFIG);
-
-        if (R_SUCCEEDED(ReadFromConfig(XBOXCONFIG, ParseControllerConfigLine)))
-        {
-            XboxController::LoadConfig(&tempConfig);
-        }
-        else
-            syscon::logger::LogError("Failed to read from xbox orig config (%s)!", XBOXCONFIG);
-
-        if (R_SUCCEEDED(ReadFromConfig(XBOXONECONFIG, ParseControllerConfigLine)))
-            XboxOneController::LoadConfig(&tempConfig);
-        else
-            syscon::logger::LogError("Failed to read from xbox one config (%s)!", XBOXONECONFIG);
-
-        if (R_SUCCEEDED(ReadFromConfig(XBOX360CONFIG, ParseControllerConfigLine)))
-        {
-            Xbox360Controller::LoadConfig(&tempConfig);
-            Xbox360WirelessController::LoadConfig(&tempConfig);
-        }
-        else
-            syscon::logger::LogError("Failed to read from xbox 360 config (%s)!", XBOX360CONFIG);
-
-        if (R_SUCCEEDED(ReadFromConfig(DUALSHOCK3CONFIG, ParseControllerConfigLine)))
-            Dualshock3Controller::LoadConfig(&tempConfig);
-        else
-            syscon::logger::LogError("Failed to read from dualshock 3 config (%s)!", DUALSHOCK3CONFIG);
-
-        if (R_SUCCEEDED(ReadFromConfig(DUALSHOCK4CONFIG, ParseControllerConfigLine)))
-            Dualshock4Controller::LoadConfig(&tempConfig, tempColor);
-        else
-            syscon::logger::LogError("Failed to read from dualshock 4 config (%s)!", DUALSHOCK4CONFIG);
-
-        if (R_SUCCEEDED(ReadFromConfig(GENERICCONFIG, ParseControllerConfigLine)))
-            GenericHIDController::LoadConfig(&tempConfig);
-        else
-            syscon::logger::LogError("Failed to read from generic config (%s)!", GENERICCONFIG);
-    }
-
-    bool CheckForFileChanges()
-    {
-        static u64 globalConfigLastModified;
-        static u64 xboxConfigLastModified;
-        static u64 xbox360ConfigLastModified;
-        static u64 xboxOneConfigLastModified;
-        static u64 dualshock3ConfigLastModified;
-        static u64 dualshock4ConfigLastModified;
-
-        // Maybe this should be called only once when initializing?
-        // I left it here in case this would cause issues when ejecting the SD card
-        FsFileSystem *fs = fsdevGetDeviceFileSystem("sdmc");
-
-        if (fs == nullptr)
-            return false;
-
-        bool filesChanged = false;
-        FsTimeStampRaw timestamp;
-
-        if (R_SUCCEEDED(fsFsGetFileTimeStampRaw(fs, GLOBALCONFIG, &timestamp)))
-            if (globalConfigLastModified != timestamp.modified)
-            {
-                globalConfigLastModified = timestamp.modified;
-                filesChanged = true;
-            }
-
-        if (R_SUCCEEDED(fsFsGetFileTimeStampRaw(fs, XBOXCONFIG, &timestamp)))
-            if (xboxConfigLastModified != timestamp.modified)
-            {
-                xboxConfigLastModified = timestamp.modified;
-                filesChanged = true;
-            }
-
-        if (R_SUCCEEDED(fsFsGetFileTimeStampRaw(fs, XBOX360CONFIG, &timestamp)))
-            if (xbox360ConfigLastModified != timestamp.modified)
-            {
-                xbox360ConfigLastModified = timestamp.modified;
-                filesChanged = true;
-            }
-
-        if (R_SUCCEEDED(fsFsGetFileTimeStampRaw(fs, XBOXONECONFIG, &timestamp)))
-            if (xboxOneConfigLastModified != timestamp.modified)
-            {
-                xboxOneConfigLastModified = timestamp.modified;
-                filesChanged = true;
-            }
-
-        if (R_SUCCEEDED(fsFsGetFileTimeStampRaw(fs, DUALSHOCK3CONFIG, &timestamp)))
-            if (dualshock3ConfigLastModified != timestamp.modified)
-            {
-                dualshock3ConfigLastModified = timestamp.modified;
-                filesChanged = true;
-            }
-
-        if (R_SUCCEEDED(fsFsGetFileTimeStampRaw(fs, DUALSHOCK4CONFIG, &timestamp)))
-            if (dualshock4ConfigLastModified != timestamp.modified)
-            {
-                dualshock4ConfigLastModified = timestamp.modified;
-                filesChanged = true;
-            }
-        return filesChanged;
-    }
-
-    Result Initialize()
-    {
-        config::LoadAllConfigs();
-        config::CheckForFileChanges();
-        utimerCreate(&filecheckTimer, 1e+9L, TimerType_Repeating);
-        return Enable();
-    }
-
-    void Exit()
-    {
-        Disable();
-    }
-
-    Result Enable()
-    {
-        if (filecheckTimer.started)
+        snprintf(config->ini_section, sizeof(config->ini_section), "global");
+        if (R_FAILED(ReadFromConfig(GLOBALCONFIG, ParseGlobalConfigLine, config)))
             return 1;
-        utimerStart(&filecheckTimer);
-        is_config_changed_check_thread_running = true;
-        R_ABORT_UNLESS(threadCreate(&g_config_changed_check_thread, &ConfigChangedCheckThreadFunc, nullptr, config_thread_stack, sizeof(config_thread_stack), 0x3E, -2));
-        R_ABORT_UNLESS(threadStart(&g_config_changed_check_thread));
+
         return 0;
     }
 
-    void Disable()
+    Result LoadControllerConfig(ControllerConfig *config, uint16_t vendor_id, uint16_t product_id)
     {
-        is_config_changed_check_thread_running = false;
-        utimerStop(&filecheckTimer);
-        svcCancelSynchronization(g_config_changed_check_thread.handle);
-        threadWaitForExit(&g_config_changed_check_thread);
-        threadClose(&g_config_changed_check_thread);
+        // Load default config
+        snprintf(config->ini_section, sizeof(config->ini_section), "default");
+        if (R_FAILED(ReadFromConfig(GLOBALCONFIG, ParseControllerConfigLine, config)))
+            return 1;
+
+        // Override with vendor specific config
+        snprintf(config->ini_section, sizeof(config->ini_section), "%04x-%04x", vendor_id, product_id);
+        if (R_FAILED(ReadFromConfig(GLOBALCONFIG, ParseControllerConfigLine, config)))
+            return 1;
+
+        return 0;
     }
 } // namespace syscon::config

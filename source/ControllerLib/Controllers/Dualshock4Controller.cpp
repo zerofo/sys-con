@@ -1,11 +1,8 @@
 #include "Controllers/Dualshock4Controller.h"
 #include <cmath>
 
-static ControllerConfig _dualshock4ControllerConfig{};
-static RGBAColor _ledValue{0x00, 0x00, 0x40};
-
-Dualshock4Controller::Dualshock4Controller(std::unique_ptr<IUSBDevice> &&device, std::unique_ptr<ILogger> &&logger)
-    : IController(std::move(device), std::move(logger))
+Dualshock4Controller::Dualshock4Controller(std::unique_ptr<IUSBDevice> &&device, const ControllerConfig &config, std::unique_ptr<ILogger> &&logger)
+    : IController(std::move(device), config, std::move(logger))
 {
 }
 
@@ -18,8 +15,8 @@ ams::Result Dualshock4Controller::SendInitBytes()
 {
     const uint8_t init_bytes[32] = {
         0x05, 0x07, 0x00, 0x00,
-        0x00, 0x00,                            // initial strong and weak rumble
-        _ledValue.r, _ledValue.g, _ledValue.b, // LED color
+        0x00, 0x00,                                                             // initial strong and weak rumble
+        GetConfig().ledColor.r, GetConfig().ledColor.g, GetConfig().ledColor.b, // LED color
         0x00, 0x00};
 
     R_RETURN(m_outPipe->Write(init_bytes, sizeof(init_bytes)));
@@ -178,12 +175,12 @@ NormalizedButtonData Dualshock4Controller::GetNormalizedButtonData()
 {
     NormalizedButtonData normalData{};
 
-    normalData.triggers[0] = NormalizeTrigger(_dualshock4ControllerConfig.triggerDeadzonePercent[0], m_buttonData.l2_pressure);
-    normalData.triggers[1] = NormalizeTrigger(_dualshock4ControllerConfig.triggerDeadzonePercent[1], m_buttonData.r2_pressure);
+    normalData.triggers[0] = NormalizeTrigger(GetConfig().triggerDeadzonePercent[0], m_buttonData.l2_pressure);
+    normalData.triggers[1] = NormalizeTrigger(GetConfig().triggerDeadzonePercent[1], m_buttonData.r2_pressure);
 
-    NormalizeAxis(m_buttonData.stick_left_x, m_buttonData.stick_left_y, _dualshock4ControllerConfig.stickDeadzonePercent[0],
+    NormalizeAxis(m_buttonData.stick_left_x, m_buttonData.stick_left_y, GetConfig().stickDeadzonePercent[0],
                   &normalData.sticks[0].axis_x, &normalData.sticks[0].axis_y);
-    NormalizeAxis(m_buttonData.stick_right_x, m_buttonData.stick_right_y, _dualshock4ControllerConfig.stickDeadzonePercent[1],
+    NormalizeAxis(m_buttonData.stick_right_x, m_buttonData.stick_right_y, GetConfig().stickDeadzonePercent[1],
                   &normalData.sticks[1].axis_x, &normalData.sticks[1].axis_y);
 
     bool buttons[MAX_CONTROLLER_BUTTONS] = {
@@ -211,7 +208,7 @@ NormalizedButtonData Dualshock4Controller::GetNormalizedButtonData()
 
     for (int i = 0; i != MAX_CONTROLLER_BUTTONS; ++i)
     {
-        ControllerButton button = _dualshock4ControllerConfig.buttons[i];
+        ControllerButton button = GetConfig().buttons[i];
         if (button == NONE)
             continue;
 
@@ -228,15 +225,4 @@ ams::Result Dualshock4Controller::SetRumble(uint8_t strong_magnitude, uint8_t we
 
     // Not implemented yet
     R_RETURN(9);
-}
-
-void Dualshock4Controller::LoadConfig(const ControllerConfig *config, RGBAColor ledValue)
-{
-    _dualshock4ControllerConfig = *config;
-    _ledValue = ledValue;
-}
-
-ControllerConfig *Dualshock4Controller::GetConfig()
-{
-    return &_dualshock4ControllerConfig;
 }

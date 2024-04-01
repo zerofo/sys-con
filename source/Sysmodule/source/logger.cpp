@@ -18,7 +18,7 @@ namespace syscon::logger
         std::scoped_lock printLock(printMutex);
         s64 fileOffset = 0;
 
-        snprintf(logPath, sizeof(logPath), "sdmc://%s", log);
+        strncpy(logPath, log, sizeof(logPath));
 
         {
             ams::fs::FileHandle file;

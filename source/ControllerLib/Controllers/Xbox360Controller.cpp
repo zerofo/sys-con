@@ -1,10 +1,8 @@
 #include "Controllers/Xbox360Controller.h"
 #include <cmath>
 
-static ControllerConfig _xbox360ControllerConfig{};
-
-Xbox360Controller::Xbox360Controller(std::unique_ptr<IUSBDevice> &&interface, std::unique_ptr<ILogger> &&logger)
-    : IController(std::move(interface), std::move(logger))
+Xbox360Controller::Xbox360Controller(std::unique_ptr<IUSBDevice> &&interface, const ControllerConfig &config, std::unique_ptr<ILogger> &&logger)
+    : IController(std::move(interface), config, std::move(logger))
 {
 }
 
@@ -167,12 +165,12 @@ NormalizedButtonData Xbox360Controller::GetNormalizedButtonData()
 {
     NormalizedButtonData normalData{};
 
-    normalData.triggers[0] = NormalizeTrigger(_xbox360ControllerConfig.triggerDeadzonePercent[0], m_buttonData.trigger_left);
-    normalData.triggers[1] = NormalizeTrigger(_xbox360ControllerConfig.triggerDeadzonePercent[1], m_buttonData.trigger_right);
+    normalData.triggers[0] = NormalizeTrigger(GetConfig().triggerDeadzonePercent[0], m_buttonData.trigger_left);
+    normalData.triggers[1] = NormalizeTrigger(GetConfig().triggerDeadzonePercent[1], m_buttonData.trigger_right);
 
-    NormalizeAxis(m_buttonData.stick_left_x, m_buttonData.stick_left_y, _xbox360ControllerConfig.stickDeadzonePercent[0],
+    NormalizeAxis(m_buttonData.stick_left_x, m_buttonData.stick_left_y, GetConfig().stickDeadzonePercent[0],
                   &normalData.sticks[0].axis_x, &normalData.sticks[0].axis_y);
-    NormalizeAxis(m_buttonData.stick_right_x, m_buttonData.stick_right_y, _xbox360ControllerConfig.stickDeadzonePercent[1],
+    NormalizeAxis(m_buttonData.stick_right_x, m_buttonData.stick_right_y, GetConfig().stickDeadzonePercent[1],
                   &normalData.sticks[1].axis_x, &normalData.sticks[1].axis_y);
 
     bool buttons[MAX_CONTROLLER_BUTTONS]{
@@ -198,7 +196,7 @@ NormalizedButtonData Xbox360Controller::GetNormalizedButtonData()
 
     for (int i = 0; i != MAX_CONTROLLER_BUTTONS; ++i)
     {
-        ControllerButton button = _xbox360ControllerConfig.buttons[i];
+        ControllerButton button = GetConfig().buttons[i];
         if (button == NONE)
             continue;
 
@@ -218,14 +216,4 @@ ams::Result Xbox360Controller::SetLED(Xbox360LEDValue value)
 {
     uint8_t ledPacket[]{0x01, 0x03, static_cast<uint8_t>(value)};
     R_RETURN(m_outPipe->Write(ledPacket, sizeof(ledPacket)));
-}
-
-void Xbox360Controller::LoadConfig(const ControllerConfig *config)
-{
-    _xbox360ControllerConfig = *config;
-}
-
-ControllerConfig *Xbox360Controller::GetConfig()
-{
-    return &_xbox360ControllerConfig;
 }

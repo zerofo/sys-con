@@ -15,6 +15,7 @@ class IController
 {
 protected:
     std::unique_ptr<IUSBDevice> m_device;
+    ControllerConfig m_config;
     std::unique_ptr<ILogger> m_logger;
 
     void LogPrint(LogLevel lvl, const char *format, ...)
@@ -26,7 +27,7 @@ protected:
     }
 
 public:
-    IController(std::unique_ptr<IUSBDevice> &&device, std::unique_ptr<ILogger> &&logger) : m_device(std::move(device)), m_logger(std::move(logger))
+    IController(std::unique_ptr<IUSBDevice> &&device, const ControllerConfig &config, std::unique_ptr<ILogger> &&logger) : m_device(std::move(device)), m_config(config), m_logger(std::move(logger))
     {
     }
     virtual ~IController() = default;
@@ -65,5 +66,5 @@ public:
 
     virtual ams::Result OutputBuffer() { return 1; };
 
-    virtual ControllerConfig *GetConfig() { return nullptr; }
+    virtual const ControllerConfig &GetConfig() { return m_config; }
 };

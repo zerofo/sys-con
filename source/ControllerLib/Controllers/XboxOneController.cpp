@@ -1,8 +1,5 @@
 #include "Controllers/XboxOneController.h"
 #include <cmath>
-// #include "../../Sysmodule/source/log.h"
-
-static ControllerConfig _xboxoneControllerConfig{};
 
 #define TRIGGER_MAXVALUE 1023
 
@@ -61,8 +58,8 @@ static constexpr VendorProductPacket init_packets[]{
     {0x24c6, 0x0000, xboxone_rumbleend_init, sizeof(xboxone_rumbleend_init)},
 };
 
-XboxOneController::XboxOneController(std::unique_ptr<IUSBDevice> &&device, std::unique_ptr<ILogger> &&logger)
-    : IController(std::move(device), std::move(logger))
+XboxOneController::XboxOneController(std::unique_ptr<IUSBDevice> &&device, const ControllerConfig &config, std::unique_ptr<ILogger> &&logger)
+    : IController(std::move(device), std::move(config), std::move(logger))
 {
 }
 
@@ -249,12 +246,12 @@ NormalizedButtonData XboxOneController::GetNormalizedButtonData()
 {
     NormalizedButtonData normalData{};
 
-    normalData.triggers[0] = NormalizeTrigger(_xboxoneControllerConfig.triggerDeadzonePercent[0], m_buttonData.trigger_left);
-    normalData.triggers[1] = NormalizeTrigger(_xboxoneControllerConfig.triggerDeadzonePercent[1], m_buttonData.trigger_right);
+    normalData.triggers[0] = NormalizeTrigger(GetConfig().triggerDeadzonePercent[0], m_buttonData.trigger_left);
+    normalData.triggers[1] = NormalizeTrigger(GetConfig().triggerDeadzonePercent[1], m_buttonData.trigger_right);
 
-    NormalizeAxis(m_buttonData.stick_left_x, m_buttonData.stick_left_y, _xboxoneControllerConfig.stickDeadzonePercent[0],
+    NormalizeAxis(m_buttonData.stick_left_x, m_buttonData.stick_left_y, GetConfig().stickDeadzonePercent[0],
                   &normalData.sticks[0].axis_x, &normalData.sticks[0].axis_y);
-    NormalizeAxis(m_buttonData.stick_right_x, m_buttonData.stick_right_y, _xboxoneControllerConfig.stickDeadzonePercent[1],
+    NormalizeAxis(m_buttonData.stick_right_x, m_buttonData.stick_right_y, GetConfig().stickDeadzonePercent[1],
                   &normalData.sticks[1].axis_x, &normalData.sticks[1].axis_y);
 
     bool buttons[MAX_CONTROLLER_BUTTONS]{
@@ -280,7 +277,7 @@ NormalizedButtonData XboxOneController::GetNormalizedButtonData()
 
     for (int i = 0; i != MAX_CONTROLLER_BUTTONS; ++i)
     {
-        ControllerButton button = _xboxoneControllerConfig.buttons[i];
+        ControllerButton button = GetConfig().buttons[i];
         if (button == NONE)
             continue;
 
@@ -308,14 +305,4 @@ ams::Result XboxOneController::SetRumble(uint8_t strong_magnitude, uint8_t weak_
         weak_magnitude,
         0xff, 0x00, 0x00};
     R_RETURN(m_outPipe->Write(rumble_data, sizeof(rumble_data)));
-}
-
-void XboxOneController::LoadConfig(const ControllerConfig *config)
-{
-    _xboxoneControllerConfig = *config;
-}
-
-ControllerConfig *XboxOneController::GetConfig()
-{
-    return &_xboxoneControllerConfig;
 }
