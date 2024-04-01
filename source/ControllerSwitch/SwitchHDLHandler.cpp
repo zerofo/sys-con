@@ -25,12 +25,7 @@ ams::Result SwitchHDLHandler::Initialize()
 
     R_TRY(InitHdlState());
 
-    if (GetController()->Support(SUPPORTS_PAIRING))
-    {
-        R_TRY(InitOutputThread());
-    }
-
-    R_TRY(InitInputThread());
+    R_TRY(InitThread());
 
     syscon::logger::LogDebug("SwitchHDLHandler Initialized !");
 
@@ -45,8 +40,7 @@ void SwitchHDLHandler::Exit()
         return;
     }
 
-    ExitInputThread();
-    ExitOutputThread();
+    ExitThread();
     m_controller->Exit();
     UninitHdlState();
 }
@@ -189,11 +183,12 @@ ams::Result SwitchHDLHandler::UpdateHdlState(const NormalizedButtonData &data, u
     ams::Result rc = hiddbgSetHdlsState(m_hdlHandle[input_idx], hdlState);
     if (rc.GetValue() == 0x1c24ca)
     {
-        syscon::logger::LogInfo("SwitchHDLHandler Re-attaching device...");
+        /*syscon::logger::LogInfo("SwitchHDLHandler Re-attaching device...");
 
         // Re-attach virtual gamepad and set state
         R_TRY(hiddbgAttachHdlsVirtualDevice(&m_hdlHandle[input_idx], &m_deviceInfo[input_idx]));
         R_TRY(hiddbgSetHdlsState(m_hdlHandle[input_idx], hdlState));
+        */
     }
 
     R_SUCCEED();
@@ -229,18 +224,18 @@ void SwitchHDLHandler::UpdateOutput()
         return;
 
     // Process rumble values if supported
-    if (GetController()->Support(SUPPORTS_RUMBLE))
+    /*if (GetController()->Support(SUPPORTS_RUMBLE))
     {
-        ams::Result rc;
         HidVibrationValue value;
 
         for (int i = 0; i < m_controller->GetInputCount(); i++)
         {
-            rc = hidGetActualVibrationValue(m_vibrationDeviceHandle[i], &value);
-            if (R_SUCCEEDED(rc))
-                m_controller->SetRumble(static_cast<uint8_t>(value.amp_high * 255.0f), static_cast<uint8_t>(value.amp_low * 255.0f));
+            if (R_FAILED(hidGetActualVibrationValue(m_vibrationDeviceHandle[i], &value))
+                return;
+
+            m_controller->SetRumble(static_cast<uint8_t>(value.amp_high * 255.0f), static_cast<uint8_t>(value.amp_low * 255.0f));
         }
-    }
+    }*/
 }
 
 HiddbgHdlsSessionId &SwitchHDLHandler::GetHdlsSessionId()

@@ -11,17 +11,13 @@ protected:
     std::unique_ptr<IController> m_controller;
     int m_polling_frequency_ms;
 
-    alignas(ams::os::ThreadStackAlignment) u8 input_thread_stack[0x1000];
-    alignas(ams::os::ThreadStackAlignment) u8 output_thread_stack[0x1000];
+    alignas(ams::os::ThreadStackAlignment) u8 thread_stack[0x1000];
 
-    Thread m_inputThread;
-    Thread m_outputThread;
+    Thread m_Thread;
 
-    bool m_inputThreadIsRunning = false;
-    bool m_outputThreadIsRunning = false;
+    bool m_ThreadIsRunning = false;
 
-    static void InputThreadLoop(void *argument);
-    static void OutputThreadLoop(void *argument);
+    static void ThreadLoop(void *argument);
 
 public:
     SwitchVirtualGamepadHandler(std::unique_ptr<IController> &&controller, int polling_frequency_ms);
@@ -33,14 +29,9 @@ public:
     virtual void Exit();
 
     // Separately init the input-reading thread
-    ams::Result InitInputThread();
+    ams::Result InitThread();
     // Separately close the input-reading thread
-    void ExitInputThread();
-
-    // Separately init the rumble sending thread
-    ams::Result InitOutputThread();
-    // Separately close the rumble sending thread
-    void ExitOutputThread();
+    void ExitThread();
 
     // The function to call indefinitely by the input thread
     virtual void UpdateInput() = 0;

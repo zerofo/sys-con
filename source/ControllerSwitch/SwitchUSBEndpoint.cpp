@@ -40,19 +40,11 @@ ams::Result SwitchUSBEndpoint::Write(const void *inBuffer, size_t bufferSize)
     if (GetDirection() == USB_ENDPOINT_IN)
         ::syscon::logger::LogError("SwitchUSBEndpoint::Write: Trying to write on an IN endpoint!");
 
-    Result rc = usbHsEpPostBuffer(&m_epSession, m_usb_buffer, bufferSize, &transferredSize);
+    R_TRY(usbHsEpPostBuffer(&m_epSession, m_usb_buffer, bufferSize, &transferredSize));
 
-    //::syscon::logger::LogDebug("SwitchUSBEndpoint::Write: bufferSize: %d transferredSize: %d error_module: %x error_desc: %x interval: %d", bufferSize, transferredSize, R_MODULE(rc), R_DESCRIPTION(rc), m_descriptor->bInterval);
+    svcSleepThread(m_descriptor->bInterval * 1000000);
 
-    if (R_SUCCEEDED(rc))
-    {
-        svcSleepThread(m_descriptor->bInterval * 1000000); //*2
-    }
-    else
-    {
-        ::syscon::logger::LogError("SwitchUSBEndpoint::Write: Failed to write on endpoint %x (Error: %x)", m_descriptor->bEndpointAddress, rc);
-    }
-    return rc;
+    R_SUCCEED();
 }
 
 ams::Result SwitchUSBEndpoint::Read(void *outBuffer, size_t *bufferSizeInOut)
@@ -62,21 +54,12 @@ ams::Result SwitchUSBEndpoint::Read(void *outBuffer, size_t *bufferSizeInOut)
     if (GetDirection() == USB_ENDPOINT_OUT)
         ::syscon::logger::LogError("SwitchUSBEndpoint::Read: Trying to read on an OUT endpoint!");
 
-    ams::Result rc = usbHsEpPostBuffer(&m_epSession, m_usb_buffer, *bufferSizeInOut, &transferredSize);
+    R_TRY(usbHsEpPostBuffer(&m_epSession, m_usb_buffer, *bufferSizeInOut, &transferredSize));
 
-    //::syscon::logger::LogDebug("SwitchUSBEndpoint::Read: bufferSize: %d transferredSize: %d error_module: %x error_desc: %x", bufferSize, transferredSize, R_MODULE(rc), R_DESCRIPTION(rc));
+    memcpy(outBuffer, m_usb_buffer, transferredSize);
+    *bufferSizeInOut = transferredSize;
 
-    if (R_SUCCEEDED(rc))
-    {
-        memcpy(outBuffer, m_usb_buffer, transferredSize);
-        *bufferSizeInOut = transferredSize;
-    }
-    else
-    {
-        ::syscon::logger::LogError("SwitchUSBEndpoint::Read: Failed to Read on endpoint %x (Error: %x)", m_descriptor->bEndpointAddress, rc);
-        *bufferSizeInOut = 0;
-    }
-    return rc;
+    R_SUCCEED();
 }
 
 IUSBEndpoint::Direction SwitchUSBEndpoint::GetDirection()

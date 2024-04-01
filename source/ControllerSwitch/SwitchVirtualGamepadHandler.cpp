@@ -21,7 +21,7 @@ void SwitchVirtualGamepadHandler::Exit()
     m_controller->Exit();
 }
 
-void SwitchVirtualGamepadHandler::InputThreadLoop(void *handler)
+void SwitchVirtualGamepadHandler::ThreadLoop(void *handler)
 {
     SwitchVirtualGamepadHandler *gamepadHandler = static_cast<SwitchVirtualGamepadHandler *>(handler);
 
@@ -30,52 +30,29 @@ void SwitchVirtualGamepadHandler::InputThreadLoop(void *handler)
     do
     {
         gamepadHandler->UpdateInput();
+
+        gamepadHandler->UpdateOutput();
+
         svcSleepThread(gamepadHandler->m_polling_frequency_ms * 1000 * 1000);
-    } while (gamepadHandler->m_inputThreadIsRunning);
+    } while (gamepadHandler->m_ThreadIsRunning);
 
     ::syscon::logger::LogDebug("SwitchVirtualGamepadHandler InputThreadLoop stopped !");
 }
 
-void SwitchVirtualGamepadHandler::OutputThreadLoop(void *handler)
+ams::Result SwitchVirtualGamepadHandler::InitThread()
 {
-    SwitchVirtualGamepadHandler *gamepadHandler = static_cast<SwitchVirtualGamepadHandler *>(handler);
-    do
-    {
-        gamepadHandler->UpdateOutput();
-        svcSleepThread(gamepadHandler->m_polling_frequency_ms * 1000 * 1000); // 10ms
-    } while (gamepadHandler->m_outputThreadIsRunning);
-}
-
-ams::Result SwitchVirtualGamepadHandler::InitInputThread()
-{
-    m_inputThreadIsRunning = true;
-    R_ABORT_UNLESS(threadCreate(&m_inputThread, &SwitchVirtualGamepadHandler::InputThreadLoop, this, input_thread_stack, sizeof(input_thread_stack), 0x30, -2));
-    R_ABORT_UNLESS(threadStart(&m_inputThread));
+    m_ThreadIsRunning = true;
+    R_ABORT_UNLESS(threadCreate(&m_Thread, &SwitchVirtualGamepadHandler::ThreadLoop, this, thread_stack, sizeof(thread_stack), 0x30, -2));
+    R_ABORT_UNLESS(threadStart(&m_Thread));
     return 0;
 }
 
-void SwitchVirtualGamepadHandler::ExitInputThread()
+void SwitchVirtualGamepadHandler::ExitThread()
 {
-    m_inputThreadIsRunning = false;
-    svcCancelSynchronization(m_inputThread.handle);
-    threadWaitForExit(&m_inputThread);
-    threadClose(&m_inputThread);
-}
-
-ams::Result SwitchVirtualGamepadHandler::InitOutputThread()
-{
-    m_outputThreadIsRunning = true;
-    R_ABORT_UNLESS(threadCreate(&m_outputThread, &SwitchVirtualGamepadHandler::OutputThreadLoop, this, output_thread_stack, sizeof(output_thread_stack), 0x30, -2));
-    R_ABORT_UNLESS(threadStart(&m_outputThread));
-    return 0;
-}
-
-void SwitchVirtualGamepadHandler::ExitOutputThread()
-{
-    m_outputThreadIsRunning = false;
-    svcCancelSynchronization(m_outputThread.handle);
-    threadWaitForExit(&m_outputThread);
-    threadClose(&m_outputThread);
+    m_ThreadIsRunning = false;
+    svcCancelSynchronization(m_Thread.handle);
+    threadWaitForExit(&m_Thread);
+    threadClose(&m_Thread);
 }
 
 static_assert(JOYSTICK_MAX == 32767 && JOYSTICK_MIN == -32767,
