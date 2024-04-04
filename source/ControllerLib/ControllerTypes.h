@@ -1,27 +1,8 @@
 #pragma once
 
-#define CONTROLLER_MAX_INPUTS        2
-#define CONTROLLER_INPUT_BUFFER_SIZE 64
-
-enum VendorIDs : uint16_t
-{
-    VENDOR_MICROSOFT = 0x45e,
-    VENDOR_SONY = 0x54c,
-};
-
-enum ProductIDs : uint16_t
-{
-    PRODUCT_XBOX360 = 0x28e,
-    PRODUCT_XBOXONE2013 = 0x2d1,
-    PRODUCT_XBOXONE2015 = 0x2dd,
-    PRODUCT_XBOXONEELITE = 0x2e3,
-    PRODUCT_XBOXONES = 0x2ea,
-    PRODUCT_XBOXADAPTIVE = 0xb0a,
-
-    PRODUCT_DUALSHOCK3 = 0x268,
-    PRODUCT_DUALSHOCK4_1X = 0x5c4,
-    PRODUCT_DUALSHOCK4_2X = 0x9cc,
-};
+#define CONTROLLER_MAX_INPUTS             2
+#define CONTROLLER_INPUT_BUFFER_SIZE      64
+#define CONTROLLER_HID_REPORT_BUFFER_SIZE 512
 
 enum ControllerFeature : uint8_t
 {

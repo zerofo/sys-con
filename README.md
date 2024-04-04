@@ -67,14 +67,30 @@ For an in-depth explanation of how sys-con works, see [here](source).
 ### Debug the application
 All crash report goes to /atmosphere/fatal_errors/report_xxxxx.bin (e6)
 
+# Usefull HID links
+
+Dump HID report descriptor
+https://github.com/mutcher/win-hid-dump
+
+Parse HID report descriptor online
+https://eleccelerator.com/usbdescreqparser/
+
+Already dumped HID report descriptor
+https://github.com/DJm00n/ControllersInfo
+
+HID explained
+https://docs.kernel.org/hid/hidintro.html#parsing-hid-report-descriptors
+
+Simple HID parser
+https://github.com/listff/hidparser/blob/main/hid.cpp
+
 # TODO
- - Change remote style don't works
  - Add more generic HID decoding (According to protocol etc...)
  - Change mapping to something like button 1, 2 etc...
  - Merge  GetInput() / GetNormalizedButtonData() 
- - Improve error code on controllers
  - Add logs in controllers
  - support rumble (m_vibrationDeviceHandle not initialized)
  - protect m_outputBuffer buffer xbox360w
- - readd support for psc
-
+ - remove ini_section from configs
+ - simplify 1 device 1 interface
+ - issue when you boot the switch only 1 remote is detected

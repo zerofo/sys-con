@@ -86,7 +86,7 @@ ams::Result Dualshock4Controller::OpenInterfaces()
     }
 
     if (!m_inPipe || !m_outPipe)
-        R_RETURN(69);
+        R_RETURN(CONTROL_ERR_INVALID_ENDPOINT);
 
     R_SUCCEED();
 }
@@ -224,5 +224,5 @@ ams::Result Dualshock4Controller::SetRumble(uint8_t strong_magnitude, uint8_t we
     AMS_UNUSED(weak_magnitude);
 
     // Not implemented yet
-    R_RETURN(9);
+    R_RETURN(CONTROL_ERR_NOT_IMPLEMENTED);
 }

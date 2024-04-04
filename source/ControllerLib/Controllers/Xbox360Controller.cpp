@@ -20,6 +20,7 @@ ams::Result Xbox360Controller::Initialize()
 {
     R_TRY(OpenInterfaces());
 
+    // Duplicated with OnControllerConnect
     if (m_is_wireless)
         R_TRY(m_outPipe->Write(reconnectPacket, sizeof(reconnectPacket)));
 
@@ -82,13 +83,14 @@ ams::Result Xbox360Controller::OpenInterfaces()
     }
 
     if (!m_inPipe || !m_outPipe)
-        R_RETURN(369);
+        R_RETURN(CONTROL_ERR_INVALID_ENDPOINT);
 
     R_SUCCEED();
 }
 
 void Xbox360Controller::CloseInterfaces()
 {
+    // Duplicated with OnControllerDisconnect
     if (m_is_wireless && m_is_present)
         m_outPipe->Write(poweroffPacket, sizeof(poweroffPacket));
 
@@ -123,7 +125,7 @@ ams::Result Xbox360Controller::GetInput()
         }
 
         if (input_bytes[1] != 0x1)
-            R_RETURN(1);
+            R_RETURN(CONTROL_ERR_UNEXPECTED_DATA);
     }
 
     if (type == XBOX360INPUT_BUTTON) // Button data
@@ -267,7 +269,7 @@ ams::Result Xbox360Controller::OnControllerConnect()
 {
     m_outputBuffer.push_back(OutputPacket{reconnectPacket, sizeof(reconnectPacket)});
     m_outputBuffer.push_back(OutputPacket{initDriverPacket, sizeof(initDriverPacket)});
-    m_outputBuffer.push_back(OutputPacket{ledPacketOn, sizeof(ledPacketOn)});
+    m_outputBuffer.push_back(OutputPacket{ledPacketOn, sizeof(ledPacketOn)}); // Duplicated with SetLED
     R_SUCCEED();
 }
 
@@ -280,7 +282,7 @@ ams::Result Xbox360Controller::OnControllerDisconnect()
 ams::Result Xbox360Controller::OutputBuffer()
 {
     if (m_outputBuffer.empty())
-        R_RETURN(1);
+        R_RETURN(CONTROL_ERR_BUFFER_EMPTY);
 
     auto it = m_outputBuffer.begin();
     R_TRY(m_outPipe->Write(it->packet, it->length));

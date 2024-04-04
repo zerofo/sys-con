@@ -12,6 +12,7 @@ namespace syscon::logger
     char logBuffer[1024];
     char logPath[255];
     int logLevel = LOG_LEVEL_INFO;
+    char logLevelStr[LOG_LEVEL_COUNT] = {'D', 'I', 'W', 'E'};
 
     ams::Result Initialize(const char *log)
     {
@@ -43,34 +44,65 @@ namespace syscon::logger
         logLevel = level;
     }
 
-    ams::Result Log(int lvl, const char *fmt, ::std::va_list vl)
+    ams::Result LogWriteToFile(const char *logBuffer)
     {
-        char logLevelStr[LOG_LEVEL_COUNT] = {'D', 'I', 'W', 'E'};
         s64 fileOffset;
         ams::fs::FileHandle file;
 
+        R_TRY(ams::fs::OpenFile(std::addressof(file), logPath, ams::fs::OpenMode_Write | ams::fs::OpenMode_AllowAppend));
+        ON_SCOPE_EXIT { ams::fs::CloseFile(file); };
+
+        R_TRY(ams::fs::GetFileSize(&fileOffset, file));
+
+        R_TRY(ams::fs::WriteFile(file, fileOffset, logBuffer, strlen(logBuffer), ams::fs::WriteOption::Flush));
+        R_TRY(ams::fs::WriteFile(file, fileOffset + strlen(logBuffer), "\n", 1, ams::fs::WriteOption::Flush));
+
+        R_SUCCEED();
+    }
+
+    void Log(int lvl, const char *fmt, ::std::va_list vl)
+    {
         if (lvl < logLevel)
-            return 0; // Don't log if the level is lower than the current log level.
+            return; // Don't log if the level is lower than the current log level.
 
         std::scoped_lock printLock(printMutex);
 
         ams::TimeSpan ts = ams::os::ConvertToTimeSpan(ams::os::GetSystemTick());
 
-        memset(logBuffer, 0, sizeof(logBuffer));
-
         /* Format log */
         ams::util::SNPrintf(logBuffer, sizeof(logBuffer), "|%c|%02li:%02li:%02li| ", logLevelStr[lvl], ts.GetHours() % 24, ts.GetMinutes() % 60, ts.GetSeconds() % 60);
-        ams::util::VSNPrintf(&logBuffer[strlen(logBuffer)], ams::util::size(logBuffer) - strlen(logBuffer) - 1, fmt, vl); //-1 to leave space for the \n
-        logBuffer[strlen(logBuffer)] = '\n';
-        logBuffer[strlen(logBuffer) + 1] = '\0';
+        ams::util::VSNPrintf(&logBuffer[strlen(logBuffer)], ams::util::size(logBuffer) - strlen(logBuffer), fmt, vl); //-1 to leave space for the \n
 
         /* Write in the file. */
-        R_TRY(ams::fs::OpenFile(std::addressof(file), logPath, ams::fs::OpenMode_Write | ams::fs::OpenMode_AllowAppend));
-        ON_SCOPE_EXIT { ams::fs::CloseFile(file); };
-        R_TRY(ams::fs::GetFileSize(&fileOffset, file));
-        R_TRY(ams::fs::WriteFile(file, fileOffset, logBuffer, strlen(logBuffer), ams::fs::WriteOption::Flush));
+        LogWriteToFile(logBuffer);
+    }
 
-        R_SUCCEED();
+    void LogBuffer(int lvl, const uint8_t *buffer, size_t size)
+    {
+        if (lvl < logLevel)
+            return; // Don't log if the level is lower than the current log level.
+
+        std::scoped_lock printLock(printMutex);
+
+        ams::TimeSpan ts = ams::os::ConvertToTimeSpan(ams::os::GetSystemTick());
+
+        ams::util::SNPrintf(logBuffer, sizeof(logBuffer), "|%c|%02li:%02li:%02li| ", logLevelStr[lvl], ts.GetHours() % 24, ts.GetMinutes() % 60, ts.GetSeconds() % 60);
+
+        size_t start_offset = strlen(logBuffer);
+
+        ams::util::SNPrintf(&logBuffer[strlen(logBuffer)], ams::util::size(logBuffer) - strlen(logBuffer), "Buffer (%ld): ", size);
+
+        LogWriteToFile(logBuffer);
+
+        /* Format log */
+        for (size_t i = 0; i < size; i += 16)
+        {
+            for (size_t k = 0; k < 16; k++)
+                ams::util::SNPrintf(&logBuffer[start_offset + (k * 3)], ams::util::size(logBuffer) - (start_offset + (k * 3)), "%02X ", buffer[i + k]);
+
+            /* Write in the file. */
+            LogWriteToFile(logBuffer);
+        }
     }
 
     void LogDebug(const char *fmt, ...)
@@ -111,20 +143,12 @@ namespace syscon::logger
 
     void Logger::Print(LogLevel lvl, const char *format, ::std::va_list vl)
     {
-        switch (lvl)
-        {
-            case LogLevelDebug:
-                Log(LOG_LEVEL_DEBUG, format, vl);
-                break;
-            case LogLevelInfo:
-                Log(LOG_LEVEL_INFO, format, vl);
-                break;
-            case LogLevelWarning:
-                Log(LOG_LEVEL_WARNING, format, vl);
-                break;
-            case LogLevelError:
-                Log(LOG_LEVEL_ERROR, format, vl);
-                break;
-        }
+        Log(lvl, format, vl);
     }
+
+    void Logger::PrintBuffer(LogLevel lvl, const uint8_t *buffer, size_t size)
+    {
+        LogBuffer(lvl, buffer, size);
+    }
+
 } // namespace syscon::logger

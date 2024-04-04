@@ -47,7 +47,7 @@ void SwitchHDLHandler::Exit()
 
 ams::Result SwitchHDLHandler::InitHdlState()
 {
-    syscon::logger::LogDebug("SwitchHDLHandler: Initializing HDL state ...");
+    syscon::logger::LogDebug("SwitchHDLHandler Initializing HDL state ...");
 
     for (int i = 0; i < m_controller->GetInputCount(); i++)
     {

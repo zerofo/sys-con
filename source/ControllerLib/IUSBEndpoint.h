@@ -1,5 +1,6 @@
 #pragma once
 #include <stratosphere.hpp>
+#include "ControllerErrors.h"
 #include <cstddef>
 
 class IUSBEndpoint

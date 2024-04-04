@@ -81,7 +81,7 @@ ams::Result Dualshock3Controller::OpenInterfaces()
     }
 
     if (!m_inPipe || !m_outPipe)
-        R_RETURN(69);
+        R_RETURN(CONTROL_ERR_INVALID_ENDPOINT);
 
     R_SUCCEED();
 }
@@ -219,12 +219,12 @@ ams::Result Dualshock3Controller::SetRumble(uint8_t strong_magnitude, uint8_t we
     AMS_UNUSED(weak_magnitude);
 
     // Not implemented yet
-    R_RETURN(9);
+    R_RETURN(CONTROL_ERR_NOT_IMPLEMENTED);
 }
 
 ams::Result Dualshock3Controller::SendCommand(IUSBInterface *interface, Dualshock3FeatureValue feature, const void *buffer, uint16_t size)
 {
-    R_RETURN(interface->ControlTransfer(0x21, 0x09, static_cast<uint16_t>(feature), 0, size, buffer));
+    R_RETURN(interface->ControlTransferOutput(USB_ENDPOINT_OUT | 0x21, 0x09, static_cast<uint16_t>(feature), 0, buffer, size));
 }
 
 ams::Result Dualshock3Controller::SetLED(Dualshock3LEDValue value)

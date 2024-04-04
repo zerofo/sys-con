@@ -37,12 +37,10 @@ namespace syscon::psc
                             case PscPmState_Awake:
                             case PscPmState_ReadyAwaken:
                                 ::syscon::logger::LogDebug("Power management: Awake");
-                                // usb::CreateUsbEvents();
                                 break;
                             case PscPmState_ReadySleep:
                             case PscPmState_ReadyShutdown:
                                 ::syscon::logger::LogDebug("Power management: Sleep");
-                                // usb::DestroyUsbEvents();
                                 controllers::Reset();
                                 break;
                             default:

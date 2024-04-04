@@ -183,7 +183,7 @@ namespace syscon::usb
 
         inline Result AddEvent(UsbHsInterfaceFilter *filter)
         {
-            syscon::logger::LogDebug("Adding event ...");
+            syscon::logger::LogDebug("Adding event with filter flag 0x%04X...", filter->Flags);
             Result ret = usbHsCreateInterfaceAvailableEvent(&g_usbEvent[g_usbEventCount], true, g_usbEventCount, filter);
             g_usbWaiters[g_usbEventCount] = waiterForEvent(&g_usbEvent[g_usbEventCount]);
 

@@ -24,8 +24,8 @@ public:
     virtual ams::Result Open() override;
     virtual void Close() override;
 
-    virtual ams::Result ControlTransfer(u8 bmRequestType, u8 bmRequest, u16 wValue, u16 wIndex, u16 wLength, void *buffer) override;
-    virtual ams::Result ControlTransfer(u8 bmRequestType, u8 bmRequest, u16 wValue, u16 wIndex, u16 wLength, const void *buffer) override;
+    virtual ams::Result ControlTransferInput(u8 bmRequestType, u8 bmRequest, u16 wValue, u16 wIndex, void *buffer, u16 *wLength) override;
+    virtual ams::Result ControlTransferOutput(u8 bmRequestType, u8 bmRequest, u16 wValue, u16 wIndex, const void *buffer, u16 wLength) override;
 
     // There are a total of 15 endpoints on a switch interface for each direction, get them by passing the desired parameters
     virtual IUSBEndpoint *GetEndpoint(IUSBEndpoint::Direction direction, uint8_t index) override;

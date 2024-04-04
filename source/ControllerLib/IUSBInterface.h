@@ -1,6 +1,14 @@
 #pragma once
 #include "IUSBEndpoint.h"
 
+enum usb_request_recipient
+{
+    USB_RECIPIENT_DEVICE = 0x00,
+    USB_RECIPIENT_INTERFACE = 0x01,
+    USB_RECIPIENT_ENDPOINT = 0x02,
+    USB_RECIPIENT_OTHER = 0x03,
+};
+
 class IUSBInterface
 {
 protected:
@@ -22,8 +30,8 @@ public:
     virtual ams::Result Open() = 0;
     virtual void Close() = 0;
 
-    virtual ams::Result ControlTransfer(uint8_t bmRequestType, uint8_t bmRequest, uint16_t wValue, uint16_t wIndex, uint16_t wLength, void *buffer) = 0;
-    virtual ams::Result ControlTransfer(uint8_t bmRequestType, uint8_t bmRequest, uint16_t wValue, uint16_t wIndex, uint16_t wLength, const void *buffer) = 0;
+    virtual ams::Result ControlTransferInput(uint8_t bmRequestType, uint8_t bmRequest, uint16_t wValue, uint16_t wIndex, void *buffer, uint16_t *wLength) = 0;
+    virtual ams::Result ControlTransferOutput(uint8_t bmRequestType, uint8_t bmRequest, uint16_t wValue, uint16_t wIndex, const void *buffer, uint16_t wLength) = 0;
 
     virtual IUSBEndpoint *GetEndpoint(IUSBEndpoint::Direction direction, uint8_t index) = 0;
     virtual InterfaceDescriptor *GetDescriptor() = 0;

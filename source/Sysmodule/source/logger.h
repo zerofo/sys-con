@@ -22,9 +22,13 @@ namespace syscon::logger
     void LogWarning(const char *format, ...);
     void LogError(const char *format, ...);
 
+    void Log(int lvl, const char *fmt, ::std::va_list vl);
+    void LogBuffer(int lvl, const uint8_t *buffer, size_t size);
+
     class Logger : public ILogger
     {
     public:
         void Print(LogLevel lvl, const char *format, ::std::va_list vl) override;
+        void PrintBuffer(LogLevel lvl, const uint8_t *buffer, size_t size) override;
     };
 } // namespace syscon::logger

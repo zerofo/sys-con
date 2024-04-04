@@ -69,7 +69,7 @@ ams::Result XboxController::OpenInterfaces()
     }
 
     if (!m_inPipe || !m_outPipe)
-        R_RETURN(69);
+        R_RETURN(CONTROL_ERR_INVALID_ENDPOINT);
 
     R_SUCCEED();
 }

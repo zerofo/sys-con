@@ -15,7 +15,7 @@ SwitchUSBInterface::~SwitchUSBInterface()
 
 ams::Result SwitchUSBInterface::Open()
 {
-    ::syscon::logger::LogDebug("SwitchUSBInterface Openning %x-%x...", m_interface.device_desc.idVendor, m_interface.device_desc.idProduct);
+    ::syscon::logger::LogDebug("SwitchUSBInterface(%x-%x) Openning ...", m_interface.device_desc.idVendor, m_interface.device_desc.idProduct);
 
     R_TRY(usbHsAcquireUsbIf(&m_session, &m_interface));
 
@@ -24,12 +24,12 @@ ams::Result SwitchUSBInterface::Open()
         usb_endpoint_descriptor &epdesc = m_session.inf.inf.input_endpoint_descs[i];
         if (epdesc.bLength != 0)
         {
-            ::syscon::logger::LogDebug("SwitchUSBInterface: Input endpoint found 0x%x (Idx: %d)", epdesc.bEndpointAddress, i);
+            ::syscon::logger::LogDebug("SwitchUSBInterface(%x-%x) Input endpoint found 0x%x (Idx: %d)", m_interface.device_desc.idVendor, m_interface.device_desc.idProduct, epdesc.bEndpointAddress, i);
             m_inEndpoints[i] = std::make_unique<SwitchUSBEndpoint>(m_session, epdesc);
         }
         else
         {
-            //::syscon::logger::LogWarning("SwitchUSBInterface: Input endpoint %d is null", i);
+            //::syscon::logger::LogWarning("SwitchUSBInterface(%x-%x) Input endpoint %d is null", m_interface.device_desc.idVendor, m_interface.device_desc.idProduct, i);
         }
     }
 
@@ -38,12 +38,12 @@ ams::Result SwitchUSBInterface::Open()
         usb_endpoint_descriptor &epdesc = m_session.inf.inf.output_endpoint_descs[i];
         if (epdesc.bLength != 0)
         {
-            ::syscon::logger::LogDebug("SwitchUSBInterface: Output endpoint found %x (Idx: %d)", epdesc.bEndpointAddress, i);
+            ::syscon::logger::LogDebug("SwitchUSBInterface(%x-%x) Output endpoint found %x (Idx: %d)", m_interface.device_desc.idVendor, m_interface.device_desc.idProduct, epdesc.bEndpointAddress, i);
             m_outEndpoints[i] = std::make_unique<SwitchUSBEndpoint>(m_session, epdesc);
         }
         else
         {
-            //::syscon::logger::LogWarning("SwitchUSBInterface: Output endpoint %d is null", i);
+            //::syscon::logger::LogWarning("SwitchUSBInterface(%x-%x) Output endpoint %d is null", m_interface.device_desc.idVendor, m_interface.device_desc.idProduct, i);
         }
     }
 
@@ -52,7 +52,7 @@ ams::Result SwitchUSBInterface::Open()
 
 void SwitchUSBInterface::Close()
 {
-    ::syscon::logger::LogDebug("SwitchUSBInterface Closing %x-%x...", m_interface.device_desc.idVendor, m_interface.device_desc.idProduct);
+    ::syscon::logger::LogDebug("SwitchUSBInterface(%x-%x) Closing...", m_interface.device_desc.idVendor, m_interface.device_desc.idProduct);
 
     for (int i = 0; i < 15; i++)
     {
@@ -65,29 +65,43 @@ void SwitchUSBInterface::Close()
     usbHsIfClose(&m_session);
 }
 
-ams::Result SwitchUSBInterface::ControlTransfer(u8 bmRequestType, u8 bmRequest, u16 wValue, u16 wIndex, u16 wLength, void *buffer)
+ams::Result SwitchUSBInterface::ControlTransferInput(u8 bmRequestType, u8 bmRequest, u16 wValue, u16 wIndex, void *buffer, u16 *wLength)
 {
-    ::syscon::logger::LogDebug("SwitchUSBInterface ControlTransfer %x-%x...", m_interface.device_desc.idVendor, m_interface.device_desc.idProduct);
+    ::syscon::logger::LogDebug("SwitchUSBInterface(%x-%x) ControlTransferInput (bmRequestType=0x%02X)...", m_interface.device_desc.idVendor, m_interface.device_desc.idProduct, bmRequestType);
 
-    u32 transferredSize;
+    if (!(bmRequestType & USB_ENDPOINT_IN))
+    {
+        ::syscon::logger::LogError("SwitchUSBInterface(%x-%x) ControlTransferInput: Trying to output data !", m_interface.device_desc.idVendor, m_interface.device_desc.idProduct);
+        R_RETURN(CONTROL_ERR_INVALID_ARGUMENT);
+    }
 
-    memcpy(m_usb_buffer, buffer, wLength);
+    u32 transferredSize = 0;
 
-    ams::Result rc = usbHsIfCtrlXfer(&m_session, bmRequestType, bmRequest, wValue, wIndex, wLength, m_usb_buffer, &transferredSize);
+    ams::Result rc = usbHsIfCtrlXfer(&m_session, bmRequestType, bmRequest, wValue, wIndex, *wLength, m_usb_buffer, &transferredSize);
 
     if (R_SUCCEEDED(rc))
     {
-        memcpy(buffer, m_usb_buffer, transferredSize);
+        if (bmRequestType & USB_ENDPOINT_IN)
+        {
+            memcpy(buffer, m_usb_buffer, transferredSize);
+            *wLength = transferredSize;
+        }
     }
 
     return rc;
 }
 
-ams::Result SwitchUSBInterface::ControlTransfer(u8 bmRequestType, u8 bmRequest, u16 wValue, u16 wIndex, u16 wLength, const void *buffer)
+ams::Result SwitchUSBInterface::ControlTransferOutput(u8 bmRequestType, u8 bmRequest, u16 wValue, u16 wIndex, const void *buffer, u16 wLength)
 {
-    ::syscon::logger::LogDebug("SwitchUSBInterface ControlTransfer %x-%x...", m_interface.device_desc.idVendor, m_interface.device_desc.idProduct);
+    ::syscon::logger::LogDebug("SwitchUSBInterface(%x-%x) ControlTransferOutput (bmRequestType=0x%02X)...", m_interface.device_desc.idVendor, m_interface.device_desc.idProduct, bmRequestType);
 
-    u32 transferredSize;
+    u32 transferredSize = 0;
+
+    if (bmRequestType & USB_ENDPOINT_IN)
+    {
+        ::syscon::logger::LogError("SwitchUSBInterface(%x-%x) ControlTransferOutput Trying to read data !", m_interface.device_desc.idVendor, m_interface.device_desc.idProduct);
+        R_RETURN(CONTROL_ERR_INVALID_ARGUMENT);
+    }
 
     memcpy(m_usb_buffer, buffer, wLength);
 
@@ -106,7 +120,7 @@ IUSBEndpoint *SwitchUSBInterface::GetEndpoint(IUSBEndpoint::Direction direction,
 
 ams::Result SwitchUSBInterface::Reset()
 {
-    ::syscon::logger::LogDebug("SwitchUSBInterface Reset %x-%x...", m_interface.device_desc.idVendor, m_interface.device_desc.idProduct);
+    ::syscon::logger::LogDebug("SwitchUSBInterface(%x-%x) Reset...", m_interface.device_desc.idVendor, m_interface.device_desc.idProduct);
 
     usbHsIfResetDevice(&m_session);
 

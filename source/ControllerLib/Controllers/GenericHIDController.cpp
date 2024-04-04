@@ -8,7 +8,7 @@ GenericHIDController::GenericHIDController(std::unique_ptr<IUSBDevice> &&device,
     : IController(std::move(device), config, std::move(logger)),
       m_inputCount(0)
 {
-    LogPrint(LogLevelInfo, "GenericHIDController: Created for VID_%04x&PID_%04x", m_device->GetVendor(), m_device->GetProduct());
+    LogPrint(LogLevelInfo, "GenericHIDController Created for %04x-%04x", m_device->GetVendor(), m_device->GetProduct());
 }
 
 GenericHIDController::~GenericHIDController()
@@ -30,7 +30,7 @@ void GenericHIDController::Exit()
 
 ams::Result GenericHIDController::OpenInterfaces()
 {
-    LogPrint(LogLevelDebug, "GenericHIDController: Opening interfaces ...");
+    LogPrint(LogLevelDebug, "GenericHIDController Opening interfaces ...");
 
     R_TRY(m_device->Open());
 
@@ -39,15 +39,6 @@ ams::Result GenericHIDController::OpenInterfaces()
     for (auto &&interface : interfaces)
     {
         R_TRY(interface->Open());
-
-        LogPrint(LogLevelDebug, "GenericHIDController: bDescriptorType: %d, bInterfaceNumber: %d, bAlternateSetting:%d, bNumEndpoints: %d, bInterfaceClass: %d, bInterfaceSubClass: %d, bInterfaceProtocol: %d, ",
-                 interface->GetDescriptor()->bDescriptorType,
-                 interface->GetDescriptor()->bInterfaceNumber,
-                 interface->GetDescriptor()->bAlternateSetting,
-                 interface->GetDescriptor()->bNumEndpoints,
-                 interface->GetDescriptor()->bInterfaceClass,
-                 interface->GetDescriptor()->bInterfaceSubClass,
-                 interface->GetDescriptor()->bInterfaceProtocol);
 
         if (!m_inPipe)
         {
@@ -78,12 +69,22 @@ ams::Result GenericHIDController::OpenInterfaces()
                 }
             }
         }
+
+        uint8_t buffer[CONTROLLER_HID_REPORT_BUFFER_SIZE];
+        uint16_t size = sizeof(buffer);
+
+        R_TRY(interface->ControlTransferInput((uint8_t)USB_ENDPOINT_IN | (uint8_t)USB_RECIPIENT_INTERFACE, USB_REQUEST_GET_DESCRIPTOR, (USB_DT_REPORT << 8) | interface->GetDescriptor()->bInterfaceNumber, 0, buffer, &size));
+        LogPrint(LogLevelDebug, "GenericHIDController Got descriptor for interface %d", interface->GetDescriptor()->bInterfaceNumber);
+        LogBuffer(LogLevelDebug, buffer, size);
+        break; // Stop after the first interface
     }
 
     if (!m_inPipe)
-        R_RETURN(69);
+        R_RETURN(CONTROL_ERR_INVALID_ENDPOINT);
 
     m_features[SUPPORTS_RUMBLE] = (m_outPipe != nullptr); // refresh input count
+
+    // If has reportID
     for (int i = 0; i < CONTROLLER_MAX_INPUTS; i++)
     {
         uint8_t input_bytes[CONTROLLER_INPUT_BUFFER_SIZE];
@@ -91,12 +92,12 @@ ams::Result GenericHIDController::OpenInterfaces()
 
         R_TRY(m_inPipe->Read(input_bytes, &size));
 
-        uint16_t input_idx = input_bytes[0] - 1;
-        if ((input_idx + 1) > m_inputCount && input_idx < CONTROLLER_MAX_INPUTS)
-            m_inputCount = (input_idx + 1);
+        uint16_t report_id = input_bytes[0];
+        if (report_id > m_inputCount && report_id <= CONTROLLER_MAX_INPUTS)
+            m_inputCount = report_id;
     }
 
-    LogPrint(LogLevelInfo, "GenericHIDController: USB interfaces opened successfully (%d inputs) !", m_inputCount);
+    LogPrint(LogLevelInfo, "GenericHIDController USB interfaces opened successfully (%d inputs) !", m_inputCount);
 
     R_SUCCEED();
 }
@@ -116,21 +117,14 @@ ams::Result GenericHIDController::ReadInput(NormalizedButtonData *normalData, ui
     uint8_t input_bytes[CONTROLLER_INPUT_BUFFER_SIZE];
     size_t size = sizeof(input_bytes);
 
-    memset(input_bytes, 0, size);
-
     R_TRY(m_inPipe->Read(input_bytes, &size));
 
-    LogPrint(LogLevelDebug, "GenericHIDController (size: %d - buffer: %02X %02X %02X %02X %02X %02X)", size,
-             input_bytes[0],
-             input_bytes[1],
-             input_bytes[2],
-             input_bytes[3],
-             input_bytes[4],
-             input_bytes[5]);
+    LogPrint(LogLevelDebug, "GenericHIDController ReadInput %d bytes", size);
+    LogBuffer(LogLevelDebug, input_bytes, size);
 
     *input_idx = input_bytes[0] - 1;
     if (*input_idx >= m_inputCount)
-        R_RETURN(1);
+        R_RETURN(CONTROL_ERR_UNEXPECTED_DATA);
 
     GenericHIDButtonData *buttonData = reinterpret_cast<GenericHIDButtonData *>(input_bytes);
 
