@@ -9,9 +9,9 @@
                 "${DEVKITPRO}/libnx/include",
                 "source/ControllerLib",
                 "source/ControllerSwitch",
-                "source/inih",
-                "source/libstratosphere/libstratosphere/include",
-                "source/libstratosphere/libvapours/include"
+                "lib/Atmosphere-libs/libstratosphere/include",
+                "lib/Atmosphere-libs/libvapours/include",
+                "lib/HIDDataInterpreter/inc",
             ],
             "defines": [
                 "SWITCH",

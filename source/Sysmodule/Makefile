@@ -3,7 +3,9 @@
 #---------------------------------------------------------------------------------
 THIS_MAKEFILE := $(abspath $(lastword $(MAKEFILE_LIST)))
 CURRENT_DIRECTORY := $(abspath $(dir $(THIS_MAKEFILE)))
-include $(dir $(abspath $(lastword $(MAKEFILE_LIST))))/../../lib/Atmosphere-libs/config/templates/stratosphere.mk
+
+include $(CURRENT_DIRECTORY)/../../lib/Atmosphere-libs/config/templates/stratosphere.mk
+include $(CURRENT_DIRECTORY)/../../lib/HIDDataInterpreter/build/switch/libhiddatainterpreter.mk
 
 TARGET		:=	sys-con
 SOURCES		+=	../ControllerSwitch ../ControllerLib ../ControllerLib/Controllers
@@ -48,9 +50,12 @@ export OFILES	:=	$(addsuffix .o,$(BINFILES)) \
 export INCLUDE	:=	$(foreach dir,$(INCLUDES),-I$(CURDIR)/$(dir)) \
 			$(foreach dir,$(AMS_LIBDIRS),-I$(dir)/include) \
 			$(foreach dir,$(LIBDIRS),-I$(dir)/include) \
-			-I$(CURDIR)/$(ATMOSPHERE_BUILD_DIR)
+			-I$(CURDIR)/$(ATMOSPHERE_BUILD_DIR) \
+			-I$(HIDDATAINTERPRETER_INCLUDE_DIR)
 
-export LIBPATHS	:=	$(foreach dir,$(LIBDIRS),-L$(dir)/lib)  $(foreach dir,$(AMS_LIBDIRS),-L$(dir)/$(ATMOSPHERE_LIBRARY_DIR))
+export LIBPATHS	:=	$(foreach dir,$(LIBDIRS),-L$(dir)/lib) \
+					$(foreach dir,$(AMS_LIBDIRS),-L$(dir)/$(ATMOSPHERE_LIBRARY_DIR)) \
+					-L$(HIDDATAINTERPRETER_LIBRARY_DIR)
 
 export BUILD_EXEFS_SRC := $(TOPDIR)/$(EXEFS_SRC)
 

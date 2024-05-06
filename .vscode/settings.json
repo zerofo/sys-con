@@ -89,6 +89,9 @@
         "xtree": "cpp",
         "xutility": "cpp",
         "*.inc": "cpp",
-        "*.rh": "cpp"
+        "*.rh": "cpp",
+        "ranges": "cpp",
+        "stack": "cpp",
+        "iostream": "cpp"
     },
 }

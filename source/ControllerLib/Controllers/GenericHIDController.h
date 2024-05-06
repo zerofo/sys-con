@@ -2,44 +2,7 @@
 
 #include "IController.h"
 
-// References used:
-// https://cs.chromium.org/chromium/src/device/gamepad/dualshock4_controller.cc
-
-struct GenericHIDButtonData
-{
-    // byte0
-    uint8_t type;
-
-    // byte1
-    uint8_t dpad_left_right; // right = 0xFF left = 0x00 None = 0x80
-
-    // byte2
-    uint8_t dpad_up_down; // up = 0x00 down = 0xFF None = 0x80
-
-    // byte3
-    bool button1 : 1;
-    bool button2 : 1;
-    bool button3 : 1;
-    bool button4 : 1;
-    bool button5 : 1;
-    bool button6 : 1;
-    bool button7 : 1;
-    bool button8 : 1;
-
-    // byte4
-    bool button9 : 1;
-    bool button10 : 1;
-    bool button11 : 1;
-    bool button12 : 1;
-    bool button13 : 1;
-    bool button14 : 1;
-    bool button15 : 1;
-    bool button16 : 1;
-
-    // byte5
-    uint8_t pad2;
-
-} __attribute__((packed));
+class HIDJoystick;
 
 class GenericHIDController : public IController
 {
@@ -47,7 +10,7 @@ private:
     IUSBEndpoint *m_inPipe = nullptr;
     IUSBEndpoint *m_outPipe = nullptr;
     bool m_features[SUPPORTS_COUNT];
-    uint16_t m_inputCount = 0;
+    std::shared_ptr<HIDJoystick> m_joystick;
 
 public:
     GenericHIDController(std::unique_ptr<IUSBDevice> &&device, const ControllerConfig &config, std::unique_ptr<ILogger> &&logger);

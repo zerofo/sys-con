@@ -1,12 +1,13 @@
 #include "Controllers/GenericHIDController.h"
+#include "HIDReportDescriptor.h"
+#include "HIDJoystick.h"
 #include <cmath>
 #include <string.h>
 
 // https://www.usb.org/sites/default/files/documents/hid1_11.pdf  p55
 
 GenericHIDController::GenericHIDController(std::unique_ptr<IUSBDevice> &&device, const ControllerConfig &config, std::unique_ptr<ILogger> &&logger)
-    : IController(std::move(device), config, std::move(logger)),
-      m_inputCount(0)
+    : IController(std::move(device), config, std::move(logger))
 {
     LogPrint(LogLevelInfo, "GenericHIDController Created for %04x-%04x", m_device->GetVendor(), m_device->GetProduct());
 }
@@ -74,30 +75,32 @@ ams::Result GenericHIDController::OpenInterfaces()
         uint16_t size = sizeof(buffer);
 
         R_TRY(interface->ControlTransferInput((uint8_t)USB_ENDPOINT_IN | (uint8_t)USB_RECIPIENT_INTERFACE, USB_REQUEST_GET_DESCRIPTOR, (USB_DT_REPORT << 8) | interface->GetDescriptor()->bInterfaceNumber, 0, buffer, &size));
+
         LogPrint(LogLevelDebug, "GenericHIDController Got descriptor for interface %d", interface->GetDescriptor()->bInterfaceNumber);
         LogBuffer(LogLevelDebug, buffer, size);
+
+        HIDReportDescriptor report_desc(buffer, size);
+
+        m_joystick = std::make_shared<HIDJoystick>(report_desc);
+
         break; // Stop after the first interface
     }
 
     if (!m_inPipe)
         R_RETURN(CONTROL_ERR_INVALID_ENDPOINT);
 
-    m_features[SUPPORTS_RUMBLE] = (m_outPipe != nullptr); // refresh input count
+    if (!m_joystick)
+        R_RETURN(CONTROL_ERR_INVALID_REPORT_DESCRIPTOR);
 
-    // If has reportID
-    for (int i = 0; i < CONTROLLER_MAX_INPUTS; i++)
+    if (!m_joystick->isValid())
     {
-        uint8_t input_bytes[CONTROLLER_INPUT_BUFFER_SIZE];
-        size_t size = sizeof(input_bytes);
-
-        R_TRY(m_inPipe->Read(input_bytes, &size));
-
-        uint16_t report_id = input_bytes[0];
-        if (report_id > m_inputCount && report_id <= CONTROLLER_MAX_INPUTS)
-            m_inputCount = report_id;
+        LogPrint(LogLevelError, "GenericHIDController HID report descriptor don't contains HID report for joystick");
+        R_RETURN(CONTROL_ERR_HID_IS_NOT_JOYSTICK);
     }
 
-    LogPrint(LogLevelInfo, "GenericHIDController USB interfaces opened successfully (%d inputs) !", m_inputCount);
+    m_features[SUPPORTS_RUMBLE] = (m_outPipe != nullptr); // refresh input count
+
+    LogPrint(LogLevelInfo, "GenericHIDController USB joystick successfully opened (%d inputs detected) !", GetInputCount());
 
     R_SUCCEED();
 }
@@ -109,11 +112,12 @@ void GenericHIDController::CloseInterfaces()
 
 uint16_t GenericHIDController::GetInputCount()
 {
-    return m_inputCount;
+    return m_joystick->getCount();
 }
 
 ams::Result GenericHIDController::ReadInput(NormalizedButtonData *normalData, uint16_t *input_idx)
 {
+    HIDJoystickData joystick_data;
     uint8_t input_bytes[CONTROLLER_INPUT_BUFFER_SIZE];
     size_t size = sizeof(input_bytes);
 
@@ -122,41 +126,47 @@ ams::Result GenericHIDController::ReadInput(NormalizedButtonData *normalData, ui
     LogPrint(LogLevelDebug, "GenericHIDController ReadInput %d bytes", size);
     LogBuffer(LogLevelDebug, input_bytes, size);
 
-    *input_idx = input_bytes[0] - 1;
-    if (*input_idx >= m_inputCount)
+    if (!m_joystick->parseData(input_bytes, size, &joystick_data))
+    {
+        LogPrint(LogLevelError, "GenericHIDController Failed to parse input data");
         R_RETURN(CONTROL_ERR_UNEXPECTED_DATA);
+    }
 
-    GenericHIDButtonData *buttonData = reinterpret_cast<GenericHIDButtonData *>(input_bytes);
+    LogPrint(LogLevelDebug, "GenericHIDController DATA: X=%d, Y=%d, Z=%d, Rz=%d, HatSwitch=%d, B1=%d, B2=%d, B3=%d, B4=%d, B5=%d, B6=%d, B7=%d, B8=%d, B9=%d, B10=%d",
+             joystick_data.X, joystick_data.Y, joystick_data.Z, joystick_data.Rz, joystick_data.hat_switch,
+             joystick_data.buttons[1],
+             joystick_data.buttons[2] ? 1 : 0,
+             joystick_data.buttons[3] ? 1 : 0,
+             joystick_data.buttons[4] ? 1 : 0,
+             joystick_data.buttons[5] ? 1 : 0,
+             joystick_data.buttons[6] ? 1 : 0,
+             joystick_data.buttons[7] ? 1 : 0,
+             joystick_data.buttons[8] ? 1 : 0,
+             joystick_data.buttons[9] ? 1 : 0,
+             joystick_data.buttons[10] ? 1 : 0);
 
-    /*
-        normalData->triggers[0] = NormalizeTrigger(GetConfig().triggerDeadzonePercent[0], buttonData->trigger_left_pressure);
-        normalData->triggers[1] = NormalizeTrigger(GetConfig().triggerDeadzonePercent[1], buttonData->trigger_right_pressure);
+    *input_idx = joystick_data.index;
 
-        NormalizeAxis(buttonData->stick_left_x, buttonData->stick_left_y, GetConfig().stickDeadzonePercent[0],
-                      &normalData->sticks[0].axis_x, &normalData->sticks[0].axis_y);
-        NormalizeAxis(buttonData->stick_right_x, buttonData->stick_right_y, GetConfig().stickDeadzonePercent[1],
-                      &normalData->sticks[1].axis_x, &normalData->sticks[1].axis_y);
-    */
     // Button 1, 2, 3, 4 has been mapped according to remote control: Guilikit, Xbox360
     bool buttons[MAX_CONTROLLER_BUTTONS] = {
-        buttonData->button4,                 // X
-        buttonData->button2,                 // A
-        buttonData->button1,                 // B
-        buttonData->button3,                 // Y
-        false,                               // buttonData->stick_left_click,
-        false,                               // buttonData->stick_right_click,
-        buttonData->button5,                 // L
-        buttonData->button6,                 // R
-        buttonData->button7,                 // ZL
-        buttonData->button8,                 // ZR
-        buttonData->button9,                 // Minus
-        buttonData->button10,                // Plus
-        buttonData->dpad_up_down == 0x00,    // UP
-        buttonData->dpad_left_right == 0xFF, // RIGHT
-        buttonData->dpad_up_down == 0xFF,    // DOWN
-        buttonData->dpad_left_right == 0x00, // LEFT
-        false,                               // Capture
-        false,                               // Home
+        joystick_data.buttons[4] ? true : false,  // X
+        joystick_data.buttons[2] ? true : false,  // A
+        joystick_data.buttons[1] ? true : false,  // B
+        joystick_data.buttons[3] ? true : false,  // Y
+        false,                                    // buttonData->stick_left_click,
+        false,                                    // buttonData->stick_right_click,
+        joystick_data.buttons[5] ? true : false,  // L
+        joystick_data.buttons[6] ? true : false,  // R
+        joystick_data.buttons[7] ? true : false,  // ZL
+        joystick_data.buttons[8] ? true : false,  // ZR
+        joystick_data.buttons[9] ? true : false,  // Minus
+        joystick_data.buttons[10] ? true : false, // Plus
+        joystick_data.Y < 0,                      // UP
+        joystick_data.Y > 0,                      // RIGHT
+        joystick_data.X < 0,                      // DOWN
+        joystick_data.X > 0,                      // LEFT
+        false,                                    // Capture
+        false,                                    // Home
     };
 
     for (int i = 0; i < MAX_CONTROLLER_BUTTONS; i++)

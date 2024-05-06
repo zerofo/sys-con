@@ -11,6 +11,9 @@ all: $(TARGETS)
 
 libstratosphere:
 	$(MAKE) -C ../lib/Atmosphere-libs/libstratosphere
+	
+libhiddatainterpreter:
+	$(MAKE) -C ../lib/HIDDataInterpreter/build/switch
 
 AppletCompanion:
 	$(MAKE) -C AppletCompanion
@@ -24,7 +27,7 @@ Sysmodule/source/version.h: ../.git/HEAD ../.git/index
 	echo "const unsigned int syscon_commit_count = $(GIT_TAG_COMMIT_COUNT);" >> $@
 	echo "}" >> $@
 
-Sysmodule: libstratosphere Sysmodule/source/version.h
+Sysmodule: libstratosphere libhiddatainterpreter Sysmodule/source/version.h
 	$(MAKE) -C Sysmodule
 
 clean:
@@ -33,3 +36,4 @@ clean:
 	
 mrproper: clean
 	$(MAKE) -C libstratosphere clean
+	$(MAKE) -C libhiddatainterpreter clean

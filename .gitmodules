@@ -4,3 +4,6 @@
 [submodule "lib/libnx"]
 	path = lib/libnx
 	url = https://github.com/switchbrew/libnx.git
+[submodule "lib/HIDDataInterpreter"]
+	path = lib/HIDDataInterpreter
+	url = https://github.com/o0Zz/HIDDataInterpreter.git
