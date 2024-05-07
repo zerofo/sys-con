@@ -90,15 +90,10 @@ namespace syscon::usb
                                 syscon::logger::LogInfo("Initializing Xbox One controller ...");
                                 controllers::Insert(std::make_unique<XboxOneController>(std::make_unique<SwitchUSBDevice>(&interfaces[i], 1), config, std::make_unique<syscon::logger::Logger>()));
                             }
-                            else if (strcmp(config.driver, "generic") == 0)
-                            {
-                                syscon::logger::LogInfo("Initializing Generic controller ...");
-                                controllers::Insert(std::make_unique<GenericHIDController>(std::make_unique<SwitchUSBDevice>(&interfaces[i], 1), config, std::make_unique<syscon::logger::Logger>()));
-                            }
                             else
                             {
-                                syscon::logger::LogError("Unable to initial controller for device [%04x-%04x], driver: '%s' not found !", interfaces[i].device_desc.idVendor, interfaces[i].device_desc.idProduct, config.driver);
-                                continue;
+                                syscon::logger::LogInfo("Initializing Generic controller for [%04x-%04x] ...", interfaces[i].device_desc.idVendor, interfaces[i].device_desc.idProduct);
+                                controllers::Insert(std::make_unique<GenericHIDController>(std::make_unique<SwitchUSBDevice>(&interfaces[i], 1), config, std::make_unique<syscon::logger::Logger>()));
                             }
 
                             break;

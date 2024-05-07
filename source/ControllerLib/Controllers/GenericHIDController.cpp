@@ -79,9 +79,7 @@ ams::Result GenericHIDController::OpenInterfaces()
         LogPrint(LogLevelDebug, "GenericHIDController Got descriptor for interface %d", interface->GetDescriptor()->bInterfaceNumber);
         LogBuffer(LogLevelDebug, buffer, size);
 
-        HIDReportDescriptor report_desc(buffer, size);
-
-        m_joystick = std::make_shared<HIDJoystick>(report_desc);
+        m_joystick = std::make_shared<HIDJoystick>(HIDReportDescriptor(buffer, size));
 
         break; // Stop after the first interface
     }
@@ -147,27 +145,38 @@ ams::Result GenericHIDController::ReadInput(NormalizedButtonData *normalData, ui
 
     *input_idx = joystick_data.index;
 
+    bool hatswitch_up = joystick_data.hat_switch == HIDJoystickHatSwitch::UP || joystick_data.hat_switch == HIDJoystickHatSwitch::UP_RIGHT || joystick_data.hat_switch == HIDJoystickHatSwitch::UP_LEFT;
+    bool hatswitch_right = joystick_data.hat_switch == HIDJoystickHatSwitch::RIGHT || joystick_data.hat_switch == HIDJoystickHatSwitch::UP_RIGHT || joystick_data.hat_switch == HIDJoystickHatSwitch::DOWN_RIGHT;
+    bool hatswitch_down = joystick_data.hat_switch == HIDJoystickHatSwitch::DOWN || joystick_data.hat_switch == HIDJoystickHatSwitch::DOWN_RIGHT || joystick_data.hat_switch == HIDJoystickHatSwitch::DOWN_LEFT;
+    bool hatswitch_left = joystick_data.hat_switch == HIDJoystickHatSwitch::LEFT || joystick_data.hat_switch == HIDJoystickHatSwitch::UP_LEFT || joystick_data.hat_switch == HIDJoystickHatSwitch::DOWN_LEFT;
+
     // Button 1, 2, 3, 4 has been mapped according to remote control: Guilikit, Xbox360
     bool buttons[MAX_CONTROLLER_BUTTONS] = {
         joystick_data.buttons[4] ? true : false,  // X
         joystick_data.buttons[2] ? true : false,  // A
         joystick_data.buttons[1] ? true : false,  // B
         joystick_data.buttons[3] ? true : false,  // Y
-        false,                                    // buttonData->stick_left_click,
-        false,                                    // buttonData->stick_right_click,
+        joystick_data.buttons[11] ? true : false, // stick_left_click,
+        joystick_data.buttons[12] ? true : false, // stick_right_click,
         joystick_data.buttons[5] ? true : false,  // L
         joystick_data.buttons[6] ? true : false,  // R
         joystick_data.buttons[7] ? true : false,  // ZL
         joystick_data.buttons[8] ? true : false,  // ZR
         joystick_data.buttons[9] ? true : false,  // Minus
         joystick_data.buttons[10] ? true : false, // Plus
-        joystick_data.Y < 0,                      // UP
-        joystick_data.Y > 0,                      // RIGHT
-        joystick_data.X < 0,                      // DOWN
-        joystick_data.X > 0,                      // LEFT
+        hatswitch_up,                             // UP
+        hatswitch_right,                          // RIGHT
+        hatswitch_down,                           // DOWN
+        hatswitch_left,                           // LEFT
         false,                                    // Capture
         false,                                    // Home
     };
+
+    normalData->triggers[0] = NormalizeTrigger(GetConfig().triggerDeadzonePercent[0], joystick_data.Z);
+    normalData->triggers[1] = NormalizeTrigger(GetConfig().triggerDeadzonePercent[1], joystick_data.Rz);
+
+    NormalizeAxis(joystick_data.X, joystick_data.Y, GetConfig().stickDeadzonePercent[0], &normalData->sticks[0].axis_x, &normalData->sticks[0].axis_y);
+    NormalizeAxis(joystick_data.Rx, joystick_data.Ry, GetConfig().stickDeadzonePercent[1], &normalData->sticks[1].axis_x, &normalData->sticks[1].axis_y);
 
     for (int i = 0; i < MAX_CONTROLLER_BUTTONS; i++)
     {
