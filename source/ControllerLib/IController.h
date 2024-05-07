@@ -71,5 +71,46 @@ public:
 
     virtual ams::Result OutputBuffer() { return 1; };
 
+    float NormalizeTrigger(uint8_t deadzonePercent, uint8_t value)
+    {
+        uint8_t deadzone = (UINT8_MAX * deadzonePercent) / 100;
+
+        if (value < deadzone)
+            return 0;
+
+        return static_cast<float>(value - deadzone) / (UINT8_MAX - deadzone);
+    }
+
+    void NormalizeAxis(uint8_t x, uint8_t y, uint8_t deadzonePercent, float *x_out, float *y_out, int32_t min, int32_t max)
+    {
+        //*x_out, *y_out is between -1.0 and 1.0
+        float ratio = 0;
+        float x_val = x;
+        float y_val = y;
+        int32_t range = max;
+
+        if (min >= 0)
+        {
+            x_val = x - (max / 2);
+            y_val = (max / 2) - y;
+            range = (max / 2);
+        }
+
+        float real_magnitude = std::sqrt(x_val * x_val + y_val * y_val);
+        float real_deadzone = (range * deadzonePercent) / 100;
+        if (real_magnitude > real_deadzone)
+        {
+            float magnitude = std::min((float)range, real_magnitude);
+            magnitude -= real_deadzone;
+            ratio = (magnitude / (range - real_deadzone)) / real_magnitude;
+        }
+        else
+        {
+            *x_out = *y_out = 0.0f;
+        }
+        *x_out = x_val * ratio;
+        *y_out = y_val * ratio;
+    }
+
     virtual const ControllerConfig &GetConfig() { return m_config; }
 };

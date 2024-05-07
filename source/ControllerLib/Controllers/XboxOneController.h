@@ -97,9 +97,6 @@ public:
 
     virtual bool Support(ControllerFeature feature) override;
 
-    float NormalizeTrigger(uint8_t deadzonePercent, uint16_t value);
-    void NormalizeAxis(int16_t x, int16_t y, uint8_t deadzonePercent, float *x_out, float *y_out);
-
     ams::Result SendInitBytes();
     ams::Result WriteAckGuideReport(uint8_t sequence);
     ams::Result SetRumble(uint8_t strong_magnitude, uint8_t weak_magnitude);

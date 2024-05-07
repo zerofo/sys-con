@@ -8,7 +8,6 @@ Dualshock4Controller::Dualshock4Controller(std::unique_ptr<IUSBDevice> &&device,
 
 Dualshock4Controller::~Dualshock4Controller()
 {
-    // Exit();
 }
 
 ams::Result Dualshock4Controller::SendInitBytes()
@@ -127,49 +126,6 @@ bool Dualshock4Controller::Support(ControllerFeature feature)
     }
 };
 
-float Dualshock4Controller::NormalizeTrigger(uint8_t deadzonePercent, uint8_t value)
-{
-    uint8_t deadzone = (UINT8_MAX * deadzonePercent) / 100;
-    // If the given value is below the trigger zone, save the calc and return 0, otherwise adjust the value to the deadzone
-    return value < deadzone
-               ? 0
-               : static_cast<float>(value - deadzone) / (UINT8_MAX - deadzone);
-}
-
-void Dualshock4Controller::NormalizeAxis(uint8_t x,
-                                         uint8_t y,
-                                         uint8_t deadzonePercent,
-                                         float *x_out,
-                                         float *y_out)
-{
-    float x_val = x - 127.0f;
-    float y_val = 127.0f - y;
-    // Determine how far the stick is pushed.
-    // This will never exceed 32767 because if the stick is
-    // horizontally maxed in one direction, vertically it must be neutral(0) and vice versa
-    float real_magnitude = std::sqrt(x_val * x_val + y_val * y_val);
-    float real_deadzone = (127 * deadzonePercent) / 100;
-    // Check if the controller is outside a circular dead zone.
-    if (real_magnitude > real_deadzone)
-    {
-        // Clip the magnitude at its expected maximum value.
-        float magnitude = std::min(127.0f, real_magnitude);
-        // Adjust magnitude relative to the end of the dead zone.
-        magnitude -= real_deadzone;
-        // Normalize the magnitude with respect to its expected range giving a
-        // magnitude value of 0.0 to 1.0
-        // ratio = (currentValue / maxValue) / realValue
-        float ratio = (magnitude / (127 - real_deadzone)) / real_magnitude;
-        *x_out = x_val * ratio;
-        *y_out = y_val * ratio;
-    }
-    else
-    {
-        // If the controller is in the deadzone zero out the magnitude.
-        *x_out = *y_out = 0.0f;
-    }
-}
-
 // Pass by value should hopefully be optimized away by RVO
 NormalizedButtonData Dualshock4Controller::GetNormalizedButtonData()
 {
@@ -179,9 +135,9 @@ NormalizedButtonData Dualshock4Controller::GetNormalizedButtonData()
     normalData.triggers[1] = NormalizeTrigger(GetConfig().triggerDeadzonePercent[1], m_buttonData.r2_pressure);
 
     NormalizeAxis(m_buttonData.stick_left_x, m_buttonData.stick_left_y, GetConfig().stickDeadzonePercent[0],
-                  &normalData.sticks[0].axis_x, &normalData.sticks[0].axis_y);
+                  &normalData.sticks[0].axis_x, &normalData.sticks[0].axis_y, 0, 255);
     NormalizeAxis(m_buttonData.stick_right_x, m_buttonData.stick_right_y, GetConfig().stickDeadzonePercent[1],
-                  &normalData.sticks[1].axis_x, &normalData.sticks[1].axis_y);
+                  &normalData.sticks[1].axis_x, &normalData.sticks[1].axis_y, 0, 255);
 
     bool buttons[MAX_CONTROLLER_BUTTONS] = {
         m_buttonData.triangle,

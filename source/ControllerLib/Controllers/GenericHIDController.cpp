@@ -24,6 +24,7 @@ ams::Result GenericHIDController::Initialize()
 
     R_SUCCEED();
 }
+
 void GenericHIDController::Exit()
 {
     CloseInterfaces();
@@ -74,12 +75,16 @@ ams::Result GenericHIDController::OpenInterfaces()
         uint8_t buffer[CONTROLLER_HID_REPORT_BUFFER_SIZE];
         uint16_t size = sizeof(buffer);
 
+        // Get the HID report descriptor
         R_TRY(interface->ControlTransferInput((uint8_t)USB_ENDPOINT_IN | (uint8_t)USB_RECIPIENT_INTERFACE, USB_REQUEST_GET_DESCRIPTOR, (USB_DT_REPORT << 8) | interface->GetDescriptor()->bInterfaceNumber, 0, buffer, &size));
+        // If not working trying to get XID report descriptor https://xboxdevwiki.net/Xbox_Input_Devices
 
         LogPrint(LogLevelDebug, "GenericHIDController Got descriptor for interface %d", interface->GetDescriptor()->bInterfaceNumber);
         LogBuffer(LogLevelDebug, buffer, size);
 
         m_joystick = std::make_shared<HIDJoystick>(HIDReportDescriptor(buffer, size));
+
+        m_joystick_count = m_joystick->getCount();
 
         break; // Stop after the first interface
     }
@@ -90,9 +95,9 @@ ams::Result GenericHIDController::OpenInterfaces()
     if (!m_joystick)
         R_RETURN(CONTROL_ERR_INVALID_REPORT_DESCRIPTOR);
 
-    if (!m_joystick->isValid())
+    if (!m_joystick_count == 0)
     {
-        LogPrint(LogLevelError, "GenericHIDController HID report descriptor don't contains HID report for joystick");
+        LogPrint(LogLevelError, "GenericHIDController HID report descriptor don't contain joystick");
         R_RETURN(CONTROL_ERR_HID_IS_NOT_JOYSTICK);
     }
 
@@ -110,7 +115,7 @@ void GenericHIDController::CloseInterfaces()
 
 uint16_t GenericHIDController::GetInputCount()
 {
-    return m_joystick->getCount();
+    return m_joystick_count;
 }
 
 ams::Result GenericHIDController::ReadInput(NormalizedButtonData *normalData, uint16_t *input_idx)
@@ -175,8 +180,8 @@ ams::Result GenericHIDController::ReadInput(NormalizedButtonData *normalData, ui
     normalData->triggers[0] = NormalizeTrigger(GetConfig().triggerDeadzonePercent[0], joystick_data.Z);
     normalData->triggers[1] = NormalizeTrigger(GetConfig().triggerDeadzonePercent[1], joystick_data.Rz);
 
-    NormalizeAxis(joystick_data.X, joystick_data.Y, GetConfig().stickDeadzonePercent[0], &normalData->sticks[0].axis_x, &normalData->sticks[0].axis_y);
-    NormalizeAxis(joystick_data.Rx, joystick_data.Ry, GetConfig().stickDeadzonePercent[1], &normalData->sticks[1].axis_x, &normalData->sticks[1].axis_y);
+    NormalizeAxis(joystick_data.X, joystick_data.Y, GetConfig().stickDeadzonePercent[0], &normalData->sticks[0].axis_x, &normalData->sticks[0].axis_y, 0, 255);
+    NormalizeAxis(joystick_data.Rx, joystick_data.Ry, GetConfig().stickDeadzonePercent[1], &normalData->sticks[1].axis_x, &normalData->sticks[1].axis_y, 0, 255);
 
     for (int i = 0; i < MAX_CONTROLLER_BUTTONS; i++)
     {
@@ -196,49 +201,6 @@ bool GenericHIDController::Support(ControllerFeature feature)
     {
         default:
             return false;
-    }
-}
-
-float GenericHIDController::NormalizeTrigger(uint8_t deadzonePercent, uint8_t value)
-{
-    uint8_t deadzone = (UINT8_MAX * deadzonePercent) / 100;
-    // If the given value is below the trigger zone, save the calc and return 0, otherwise adjust the value to the deadzone
-    return value < deadzone
-               ? 0
-               : static_cast<float>(value - deadzone) / (UINT8_MAX - deadzone);
-}
-
-void GenericHIDController::NormalizeAxis(uint8_t x,
-                                         uint8_t y,
-                                         uint8_t deadzonePercent,
-                                         float *x_out,
-                                         float *y_out)
-{
-    float x_val = x - 127.0f;
-    float y_val = 127.0f - y;
-    // Determine how far the stick is pushed.
-    // This will never exceed 32767 because if the stick is
-    // horizontally maxed in one direction, vertically it must be neutral(0) and vice versa
-    float real_magnitude = std::sqrt(x_val * x_val + y_val * y_val);
-    float real_deadzone = (127 * deadzonePercent) / 100;
-    // Check if the controller is outside a circular dead zone.
-    if (real_magnitude > real_deadzone)
-    {
-        // Clip the magnitude at its expected maximum value.
-        float magnitude = std::min(127.0f, real_magnitude);
-        // Adjust magnitude relative to the end of the dead zone.
-        magnitude -= real_deadzone;
-        // Normalize the magnitude with respect to its expected range giving a
-        // magnitude value of 0.0 to 1.0
-        // ratio = (currentValue / maxValue) / realValue
-        float ratio = (magnitude / (127 - real_deadzone)) / real_magnitude;
-        *x_out = x_val * ratio;
-        *y_out = y_val * ratio;
-    }
-    else
-    {
-        // If the controller is in the deadzone zero out the magnitude.
-        *x_out = *y_out = 0.0f;
     }
 }
 

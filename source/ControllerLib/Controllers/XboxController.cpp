@@ -8,7 +8,6 @@ XboxController::XboxController(std::unique_ptr<IUSBDevice> &&device, const Contr
 
 XboxController::~XboxController()
 {
-    // Exit();
 }
 
 ams::Result XboxController::Initialize()
@@ -99,50 +98,6 @@ bool XboxController::Support(ControllerFeature feature)
     return false;
 }
 
-float XboxController::NormalizeTrigger(uint8_t deadzonePercent, uint8_t value)
-{
-    uint8_t deadzone = (UINT8_MAX * deadzonePercent) / 100;
-    // If the given value is below the trigger zone, save the calc and return 0, otherwise adjust the value to the deadzone
-    return value < deadzone
-               ? 0
-               : static_cast<float>(value - deadzone) / (UINT8_MAX - deadzone);
-}
-
-void XboxController::NormalizeAxis(int16_t x,
-                                   int16_t y,
-                                   uint8_t deadzonePercent,
-                                   float *x_out,
-                                   float *y_out)
-{
-    float x_val = x;
-    float y_val = y;
-    // Determine how far the stick is pushed.
-    // This will never exceed 32767 because if the stick is
-    // horizontally maxed in one direction, vertically it must be neutral(0) and vice versa
-    float real_magnitude = std::sqrt(x_val * x_val + y_val * y_val);
-    float real_deadzone = (32767 * deadzonePercent) / 100;
-    // Check if the controller is outside a circular dead zone.
-    if (real_magnitude > real_deadzone)
-    {
-        // Clip the magnitude at its expected maximum value.
-        float magnitude = std::min(32767.0f, real_magnitude);
-        // Adjust magnitude relative to the end of the dead zone.
-        magnitude -= real_deadzone;
-        // Normalize the magnitude with respect to its expected range giving a
-        // magnitude value of 0.0 to 1.0
-        // ratio = (currentValue / maxValue) / realValue
-        float ratio = (magnitude / (32767 - real_deadzone)) / real_magnitude;
-
-        *x_out = x_val * ratio;
-        *y_out = y_val * ratio;
-    }
-    else
-    {
-        // If the controller is in the deadzone zero out the magnitude.
-        *x_out = *y_out = 0.0f;
-    }
-}
-
 // Pass by value should hopefully be optimized away by RVO
 NormalizedButtonData XboxController::GetNormalizedButtonData()
 {
@@ -152,9 +107,9 @@ NormalizedButtonData XboxController::GetNormalizedButtonData()
     normalData.triggers[1] = NormalizeTrigger(GetConfig().triggerDeadzonePercent[1], m_buttonData.trigger_right);
 
     NormalizeAxis(m_buttonData.stick_left_x, m_buttonData.stick_left_y, GetConfig().stickDeadzonePercent[0],
-                  &normalData.sticks[0].axis_x, &normalData.sticks[0].axis_y);
+                  &normalData.sticks[0].axis_x, &normalData.sticks[0].axis_y, -32768, 32767);
     NormalizeAxis(m_buttonData.stick_right_x, m_buttonData.stick_right_y, GetConfig().stickDeadzonePercent[1],
-                  &normalData.sticks[1].axis_x, &normalData.sticks[1].axis_y);
+                  &normalData.sticks[1].axis_x, &normalData.sticks[1].axis_y, -32768, 32767);
 
     bool buttons[MAX_CONTROLLER_BUTTONS]{
         m_buttonData.y != 0,

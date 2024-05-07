@@ -11,6 +11,7 @@ private:
     IUSBEndpoint *m_outPipe = nullptr;
     bool m_features[SUPPORTS_COUNT];
     std::shared_ptr<HIDJoystick> m_joystick;
+    uint8_t m_joystick_count = 0;
 
 public:
     GenericHIDController(std::unique_ptr<IUSBDevice> &&device, const ControllerConfig &config, std::unique_ptr<ILogger> &&logger);
@@ -27,9 +28,6 @@ public:
     virtual ams::Result ReadInput(NormalizedButtonData *normalData, uint16_t *input_idx) override;
 
     virtual bool Support(ControllerFeature feature) override;
-
-    float NormalizeTrigger(uint8_t deadzonePercent, uint8_t value);
-    void NormalizeAxis(uint8_t x, uint8_t y, uint8_t deadzonePercent, float *x_out, float *y_out);
 
     ams::Result SendInitBytes();
     ams::Result SetRumble(uint8_t strong_magnitude, uint8_t weak_magnitude);
