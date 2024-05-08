@@ -1,5 +1,4 @@
 #include "Controllers/XboxOneController.h"
-#include <cmath>
 
 #define TRIGGER_MAXVALUE 1023
 
@@ -59,7 +58,7 @@ static constexpr VendorProductPacket init_packets[]{
 };
 
 XboxOneController::XboxOneController(std::unique_ptr<IUSBDevice> &&device, const ControllerConfig &config, std::unique_ptr<ILogger> &&logger)
-    : IController(std::move(device), std::move(config), std::move(logger))
+    : BaseController(std::move(device), std::move(config), std::move(logger))
 {
 }
 
@@ -69,76 +68,13 @@ XboxOneController::~XboxOneController()
 
 ams::Result XboxOneController::Initialize()
 {
-    R_TRY(OpenInterfaces());
+    R_TRY(BaseController::Initialize());
     R_TRY(SendInitBytes());
 
     R_SUCCEED();
 }
 
-void XboxOneController::Exit()
-{
-    CloseInterfaces();
-}
-
-ams::Result XboxOneController::OpenInterfaces()
-{
-    R_TRY(m_device->Open());
-
-    // This will open each interface and try to acquire Xbox One controller's in and out endpoints, if it hasn't already
-    std::vector<std::unique_ptr<IUSBInterface>> &interfaces = m_device->GetInterfaces();
-    for (auto &&interface : interfaces)
-    {
-        R_TRY(interface->Open());
-
-        if (interface->GetDescriptor()->bInterfaceProtocol != 208)
-            continue;
-
-        if (interface->GetDescriptor()->bNumEndpoints < 2)
-            continue;
-
-        if (!m_inPipe)
-        {
-            for (uint8_t i = 0; i != 15; ++i)
-            {
-                IUSBEndpoint *inEndpoint = interface->GetEndpoint(IUSBEndpoint::USB_ENDPOINT_IN, i);
-                if (inEndpoint)
-                {
-                    R_TRY(inEndpoint->Open());
-
-                    m_inPipe = inEndpoint;
-                    break;
-                }
-            }
-        }
-
-        if (!m_outPipe)
-        {
-            for (uint8_t i = 0; i != 15; ++i)
-            {
-                IUSBEndpoint *outEndpoint = interface->GetEndpoint(IUSBEndpoint::USB_ENDPOINT_OUT, i);
-                if (outEndpoint)
-                {
-                    R_TRY(outEndpoint->Open());
-
-                    m_outPipe = outEndpoint;
-                    break;
-                }
-            }
-        }
-    }
-
-    if (!m_inPipe || !m_outPipe)
-        R_RETURN(CONTROL_ERR_INVALID_ENDPOINT);
-
-    R_SUCCEED();
-}
-void XboxOneController::CloseInterfaces()
-{
-    // m_device->Reset();
-    m_device->Close();
-}
-
-ams::Result XboxOneController::GetInput()
+ams::Result XboxOneController::ReadInput(NormalizedButtonData *normalData, uint16_t *input_idx)
 {
     uint8_t input_bytes[64];
     size_t size = sizeof(input_bytes);
@@ -149,7 +85,47 @@ ams::Result XboxOneController::GetInput()
 
     if (type == XBONEINPUT_BUTTON) // Button data
     {
-        m_buttonData = *reinterpret_cast<XboxOneButtonData *>(input_bytes);
+        XboxOneButtonData *buttonData = reinterpret_cast<XboxOneButtonData *>(input_bytes);
+
+        *input_idx = 0;
+
+        normalData->triggers[0] = NormalizeTrigger(GetConfig().triggerDeadzonePercent[0], buttonData->trigger_left);
+        normalData->triggers[1] = NormalizeTrigger(GetConfig().triggerDeadzonePercent[1], buttonData->trigger_right);
+
+        NormalizeAxis(buttonData->stick_left_x, buttonData->stick_left_y, GetConfig().stickDeadzonePercent[0],
+                      &normalData->sticks[0].axis_x, &normalData->sticks[0].axis_y, -32768, 32767);
+        NormalizeAxis(buttonData->stick_right_x, buttonData->stick_right_y, GetConfig().stickDeadzonePercent[1],
+                      &normalData->sticks[1].axis_x, &normalData->sticks[1].axis_y, -32768, 32767);
+
+        bool buttons[MAX_CONTROLLER_BUTTONS]{
+            buttonData->y,
+            buttonData->b,
+            buttonData->a,
+            buttonData->x,
+            buttonData->stick_left_click,
+            buttonData->stick_right_click,
+            buttonData->bumper_left,
+            buttonData->bumper_right,
+            normalData->triggers[0] > 0,
+            normalData->triggers[1] > 0,
+            buttonData->back,
+            buttonData->start,
+            buttonData->dpad_up,
+            buttonData->dpad_right,
+            buttonData->dpad_down,
+            buttonData->dpad_left,
+            buttonData->sync,
+            m_GuidePressed,
+        };
+
+        for (int i = 0; i != MAX_CONTROLLER_BUTTONS; ++i)
+        {
+            ControllerButton button = GetConfig().buttons[i];
+            if (button == NONE)
+                continue;
+
+            normalData->buttons[(button != DEFAULT ? button - 2 : i)] += buttons[i];
+        }
     }
     else if (type == XBONEINPUT_GUIDEBUTTON) // Guide button Result
     {
@@ -164,19 +140,6 @@ ams::Result XboxOneController::GetInput()
     }
 
     R_SUCCEED();
-}
-
-bool XboxOneController::Support(ControllerFeature feature)
-{
-    switch (feature)
-    {
-        case SUPPORTS_RUMBLE:
-            return true;
-        case SUPPORTS_BLUETOOTH:
-            return true;
-        default:
-            return false;
-    }
 }
 
 ams::Result XboxOneController::SendInitBytes()
@@ -194,52 +157,6 @@ ams::Result XboxOneController::SendInitBytes()
     }
 
     R_SUCCEED();
-}
-
-// Pass by value should hopefully be optimized away by RVO
-NormalizedButtonData XboxOneController::GetNormalizedButtonData()
-{
-    NormalizedButtonData normalData{};
-
-    normalData.triggers[0] = NormalizeTrigger(GetConfig().triggerDeadzonePercent[0], m_buttonData.trigger_left);
-    normalData.triggers[1] = NormalizeTrigger(GetConfig().triggerDeadzonePercent[1], m_buttonData.trigger_right);
-
-    NormalizeAxis(m_buttonData.stick_left_x, m_buttonData.stick_left_y, GetConfig().stickDeadzonePercent[0],
-                  &normalData.sticks[0].axis_x, &normalData.sticks[0].axis_y, -32768, 32767);
-    NormalizeAxis(m_buttonData.stick_right_x, m_buttonData.stick_right_y, GetConfig().stickDeadzonePercent[1],
-                  &normalData.sticks[1].axis_x, &normalData.sticks[1].axis_y, -32768, 32767);
-
-    bool buttons[MAX_CONTROLLER_BUTTONS]{
-        m_buttonData.y,
-        m_buttonData.b,
-        m_buttonData.a,
-        m_buttonData.x,
-        m_buttonData.stick_left_click,
-        m_buttonData.stick_right_click,
-        m_buttonData.bumper_left,
-        m_buttonData.bumper_right,
-        normalData.triggers[0] > 0,
-        normalData.triggers[1] > 0,
-        m_buttonData.back,
-        m_buttonData.start,
-        m_buttonData.dpad_up,
-        m_buttonData.dpad_right,
-        m_buttonData.dpad_down,
-        m_buttonData.dpad_left,
-        m_buttonData.sync,
-        m_GuidePressed,
-    };
-
-    for (int i = 0; i != MAX_CONTROLLER_BUTTONS; ++i)
-    {
-        ControllerButton button = GetConfig().buttons[i];
-        if (button == NONE)
-            continue;
-
-        normalData.buttons[(button != DEFAULT ? button - 2 : i)] += buttons[i];
-    }
-
-    return normalData;
 }
 
 ams::Result XboxOneController::WriteAckGuideReport(uint8_t sequence)

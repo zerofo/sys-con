@@ -1,13 +1,12 @@
 #include "Controllers/GenericHIDController.h"
 #include "HIDReportDescriptor.h"
 #include "HIDJoystick.h"
-#include <cmath>
 #include <string.h>
 
 // https://www.usb.org/sites/default/files/documents/hid1_11.pdf  p55
 
 GenericHIDController::GenericHIDController(std::unique_ptr<IUSBDevice> &&device, const ControllerConfig &config, std::unique_ptr<ILogger> &&logger)
-    : IController(std::move(device), config, std::move(logger))
+    : BaseController(std::move(device), config, std::move(logger))
 {
     LogPrint(LogLevelInfo, "GenericHIDController Created for %04x-%04x", m_device->GetVendor(), m_device->GetProduct());
 }
@@ -20,80 +19,20 @@ ams::Result GenericHIDController::Initialize()
 {
     LogPrint(LogLevelDebug, "GenericHIDController Initializing ...");
 
-    R_TRY(OpenInterfaces());
+    R_TRY(BaseController::Initialize());
 
-    R_SUCCEED();
-}
+    uint8_t buffer[CONTROLLER_HID_REPORT_BUFFER_SIZE];
+    uint16_t size = sizeof(buffer);
 
-void GenericHIDController::Exit()
-{
-    CloseInterfaces();
-}
+    // Get the HID report descriptor
+    R_TRY(m_interface->ControlTransferInput((uint8_t)USB_ENDPOINT_IN | (uint8_t)USB_RECIPIENT_INTERFACE, USB_REQUEST_GET_DESCRIPTOR, (USB_DT_REPORT << 8) | m_interface->GetDescriptor()->bInterfaceNumber, 0, buffer, &size));
 
-ams::Result GenericHIDController::OpenInterfaces()
-{
-    LogPrint(LogLevelDebug, "GenericHIDController Opening interfaces ...");
+    LogPrint(LogLevelDebug, "GenericHIDController Got descriptor for interface %d", m_interface->GetDescriptor()->bInterfaceNumber);
+    LogBuffer(LogLevelDebug, buffer, size);
 
-    R_TRY(m_device->Open());
+    m_joystick = std::make_shared<HIDJoystick>(HIDReportDescriptor(buffer, size));
 
-    // Open each interface, send it a setup packet and get the endpoints if it succeeds
-    std::vector<std::unique_ptr<IUSBInterface>> &interfaces = m_device->GetInterfaces();
-    for (auto &&interface : interfaces)
-    {
-        R_TRY(interface->Open());
-
-        if (!m_inPipe)
-        {
-            for (int i = 0; i < 15; i++)
-            {
-                IUSBEndpoint *inEndpoint = interface->GetEndpoint(IUSBEndpoint::USB_ENDPOINT_IN, i);
-                if (inEndpoint)
-                {
-                    R_TRY(inEndpoint->Open());
-
-                    m_inPipe = inEndpoint;
-                    break;
-                }
-            }
-        }
-
-        if (!m_outPipe)
-        {
-            for (int i = 0; i < 15; i++)
-            {
-                IUSBEndpoint *outEndpoint = interface->GetEndpoint(IUSBEndpoint::USB_ENDPOINT_OUT, i);
-                if (outEndpoint)
-                {
-                    R_TRY(outEndpoint->Open());
-
-                    m_outPipe = outEndpoint;
-                    break;
-                }
-            }
-        }
-
-        uint8_t buffer[CONTROLLER_HID_REPORT_BUFFER_SIZE];
-        uint16_t size = sizeof(buffer);
-
-        // Get the HID report descriptor
-        R_TRY(interface->ControlTransferInput((uint8_t)USB_ENDPOINT_IN | (uint8_t)USB_RECIPIENT_INTERFACE, USB_REQUEST_GET_DESCRIPTOR, (USB_DT_REPORT << 8) | interface->GetDescriptor()->bInterfaceNumber, 0, buffer, &size));
-        // If not working trying to get XID report descriptor https://xboxdevwiki.net/Xbox_Input_Devices
-
-        LogPrint(LogLevelDebug, "GenericHIDController Got descriptor for interface %d", interface->GetDescriptor()->bInterfaceNumber);
-        LogBuffer(LogLevelDebug, buffer, size);
-
-        m_joystick = std::make_shared<HIDJoystick>(HIDReportDescriptor(buffer, size));
-
-        m_joystick_count = m_joystick->getCount();
-
-        break; // Stop after the first interface
-    }
-
-    if (!m_inPipe)
-        R_RETURN(CONTROL_ERR_INVALID_ENDPOINT);
-
-    if (!m_joystick)
-        R_RETURN(CONTROL_ERR_INVALID_REPORT_DESCRIPTOR);
+    m_joystick_count = m_joystick->getCount();
 
     if (!m_joystick_count == 0)
     {
@@ -101,16 +40,9 @@ ams::Result GenericHIDController::OpenInterfaces()
         R_RETURN(CONTROL_ERR_HID_IS_NOT_JOYSTICK);
     }
 
-    m_features[SUPPORTS_RUMBLE] = (m_outPipe != nullptr); // refresh input count
-
     LogPrint(LogLevelInfo, "GenericHIDController USB joystick successfully opened (%d inputs detected) !", GetInputCount());
 
     R_SUCCEED();
-}
-
-void GenericHIDController::CloseInterfaces()
-{
-    m_device->Close();
 }
 
 uint16_t GenericHIDController::GetInputCount()
@@ -193,21 +125,4 @@ ams::Result GenericHIDController::ReadInput(NormalizedButtonData *normalData, ui
     }
 
     R_SUCCEED();
-}
-
-bool GenericHIDController::Support(ControllerFeature feature)
-{
-    switch (feature)
-    {
-        default:
-            return false;
-    }
-}
-
-ams::Result GenericHIDController::SetRumble(uint8_t strong_magnitude, uint8_t weak_magnitude)
-{
-    (void)strong_magnitude;
-    (void)weak_magnitude;
-    // Not implemented yet
-    return 9;
 }

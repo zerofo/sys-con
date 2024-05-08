@@ -1,9 +1,6 @@
 #pragma once
 
-#include "IController.h"
-
-// References used:
-// https://cs.chromium.org/chromium/src/device/gamepad/dualshock4_controller.cc
+#include "BaseController.h"
 
 enum Dualshock3FeatureValue : uint16_t
 {
@@ -97,12 +94,6 @@ struct Dualshock3ButtonData
     uint16_t gyroscope;
 } __attribute__((packed));
 
-/*
-#define DS3_VENDOR_ID                           0x054C
-#define DS3_PRODUCT_ID                          0x0268
-#define PS_MOVE_NAVI_PRODUCT_ID                 0x042F
-*/
-
 enum Dualshock3LEDValue : uint8_t
 {
     DS3LED_1 = 0x01,
@@ -119,33 +110,18 @@ enum Dualshock3LEDValue : uint8_t
 
 #define LED_PERMANENT 0xff, 0x27, 0x00, 0x00, 0x32
 
-class Dualshock3Controller : public IController
+class Dualshock3Controller : public BaseController
 {
-private:
-    IUSBEndpoint *m_inPipe = nullptr;
-    IUSBEndpoint *m_outPipe = nullptr;
-    IUSBInterface *m_interface = nullptr;
-
-    Dualshock3ButtonData m_buttonData{};
-
 public:
     Dualshock3Controller(std::unique_ptr<IUSBDevice> &&device, const ControllerConfig &config, std::unique_ptr<ILogger> &&logger);
     virtual ~Dualshock3Controller() override;
 
     virtual ams::Result Initialize() override;
-    virtual void Exit() override;
+    virtual ams::Result OpenInterfaces() override;
 
-    ams::Result OpenInterfaces();
-    void CloseInterfaces();
-
-    virtual ams::Result GetInput() override;
-
-    virtual NormalizedButtonData GetNormalizedButtonData() override;
-
-    virtual bool Support(ControllerFeature feature) override;
+    ams::Result ReadInput(NormalizedButtonData *normalData, uint16_t *input_idx);
 
     ams::Result SendInitBytes();
-    ams::Result SetRumble(uint8_t strong_magnitude, uint8_t weak_magnitude);
 
     static ams::Result SendCommand(IUSBInterface *interface, Dualshock3FeatureValue feature, const void *buffer, uint16_t size);
 

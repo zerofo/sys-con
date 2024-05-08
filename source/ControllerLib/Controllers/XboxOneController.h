@@ -1,6 +1,6 @@
 #pragma once
 
-#include "IController.h"
+#include "BaseController.h"
 
 // References used:
 // https://github.com/quantus/xbox-one-controller-protocol
@@ -72,13 +72,9 @@ enum XboxOneInputPacketType : uint8_t
     XBONEINPUT_WAITCONNECT = 0x02,
 };
 
-class XboxOneController : public IController
+class XboxOneController : public BaseController
 {
 private:
-    IUSBEndpoint *m_inPipe = nullptr;
-    IUSBEndpoint *m_outPipe = nullptr;
-
-    XboxOneButtonData m_buttonData{};
     bool m_GuidePressed{false};
 
 public:
@@ -86,16 +82,8 @@ public:
     virtual ~XboxOneController() override;
 
     virtual ams::Result Initialize() override;
-    virtual void Exit() override;
 
-    ams::Result OpenInterfaces();
-    void CloseInterfaces();
-
-    virtual ams::Result GetInput() override;
-
-    virtual NormalizedButtonData GetNormalizedButtonData() override;
-
-    virtual bool Support(ControllerFeature feature) override;
+    virtual ams::Result ReadInput(NormalizedButtonData *normalData, uint16_t *input_idx) override;
 
     ams::Result SendInitBytes();
     ams::Result WriteAckGuideReport(uint8_t sequence);

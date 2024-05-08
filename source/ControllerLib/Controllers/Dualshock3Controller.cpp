@@ -1,8 +1,7 @@
 #include "Controllers/Dualshock3Controller.h"
-#include <cmath>
 
 Dualshock3Controller::Dualshock3Controller(std::unique_ptr<IUSBDevice> &&device, const ControllerConfig &config, std::unique_ptr<ILogger> &&logger)
-    : IController(std::move(device), config, std::move(logger))
+    : BaseController(std::move(device), config, std::move(logger))
 {
 }
 
@@ -12,35 +11,21 @@ Dualshock3Controller::~Dualshock3Controller()
 
 ams::Result Dualshock3Controller::Initialize()
 {
-    R_TRY(OpenInterfaces());
+    R_TRY(BaseController::Initialize());
 
     SetLED(DS3LED_1);
 
     R_SUCCEED();
-}
-void Dualshock3Controller::Exit()
-{
-    CloseInterfaces();
 }
 
 ams::Result Dualshock3Controller::OpenInterfaces()
 {
     R_TRY(m_device->Open());
 
-    // Open each interface, send it a setup packet and get the endpoints if it succeeds
     std::vector<std::unique_ptr<IUSBInterface>> &interfaces = m_device->GetInterfaces();
     for (auto &&interface : interfaces)
     {
         R_TRY(interface->Open());
-
-        if (interface->GetDescriptor()->bInterfaceClass != 3)
-            continue;
-
-        if (interface->GetDescriptor()->bInterfaceProtocol != 0)
-            continue;
-
-        if (interface->GetDescriptor()->bNumEndpoints < 2)
-            continue;
 
         // Send an initial control packet
         constexpr uint8_t initBytes[] = {0x42, 0x0C, 0x00, 0x00};
@@ -85,13 +70,7 @@ ams::Result Dualshock3Controller::OpenInterfaces()
     R_SUCCEED();
 }
 
-void Dualshock3Controller::CloseInterfaces()
-{
-    // m_device->Reset();
-    m_device->Close();
-}
-
-ams::Result Dualshock3Controller::GetInput()
+ams::Result Dualshock3Controller::ReadInput(NormalizedButtonData *normalData, uint16_t *input_idx)
 {
     uint8_t input_bytes[49];
     size_t size = sizeof(input_bytes);
@@ -100,82 +79,50 @@ ams::Result Dualshock3Controller::GetInput()
 
     if (input_bytes[0] == Ds3InputPacket_Button)
     {
-        m_buttonData = *reinterpret_cast<Dualshock3ButtonData *>(input_bytes);
+        Dualshock3ButtonData *buttonData = reinterpret_cast<Dualshock3ButtonData *>(input_bytes);
+
+        *input_idx = 0;
+
+        normalData->triggers[0] = NormalizeTrigger(GetConfig().triggerDeadzonePercent[0], buttonData->trigger_left_pressure);
+        normalData->triggers[1] = NormalizeTrigger(GetConfig().triggerDeadzonePercent[1], buttonData->trigger_right_pressure);
+
+        NormalizeAxis(buttonData->stick_left_x, buttonData->stick_left_y, GetConfig().stickDeadzonePercent[0],
+                      &normalData->sticks[0].axis_x, &normalData->sticks[0].axis_y, 0, 255);
+        NormalizeAxis(buttonData->stick_right_x, buttonData->stick_right_y, GetConfig().stickDeadzonePercent[1],
+                      &normalData->sticks[1].axis_x, &normalData->sticks[1].axis_y, 0, 255);
+
+        bool buttons[MAX_CONTROLLER_BUTTONS] = {
+            buttonData->triangle, // X
+            buttonData->circle,   // A
+            buttonData->cross,    // B
+            buttonData->square,   // Y
+            buttonData->stick_left_click,
+            buttonData->stick_right_click,
+            buttonData->bumper_left,     // L
+            buttonData->bumper_right,    // R
+            normalData->triggers[0] > 0, // ZL
+            normalData->triggers[1] > 0, // ZR
+            buttonData->back,            // Minus
+            buttonData->start,           // Plus
+            buttonData->dpad_up,         // UP
+            buttonData->dpad_right,      // RIGHT
+            buttonData->dpad_down,       // DOWN
+            buttonData->dpad_left,       // LEFT
+            false,                       // Capture
+            buttonData->guide,           // Home
+        };
+
+        for (int i = 0; i != MAX_CONTROLLER_BUTTONS; ++i)
+        {
+            ControllerButton button = GetConfig().buttons[i];
+            if (button == NONE)
+                continue;
+
+            normalData->buttons[(button != DEFAULT ? button - 2 : i)] += buttons[i];
+        }
     }
 
     R_SUCCEED();
-}
-
-bool Dualshock3Controller::Support(ControllerFeature feature)
-{
-    switch (feature)
-    {
-        case SUPPORTS_RUMBLE:
-            return true;
-        case SUPPORTS_BLUETOOTH:
-            return true;
-        case SUPPORTS_PRESSUREBUTTONS:
-            return true;
-        case SUPPORTS_SIXAXIS:
-            return true;
-        default:
-            return false;
-    }
-};
-
-// Pass by value should hopefully be optimized away by RVO
-NormalizedButtonData Dualshock3Controller::GetNormalizedButtonData()
-{
-    NormalizedButtonData normalData{};
-
-    normalData.triggers[0] = NormalizeTrigger(GetConfig().triggerDeadzonePercent[0], m_buttonData.trigger_left_pressure);
-    normalData.triggers[1] = NormalizeTrigger(GetConfig().triggerDeadzonePercent[1], m_buttonData.trigger_right_pressure);
-
-    NormalizeAxis(m_buttonData.stick_left_x, m_buttonData.stick_left_y, GetConfig().stickDeadzonePercent[0],
-                  &normalData.sticks[0].axis_x, &normalData.sticks[0].axis_y, 0, 255);
-    NormalizeAxis(m_buttonData.stick_right_x, m_buttonData.stick_right_y, GetConfig().stickDeadzonePercent[1],
-                  &normalData.sticks[1].axis_x, &normalData.sticks[1].axis_y, 0, 255);
-
-    bool buttons[MAX_CONTROLLER_BUTTONS] = {
-        m_buttonData.triangle, // X
-        m_buttonData.circle,   // A
-        m_buttonData.cross,    // B
-        m_buttonData.square,   // Y
-        m_buttonData.stick_left_click,
-        m_buttonData.stick_right_click,
-        m_buttonData.bumper_left,   // L
-        m_buttonData.bumper_right,  // R
-        normalData.triggers[0] > 0, // ZL
-        normalData.triggers[1] > 0, // ZR
-        m_buttonData.back,          // Minus
-        m_buttonData.start,         // Plus
-        m_buttonData.dpad_up,       // UP
-        m_buttonData.dpad_right,    // RIGHT
-        m_buttonData.dpad_down,     // DOWN
-        m_buttonData.dpad_left,     // LEFT
-        false,                      // Capture
-        m_buttonData.guide,         // Home
-    };
-
-    for (int i = 0; i != MAX_CONTROLLER_BUTTONS; ++i)
-    {
-        ControllerButton button = GetConfig().buttons[i];
-        if (button == NONE)
-            continue;
-
-        normalData.buttons[(button != DEFAULT ? button - 2 : i)] += buttons[i];
-    }
-
-    return normalData;
-}
-
-ams::Result Dualshock3Controller::SetRumble(uint8_t strong_magnitude, uint8_t weak_magnitude)
-{
-    AMS_UNUSED(strong_magnitude);
-    AMS_UNUSED(weak_magnitude);
-
-    // Not implemented yet
-    R_RETURN(CONTROL_ERR_NOT_IMPLEMENTED);
 }
 
 ams::Result Dualshock3Controller::SendCommand(IUSBInterface *interface, Dualshock3FeatureValue feature, const void *buffer, uint16_t size)

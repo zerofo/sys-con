@@ -1,62 +1,8 @@
 #pragma once
-#include "IController.h"
+#include "BaseController.h"
 
 // References used:
 // https://cs.chromium.org/chromium/src/device/gamepad/dualshock4_controller.cc
-
-struct Dualshock4ButtonData
-{
-    uint8_t padding0[2];
-
-    uint8_t stick_left_x;
-    uint8_t stick_left_y;
-    uint8_t stick_right_x;
-    uint8_t stick_right_y;
-    uint8_t dpad : 4;
-    bool square : 1;
-    bool cross : 1;
-    bool circle : 1;
-    bool triangle : 1;
-    bool l1 : 1;
-    bool r1 : 1;
-    bool l2 : 1;
-    bool r2 : 1;
-    bool share : 1;
-    bool options : 1;
-    bool l3 : 1;
-    bool r3 : 1;
-    bool psbutton : 1;
-    bool touchpad_press : 1;
-    uint8_t sequence_number : 6;
-    uint8_t l2_pressure;
-    uint8_t r2_pressure;
-    uint16_t timestamp;
-    uint8_t sensor_temperature;
-    uint16_t gyro_pitch;
-    uint16_t gyro_yaw;
-    uint16_t gyro_roll;
-    uint16_t accelerometer_x;
-    uint16_t accelerometer_y;
-    uint16_t accelerometer_z;
-    uint8_t padding1[5];
-    uint8_t battery_info : 5;
-    uint8_t padding2 : 2;
-    bool extension_detection : 1;
-
-    uint8_t padding3[2];
-
-    uint8_t touches_count;
-    uint8_t touch_data_timestamp;
-    uint8_t touch0_id : 7;
-    bool touch0_is_invalid : 1;
-    uint8_t touch0_data[3];
-    uint8_t touch1_id : 7;
-    bool touch1_is_invalid : 1;
-    uint8_t touch1_data[3];
-
-    uint8_t padding4[2];
-    uint32_t crc32;
-};
 
 struct Dualshock4USBButtonData
 {
@@ -138,30 +84,15 @@ enum Dualshock4Dpad : uint8_t
     DS4_UPLEFT,
 };
 
-class Dualshock4Controller : public IController
+class Dualshock4Controller : public BaseController
 {
-private:
-    IUSBEndpoint *m_inPipe = nullptr;
-    IUSBEndpoint *m_outPipe = nullptr;
-
-    Dualshock4USBButtonData m_buttonData{};
-
 public:
     Dualshock4Controller(std::unique_ptr<IUSBDevice> &&device, const ControllerConfig &config, std::unique_ptr<ILogger> &&logger);
     virtual ~Dualshock4Controller() override;
 
     virtual ams::Result Initialize() override;
-    virtual void Exit() override;
 
-    ams::Result OpenInterfaces();
-    void CloseInterfaces();
-
-    virtual ams::Result GetInput() override;
-
-    virtual NormalizedButtonData GetNormalizedButtonData() override;
-
-    virtual bool Support(ControllerFeature feature) override;
+    virtual ams::Result ReadInput(NormalizedButtonData *normalData, uint16_t *input_idx) override;
 
     ams::Result SendInitBytes();
-    ams::Result SetRumble(uint8_t strong_magnitude, uint8_t weak_magnitude);
 };

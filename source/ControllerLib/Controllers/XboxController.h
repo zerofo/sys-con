@@ -1,6 +1,6 @@
 #pragma once
 
-#include "IController.h"
+#include "BaseController.h"
 
 // References used:
 // http://euc.jp/periphs/xbox-controller.ja.html
@@ -50,29 +50,13 @@ struct XboxRumbleData
     uint8_t little;
 };
 
-class XboxController : public IController
+class XboxController : public BaseController
 {
-private:
-    IUSBEndpoint *m_inPipe = nullptr;
-    IUSBEndpoint *m_outPipe = nullptr;
-
-    XboxButtonData m_buttonData{};
-
 public:
     XboxController(std::unique_ptr<IUSBDevice> &&device, const ControllerConfig &config, std::unique_ptr<ILogger> &&logger);
     virtual ~XboxController() override;
 
-    virtual ams::Result Initialize() override;
-    virtual void Exit() override;
-
-    ams::Result OpenInterfaces();
-    void CloseInterfaces();
-
-    virtual ams::Result GetInput() override;
-
-    virtual NormalizedButtonData GetNormalizedButtonData() override;
-
-    virtual bool Support(ControllerFeature feature) override;
+    virtual ams::Result ReadInput(NormalizedButtonData *normalData, uint16_t *input_idx) override;
 
     ams::Result SetRumble(uint8_t strong_magnitude, uint8_t weak_magnitude);
 };

@@ -1,6 +1,4 @@
 #include "Controllers/Xbox360Controller.h"
-#include <cmath>
-
 // https://www.partsnotincluded.com/understanding-the-xbox-360-wired-controllers-usb-data/
 
 static constexpr uint8_t reconnectPacket[]{0x08, 0x00, 0x0F, 0xC0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
@@ -9,7 +7,7 @@ static constexpr uint8_t initDriverPacket[]{0x00, 0x00, 0x02, 0x80, 0x00, 0x00, 
 static constexpr uint8_t ledPacketOn[]{0x00, 0x00, 0x08, 0x40 | XBOX360LED_TOPLEFT, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
 
 Xbox360Controller::Xbox360Controller(std::unique_ptr<IUSBDevice> &&interface, const ControllerConfig &config, std::unique_ptr<ILogger> &&logger)
-    : IController(std::move(interface), config, std::move(logger))
+    : BaseController(std::move(interface), config, std::move(logger))
 {
 }
 
@@ -19,7 +17,7 @@ Xbox360Controller::~Xbox360Controller()
 
 ams::Result Xbox360Controller::Initialize()
 {
-    R_TRY(OpenInterfaces());
+    R_TRY(BaseController::Initialize());
 
     // Duplicated with OnControllerConnect
     if (m_is_wireless)
@@ -30,77 +28,16 @@ ams::Result Xbox360Controller::Initialize()
     R_SUCCEED();
 }
 
-void Xbox360Controller::Exit()
-{
-    CloseInterfaces();
-}
-
-ams::Result Xbox360Controller::OpenInterfaces()
-{
-    R_TRY(m_device->Open());
-
-    // This will open each interface and try to acquire Xbox One controller's in and out endpoints, if it hasn't already
-    std::vector<std::unique_ptr<IUSBInterface>> &interfaces = m_device->GetInterfaces();
-    for (auto &&interface : interfaces)
-    {
-        R_TRY(interface->Open());
-
-        if ((interface->GetDescriptor()->bInterfaceProtocol & 0x7F) != 0x01)
-            continue;
-
-        if (interface->GetDescriptor()->bNumEndpoints < 2)
-            continue;
-
-        m_is_wireless = interface->GetDescriptor()->bInterfaceProtocol & 0x80;
-
-        if (!m_inPipe)
-        {
-            for (int i = 0; i != 15; ++i)
-            {
-                IUSBEndpoint *inEndpoint = interface->GetEndpoint(IUSBEndpoint::USB_ENDPOINT_IN, i);
-                if (inEndpoint)
-                {
-                    R_TRY(inEndpoint->Open());
-
-                    m_inPipe = inEndpoint;
-                    break;
-                }
-            }
-        }
-
-        if (!m_outPipe)
-        {
-            for (int i = 0; i != 15; ++i)
-            {
-                IUSBEndpoint *outEndpoint = interface->GetEndpoint(IUSBEndpoint::USB_ENDPOINT_OUT, i);
-                if (outEndpoint)
-                {
-                    R_TRY(outEndpoint->Open());
-
-                    m_outPipe = outEndpoint;
-                    break;
-                }
-            }
-        }
-    }
-
-    if (!m_inPipe || !m_outPipe)
-        R_RETURN(CONTROL_ERR_INVALID_ENDPOINT);
-
-    R_SUCCEED();
-}
-
 void Xbox360Controller::CloseInterfaces()
 {
     // Duplicated with OnControllerDisconnect
     if (m_is_wireless && m_is_present)
         m_outPipe->Write(poweroffPacket, sizeof(poweroffPacket));
 
-    // m_device->Reset();
-    m_device->Close();
+    BaseController::CloseInterfaces();
 }
 
-ams::Result Xbox360Controller::GetInput()
+ams::Result Xbox360Controller::ReadInput(NormalizedButtonData *normalData, uint16_t *input_idx)
 {
     uint8_t input_bytes[64];
     size_t size = sizeof(input_bytes);
@@ -132,12 +69,53 @@ ams::Result Xbox360Controller::GetInput()
 
     if (type == XBOX360INPUT_BUTTON) // Button data
     {
-        m_buttonData = *reinterpret_cast<Xbox360ButtonData *>(input_bytes);
+        Xbox360ButtonData *buttonData = reinterpret_cast<Xbox360ButtonData *>(input_bytes);
+
+        *input_idx = 0;
+
+        normalData->triggers[0] = NormalizeTrigger(GetConfig().triggerDeadzonePercent[0], buttonData->trigger_left);
+        normalData->triggers[1] = NormalizeTrigger(GetConfig().triggerDeadzonePercent[1], buttonData->trigger_right);
+
+        NormalizeAxis(buttonData->stick_left_x, buttonData->stick_left_y, GetConfig().stickDeadzonePercent[0],
+                      &normalData->sticks[0].axis_x, &normalData->sticks[0].axis_y, -32768, 32767);
+        NormalizeAxis(buttonData->stick_right_x, buttonData->stick_right_y, GetConfig().stickDeadzonePercent[1],
+                      &normalData->sticks[1].axis_x, &normalData->sticks[1].axis_y, -32768, 32767);
+
+        bool buttons[MAX_CONTROLLER_BUTTONS]{
+            buttonData->y,
+            buttonData->b,
+            buttonData->a,
+            buttonData->x,
+            buttonData->stick_left_click,
+            buttonData->stick_right_click,
+            buttonData->bumper_left,
+            buttonData->bumper_right,
+            normalData->triggers[0] > 0,
+            normalData->triggers[1] > 0,
+            buttonData->back,
+            buttonData->start,
+            buttonData->dpad_up,
+            buttonData->dpad_right,
+            buttonData->dpad_down,
+            buttonData->dpad_left,
+            false,
+            buttonData->guide,
+        };
+
+        for (int i = 0; i != MAX_CONTROLLER_BUTTONS; ++i)
+        {
+            ControllerButton button = GetConfig().buttons[i];
+            if (button == NONE)
+                continue;
+
+            normalData->buttons[(button != DEFAULT ? button - 2 : i)] += buttons[i];
+        }
     }
 
     R_SUCCEED();
 }
 
+/*
 bool Xbox360Controller::Support(ControllerFeature feature)
 {
     if (feature == SUPPORTS_RUMBLE)
@@ -147,53 +125,7 @@ bool Xbox360Controller::Support(ControllerFeature feature)
         return m_is_wireless ? true : false;
 
     return false;
-}
-
-// Pass by value should hopefully be optimized away by RVO
-NormalizedButtonData Xbox360Controller::GetNormalizedButtonData()
-{
-    NormalizedButtonData normalData{};
-
-    normalData.triggers[0] = NormalizeTrigger(GetConfig().triggerDeadzonePercent[0], m_buttonData.trigger_left);
-    normalData.triggers[1] = NormalizeTrigger(GetConfig().triggerDeadzonePercent[1], m_buttonData.trigger_right);
-
-    NormalizeAxis(m_buttonData.stick_left_x, m_buttonData.stick_left_y, GetConfig().stickDeadzonePercent[0],
-                  &normalData.sticks[0].axis_x, &normalData.sticks[0].axis_y, -32768, 32767);
-    NormalizeAxis(m_buttonData.stick_right_x, m_buttonData.stick_right_y, GetConfig().stickDeadzonePercent[1],
-                  &normalData.sticks[1].axis_x, &normalData.sticks[1].axis_y, -32768, 32767);
-
-    bool buttons[MAX_CONTROLLER_BUTTONS]{
-        m_buttonData.y,
-        m_buttonData.b,
-        m_buttonData.a,
-        m_buttonData.x,
-        m_buttonData.stick_left_click,
-        m_buttonData.stick_right_click,
-        m_buttonData.bumper_left,
-        m_buttonData.bumper_right,
-        normalData.triggers[0] > 0,
-        normalData.triggers[1] > 0,
-        m_buttonData.back,
-        m_buttonData.start,
-        m_buttonData.dpad_up,
-        m_buttonData.dpad_right,
-        m_buttonData.dpad_down,
-        m_buttonData.dpad_left,
-        false,
-        m_buttonData.guide,
-    };
-
-    for (int i = 0; i != MAX_CONTROLLER_BUTTONS; ++i)
-    {
-        ControllerButton button = GetConfig().buttons[i];
-        if (button == NONE)
-            continue;
-
-        normalData.buttons[(button != DEFAULT ? button - 2 : i)] += buttons[i];
-    }
-
-    return normalData;
-}
+}*/
 
 ams::Result Xbox360Controller::SetRumble(uint8_t strong_magnitude, uint8_t weak_magnitude)
 {
