@@ -32,7 +32,9 @@ protected:
     }
 
 public:
-    IController(std::unique_ptr<IUSBDevice> &&device, const ControllerConfig &config, std::unique_ptr<ILogger> &&logger) : m_device(std::move(device)), m_config(config), m_logger(std::move(logger))
+    IController(std::unique_ptr<IUSBDevice> &&device, const ControllerConfig &config, std::unique_ptr<ILogger> &&logger) : m_device(std::move(device)),
+                                                                                                                           m_config(config),
+                                                                                                                           m_logger(std::move(logger))
     {
     }
     virtual ~IController() = default;
@@ -49,7 +51,9 @@ public:
 
     virtual bool IsControllerActive() { return true; }
 
-    virtual ams::Result OutputBuffer() { return R_RETURN(CONTROL_ERR_BUFFER_EMPTY); };
+    virtual ams::Result OutputBuffer() { R_RETURN(CONTROL_ERR_BUFFER_EMPTY); };
 
-    virtual const ControllerConfig &GetConfig() { return m_config; }
+    virtual const ControllerConfig &GetConfig() const { return m_config; }
+
+    inline IUSBDevice *GetDevice() { return m_device.get(); }
 };

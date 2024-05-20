@@ -69,47 +69,42 @@ ams::Result Xbox360Controller::ReadInput(NormalizedButtonData *normalData, uint1
 
     if (type == XBOX360INPUT_BUTTON) // Button data
     {
-        Xbox360ButtonData *buttonData = reinterpret_cast<Xbox360ButtonData *>(input_bytes);
-
         *input_idx = 0;
+        normalData->buttons[0] = false;
 
-        normalData->triggers[0] = NormalizeTrigger(GetConfig().triggerDeadzonePercent[0], buttonData->trigger_left);
-        normalData->triggers[1] = NormalizeTrigger(GetConfig().triggerDeadzonePercent[1], buttonData->trigger_right);
+        /* Xbox360ButtonData *buttonData = reinterpret_cast<Xbox360ButtonData *>(input_bytes);
+
+
+        normalData->triggers[0] = NormalizeTrigger(GetConfig().triggerDeadzonePercent[0], buttonData->trigger_left, 0, 255);
+        normalData->triggers[1] = NormalizeTrigger(GetConfig().triggerDeadzonePercent[1], buttonData->trigger_right, 0, 255);
 
         NormalizeAxis(buttonData->stick_left_x, buttonData->stick_left_y, GetConfig().stickDeadzonePercent[0],
                       &normalData->sticks[0].axis_x, &normalData->sticks[0].axis_y, -32768, 32767);
         NormalizeAxis(buttonData->stick_right_x, buttonData->stick_right_y, GetConfig().stickDeadzonePercent[1],
                       &normalData->sticks[1].axis_x, &normalData->sticks[1].axis_y, -32768, 32767);
 
-        bool buttons[MAX_CONTROLLER_BUTTONS]{
-            buttonData->y,
-            buttonData->b,
-            buttonData->a,
-            buttonData->x,
-            buttonData->stick_left_click,
-            buttonData->stick_right_click,
-            buttonData->bumper_left,
-            buttonData->bumper_right,
-            normalData->triggers[0] > 0,
-            normalData->triggers[1] > 0,
-            buttonData->back,
-            buttonData->start,
-            buttonData->dpad_up,
-            buttonData->dpad_right,
-            buttonData->dpad_down,
-            buttonData->dpad_left,
-            false,
-            buttonData->guide,
-        };
 
-        for (int i = 0; i != MAX_CONTROLLER_BUTTONS; ++i)
-        {
-            ControllerButton button = GetConfig().buttons[i];
-            if (button == NONE)
-                continue;
-
-            normalData->buttons[(button != DEFAULT ? button - 2 : i)] += buttons[i];
-        }
+                bool buttons[MAX_CONTROLLER_BUTTONS]{
+                    buttonData->y,
+                    buttonData->b,
+                    buttonData->a,
+                    buttonData->x,
+                    buttonData->stick_left_click,
+                    buttonData->stick_right_click,
+                    buttonData->bumper_left,
+                    buttonData->bumper_right,
+                    normalData->triggers[0] > 0,
+                    normalData->triggers[1] > 0,
+                    buttonData->back,
+                    buttonData->start,
+                    buttonData->dpad_up,
+                    buttonData->dpad_right,
+                    buttonData->dpad_down,
+                    buttonData->dpad_left,
+                    false,
+                    buttonData->guide,
+                };
+                */
     }
 
     R_SUCCEED();

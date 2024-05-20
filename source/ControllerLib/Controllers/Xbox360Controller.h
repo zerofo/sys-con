@@ -11,37 +11,30 @@ struct Xbox360ButtonData
     uint8_t type;
     uint8_t length;
 
-    bool dpad_up : 1;
-    bool dpad_down : 1;
-    bool dpad_left : 1;
-    bool dpad_right : 1;
+    uint8_t hat_switch : 4;
 
-    bool start : 1;
-    bool back : 1;
-    bool stick_left_click : 1;
-    bool stick_right_click : 1;
+    bool button9 : 1;
+    bool button10 : 1;
+    bool button7 : 1;
+    bool button8 : 1;
 
-    bool bumper_left : 1;
-    bool bumper_right : 1;
-    bool guide : 1;
+    bool button5 : 1;
+    bool button6 : 1;
+    bool button11 : 1;
     bool dummy1 : 1; // Always 0.
 
-    bool a : 1;
-    bool b : 1;
-    bool x : 1;
-    bool y : 1;
+    bool button1 : 1;
+    bool button2 : 1;
+    bool button3 : 1;
+    bool button4 : 1;
 
-    uint8_t trigger_left;
-    uint8_t trigger_right;
+    uint8_t Z;
+    uint8_t Rz;
 
-    int16_t stick_left_x;
-    int16_t stick_left_y;
-    int16_t stick_right_x;
-    int16_t stick_right_y;
-
-    // Always 0.
-    uint32_t dummy2;
-    uint16_t dummy3;
+    int16_t X;
+    int16_t Y;
+    int16_t Rx;
+    int16_t Ry;
 };
 
 struct Xbox360RumbleData

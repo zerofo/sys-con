@@ -83,43 +83,30 @@ ams::Result Dualshock3Controller::ReadInput(NormalizedButtonData *normalData, ui
 
         *input_idx = 0;
 
-        normalData->triggers[0] = NormalizeTrigger(GetConfig().triggerDeadzonePercent[0], buttonData->trigger_left_pressure);
-        normalData->triggers[1] = NormalizeTrigger(GetConfig().triggerDeadzonePercent[1], buttonData->trigger_right_pressure);
+        normalData->triggers[0] = NormalizeTrigger(GetConfig().triggerDeadzonePercent[0], buttonData->trigger_left_pressure, 0, 255);
+        normalData->triggers[1] = NormalizeTrigger(GetConfig().triggerDeadzonePercent[1], buttonData->trigger_right_pressure, 0, 255);
 
         NormalizeAxis(buttonData->stick_left_x, buttonData->stick_left_y, GetConfig().stickDeadzonePercent[0],
                       &normalData->sticks[0].axis_x, &normalData->sticks[0].axis_y, 0, 255);
         NormalizeAxis(buttonData->stick_right_x, buttonData->stick_right_y, GetConfig().stickDeadzonePercent[1],
                       &normalData->sticks[1].axis_x, &normalData->sticks[1].axis_y, 0, 255);
 
-        bool buttons[MAX_CONTROLLER_BUTTONS] = {
-            buttonData->triangle, // X
-            buttonData->circle,   // A
-            buttonData->cross,    // B
-            buttonData->square,   // Y
-            buttonData->stick_left_click,
-            buttonData->stick_right_click,
-            buttonData->bumper_left,     // L
-            buttonData->bumper_right,    // R
-            normalData->triggers[0] > 0, // ZL
-            normalData->triggers[1] > 0, // ZR
-            buttonData->back,            // Minus
-            buttonData->start,           // Plus
-            buttonData->dpad_up,         // UP
-            buttonData->dpad_right,      // RIGHT
-            buttonData->dpad_down,       // DOWN
-            buttonData->dpad_left,       // LEFT
-            false,                       // Capture
-            buttonData->guide,           // Home
-        };
-
-        for (int i = 0; i != MAX_CONTROLLER_BUTTONS; ++i)
-        {
-            ControllerButton button = GetConfig().buttons[i];
-            if (button == NONE)
-                continue;
-
-            normalData->buttons[(button != DEFAULT ? button - 2 : i)] += buttons[i];
-        }
+        normalData->buttons[ControllerButton::A] = buttonData->circle;
+        normalData->buttons[ControllerButton::B] = buttonData->cross;
+        normalData->buttons[ControllerButton::X] = buttonData->triangle;
+        normalData->buttons[ControllerButton::Y] = buttonData->square;
+        normalData->buttons[ControllerButton::L] = buttonData->bumper_left;
+        normalData->buttons[ControllerButton::R] = buttonData->bumper_right;
+        normalData->buttons[ControllerButton::ZL] = normalData->triggers[0] > 0 ? true : false;
+        normalData->buttons[ControllerButton::ZR] = normalData->triggers[1] > 0 ? true : false;
+        normalData->buttons[ControllerButton::MINUS] = buttonData->back;
+        normalData->buttons[ControllerButton::PLUS] = buttonData->start;
+        normalData->buttons[ControllerButton::DPAD_UP] = buttonData->dpad_up;
+        normalData->buttons[ControllerButton::DPAD_RIGHT] = buttonData->dpad_right;
+        normalData->buttons[ControllerButton::DPAD_DOWN] = buttonData->dpad_down;
+        normalData->buttons[ControllerButton::DPAD_LEFT] = buttonData->dpad_left;
+        normalData->buttons[ControllerButton::CAPTURE] = false;
+        normalData->buttons[ControllerButton::HOME] = buttonData->guide;
     }
 
     R_SUCCEED();

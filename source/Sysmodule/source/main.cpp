@@ -18,7 +18,7 @@ namespace ams
         namespace
         {
 
-            alignas(0x40) constinit u8 g_heap_memory[64_KB];
+            alignas(0x40) constinit u8 g_heap_memory[256_KB];
             constinit lmem::HeapHandle g_heap_handle;
             constinit bool g_heap_initialized;
             constinit os::SdkMutex g_heap_init_mutex;
@@ -120,6 +120,13 @@ namespace ams
 
         ::syscon::logger::LogDebug("Initializing controllers ...");
         ::syscon::controllers::Initialize();
+
+        // Reduce polling frequency when we use debug or trace to avoid spamming the logs
+        if (globalConfig.log_level == LOG_LEVEL_TRACE && globalConfig.polling_frequency_ms < 500)
+            globalConfig.polling_frequency_ms = 500;
+
+        if (globalConfig.log_level == LOG_LEVEL_DEBUG && globalConfig.polling_frequency_ms < 100)
+            globalConfig.polling_frequency_ms = 100;
 
         ::syscon::controllers::SetPollingFrequency(globalConfig.polling_frequency_ms);
 

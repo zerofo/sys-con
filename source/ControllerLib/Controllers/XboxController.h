@@ -28,7 +28,7 @@ struct XboxButtonData
     uint8_t x;
     uint8_t y;
 
-    uint8_t black_buttton;
+    uint8_t black_button;
     uint8_t white_button;
 
     uint8_t trigger_left;

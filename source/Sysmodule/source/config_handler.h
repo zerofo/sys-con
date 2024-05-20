@@ -4,14 +4,13 @@
 #include <string>
 #include <switch.h>
 
-#define CONFIG_PATH  "sdmc:///config/sys-con/"
-#define GLOBALCONFIG CONFIG_PATH "config_global.ini"
+#define CONFIG_PATH     "sdmc:///config/sys-con/"
+#define CONFIG_FULLPATH CONFIG_PATH "config.ini"
 
 namespace syscon::config
 {
     struct GlobalConfig
     {
-        char ini_section[32]{};
         uint16_t polling_frequency_ms;
         int log_level;
     };

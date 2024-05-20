@@ -20,43 +20,32 @@ ams::Result XboxController::ReadInput(NormalizedButtonData *normalData, uint16_t
 
     *input_idx = 0;
 
-    normalData->triggers[0] = NormalizeTrigger(GetConfig().triggerDeadzonePercent[0], buttonData->trigger_left);
-    normalData->triggers[1] = NormalizeTrigger(GetConfig().triggerDeadzonePercent[1], buttonData->trigger_right);
+    normalData->triggers[0] = NormalizeTrigger(GetConfig().triggerDeadzonePercent[0], buttonData->trigger_left, 0, 255);
+    normalData->triggers[1] = NormalizeTrigger(GetConfig().triggerDeadzonePercent[1], buttonData->trigger_right, 0, 255);
 
     NormalizeAxis(buttonData->stick_left_x, buttonData->stick_left_y, GetConfig().stickDeadzonePercent[0],
                   &normalData->sticks[0].axis_x, &normalData->sticks[0].axis_y, -32768, 32767);
     NormalizeAxis(buttonData->stick_right_x, buttonData->stick_right_y, GetConfig().stickDeadzonePercent[1],
                   &normalData->sticks[1].axis_x, &normalData->sticks[1].axis_y, -32768, 32767);
 
-    bool buttons[MAX_CONTROLLER_BUTTONS]{
-        buttonData->y != 0,
-        buttonData->b != 0,
-        buttonData->a != 0,
-        buttonData->x != 0,
-        buttonData->stick_left_click,
-        buttonData->stick_right_click,
-        false,
-        false,
-        buttonData->trigger_left != 0,
-        buttonData->trigger_right != 0,
-        buttonData->back,
-        buttonData->start,
-        buttonData->dpad_up,
-        buttonData->dpad_right,
-        buttonData->dpad_down,
-        buttonData->dpad_left,
-        buttonData->white_button != 0,
-        buttonData->black_buttton != 0,
-    };
-
-    for (int i = 0; i != MAX_CONTROLLER_BUTTONS; ++i)
-    {
-        ControllerButton button = GetConfig().buttons[i];
-        if (button == NONE)
-            continue;
-
-        normalData->buttons[(button != DEFAULT ? button - 2 : i)] += buttons[i];
-    }
+    normalData->buttons[ControllerButton::X] = buttonData->y > 0;
+    normalData->buttons[ControllerButton::A] = buttonData->b > 0;
+    normalData->buttons[ControllerButton::B] = buttonData->a > 0;
+    normalData->buttons[ControllerButton::Y] = buttonData->x > 0;
+    normalData->buttons[ControllerButton::LSTICK_CLICK] = buttonData->stick_left_click;
+    normalData->buttons[ControllerButton::RSTICK_CLICK] = buttonData->stick_right_click;
+    normalData->buttons[ControllerButton::L] = false;
+    normalData->buttons[ControllerButton::R] = false;
+    normalData->buttons[ControllerButton::ZL] = buttonData->trigger_left > 0;
+    normalData->buttons[ControllerButton::ZR] = buttonData->trigger_right > 0;
+    normalData->buttons[ControllerButton::MINUS] = buttonData->back;
+    normalData->buttons[ControllerButton::PLUS] = buttonData->start;
+    normalData->buttons[ControllerButton::DPAD_UP] = buttonData->dpad_up;
+    normalData->buttons[ControllerButton::DPAD_RIGHT] = buttonData->dpad_right;
+    normalData->buttons[ControllerButton::DPAD_DOWN] = buttonData->dpad_down;
+    normalData->buttons[ControllerButton::DPAD_LEFT] = buttonData->dpad_left;
+    normalData->buttons[ControllerButton::CAPTURE] = buttonData->white_button;
+    normalData->buttons[ControllerButton::HOME] = buttonData->black_button;
 
     R_SUCCEED();
 }

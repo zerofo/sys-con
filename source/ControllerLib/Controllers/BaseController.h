@@ -29,6 +29,6 @@ public:
     ams::Result SetRumble(uint8_t strong_magnitude, uint8_t weak_magnitude);
 
     // Helper functions
-    float NormalizeTrigger(uint8_t deadzonePercent, uint8_t value);
+    float NormalizeTrigger(uint8_t deadzonePercent, uint8_t value, int16_t min, int16_t max);
     void NormalizeAxis(uint8_t x, uint8_t y, uint8_t deadzonePercent, float *x_out, float *y_out, int32_t min, int32_t max);
 };

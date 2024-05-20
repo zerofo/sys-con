@@ -75,11 +75,6 @@ namespace syscon::usb
                                 syscon::logger::LogInfo("Initializing Dualshock 3 controller ...");
                                 controllers::Insert(std::make_unique<Dualshock3Controller>(std::make_unique<SwitchUSBDevice>(&interfaces[i], 1), config, std::make_unique<syscon::logger::Logger>()));
                             }
-                            else if (strcmp(config.driver, "dualshock4") == 0)
-                            {
-                                syscon::logger::LogInfo("Initializing Dualshock 4 controller ...");
-                                controllers::Insert(std::make_unique<Dualshock4Controller>(std::make_unique<SwitchUSBDevice>(&interfaces[i], 1), config, std::make_unique<syscon::logger::Logger>()));
-                            }
                             else if (strcmp(config.driver, "xbox360") == 0)
                             {
                                 syscon::logger::LogInfo("Initializing Xbox 360 controller ...");

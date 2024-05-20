@@ -27,14 +27,17 @@ ams::Result GenericHIDController::Initialize()
     // Get the HID report descriptor
     R_TRY(m_interface->ControlTransferInput((uint8_t)USB_ENDPOINT_IN | (uint8_t)USB_RECIPIENT_INTERFACE, USB_REQUEST_GET_DESCRIPTOR, (USB_DT_REPORT << 8) | m_interface->GetDescriptor()->bInterfaceNumber, 0, buffer, &size));
 
-    LogPrint(LogLevelDebug, "GenericHIDController Got descriptor for interface %d", m_interface->GetDescriptor()->bInterfaceNumber);
-    LogBuffer(LogLevelDebug, buffer, size);
+    LogPrint(LogLevelTrace, "GenericHIDController Got descriptor for interface %d", m_interface->GetDescriptor()->bInterfaceNumber);
+    LogBuffer(LogLevelTrace, buffer, size);
 
-    m_joystick = std::make_shared<HIDJoystick>(HIDReportDescriptor(buffer, size));
+    LogPrint(LogLevelDebug, "GenericHIDController Parsing descriptor ...");
+    std::shared_ptr<HIDReportDescriptor> descriptor = std::make_shared<HIDReportDescriptor>(buffer, size);
 
+    LogPrint(LogLevelDebug, "GenericHIDController Looking for joystick/gamepad profile ...");
+    m_joystick = std::make_shared<HIDJoystick>(descriptor);
     m_joystick_count = m_joystick->getCount();
 
-    if (!m_joystick_count == 0)
+    if (m_joystick_count == 0)
     {
         LogPrint(LogLevelError, "GenericHIDController HID report descriptor don't contain joystick");
         R_RETURN(CONTROL_ERR_HID_IS_NOT_JOYSTICK);
@@ -58,8 +61,8 @@ ams::Result GenericHIDController::ReadInput(NormalizedButtonData *normalData, ui
 
     R_TRY(m_inPipe->Read(input_bytes, &size));
 
-    LogPrint(LogLevelDebug, "GenericHIDController ReadInput %d bytes", size);
-    LogBuffer(LogLevelDebug, input_bytes, size);
+    LogPrint(LogLevelTrace, "GenericHIDController ReadInput %d bytes", size);
+    LogBuffer(LogLevelTrace, input_bytes, size);
 
     if (!m_joystick->parseData(input_bytes, size, &joystick_data))
     {
@@ -82,47 +85,28 @@ ams::Result GenericHIDController::ReadInput(NormalizedButtonData *normalData, ui
 
     *input_idx = joystick_data.index;
 
-    bool hatswitch_up = joystick_data.hat_switch == HIDJoystickHatSwitch::UP || joystick_data.hat_switch == HIDJoystickHatSwitch::UP_RIGHT || joystick_data.hat_switch == HIDJoystickHatSwitch::UP_LEFT;
-    bool hatswitch_right = joystick_data.hat_switch == HIDJoystickHatSwitch::RIGHT || joystick_data.hat_switch == HIDJoystickHatSwitch::UP_RIGHT || joystick_data.hat_switch == HIDJoystickHatSwitch::DOWN_RIGHT;
-    bool hatswitch_down = joystick_data.hat_switch == HIDJoystickHatSwitch::DOWN || joystick_data.hat_switch == HIDJoystickHatSwitch::DOWN_RIGHT || joystick_data.hat_switch == HIDJoystickHatSwitch::DOWN_LEFT;
-    bool hatswitch_left = joystick_data.hat_switch == HIDJoystickHatSwitch::LEFT || joystick_data.hat_switch == HIDJoystickHatSwitch::UP_LEFT || joystick_data.hat_switch == HIDJoystickHatSwitch::DOWN_LEFT;
+    normalData->triggers[0] = NormalizeTrigger(GetConfig().triggerDeadzonePercent[0], joystick_data.Z, -32768, +32767);
+    normalData->triggers[1] = NormalizeTrigger(GetConfig().triggerDeadzonePercent[1], joystick_data.Rz, -32768, +32767);
 
-    // Button 1, 2, 3, 4 has been mapped according to remote control: Guilikit, Xbox360
-    bool buttons[MAX_CONTROLLER_BUTTONS] = {
-        joystick_data.buttons[4] ? true : false,  // X
-        joystick_data.buttons[2] ? true : false,  // A
-        joystick_data.buttons[1] ? true : false,  // B
-        joystick_data.buttons[3] ? true : false,  // Y
-        joystick_data.buttons[11] ? true : false, // stick_left_click,
-        joystick_data.buttons[12] ? true : false, // stick_right_click,
-        joystick_data.buttons[5] ? true : false,  // L
-        joystick_data.buttons[6] ? true : false,  // R
-        joystick_data.buttons[7] ? true : false,  // ZL
-        joystick_data.buttons[8] ? true : false,  // ZR
-        joystick_data.buttons[9] ? true : false,  // Minus
-        joystick_data.buttons[10] ? true : false, // Plus
-        hatswitch_up,                             // UP
-        hatswitch_right,                          // RIGHT
-        hatswitch_down,                           // DOWN
-        hatswitch_left,                           // LEFT
-        false,                                    // Capture
-        false,                                    // Home
-    };
+    NormalizeAxis(joystick_data.X, joystick_data.Y, GetConfig().stickDeadzonePercent[0], &normalData->sticks[0].axis_x, &normalData->sticks[0].axis_y, -32768, +32767);
+    NormalizeAxis(joystick_data.Rx, joystick_data.Ry, GetConfig().stickDeadzonePercent[1], &normalData->sticks[1].axis_x, &normalData->sticks[1].axis_y, -32768, +32767);
 
-    normalData->triggers[0] = NormalizeTrigger(GetConfig().triggerDeadzonePercent[0], joystick_data.Z);
-    normalData->triggers[1] = NormalizeTrigger(GetConfig().triggerDeadzonePercent[1], joystick_data.Rz);
-
-    NormalizeAxis(joystick_data.X, joystick_data.Y, GetConfig().stickDeadzonePercent[0], &normalData->sticks[0].axis_x, &normalData->sticks[0].axis_y, 0, 255);
-    NormalizeAxis(joystick_data.Rx, joystick_data.Ry, GetConfig().stickDeadzonePercent[1], &normalData->sticks[1].axis_x, &normalData->sticks[1].axis_y, 0, 255);
-
-    for (int i = 0; i < MAX_CONTROLLER_BUTTONS; i++)
-    {
-        ControllerButton button = GetConfig().buttons[i];
-        if (button == NONE)
-            continue;
-
-        normalData->buttons[(button != DEFAULT ? button - 2 : i)] += buttons[i];
-    }
+    normalData->buttons[ControllerButton::X] = joystick_data.buttons[GetConfig().buttons_pin[ControllerButton::X]] ? true : false;
+    normalData->buttons[ControllerButton::A] = joystick_data.buttons[GetConfig().buttons_pin[ControllerButton::A]] ? true : false;
+    normalData->buttons[ControllerButton::B] = joystick_data.buttons[GetConfig().buttons_pin[ControllerButton::B]] ? true : false;
+    normalData->buttons[ControllerButton::Y] = joystick_data.buttons[GetConfig().buttons_pin[ControllerButton::Y]] ? true : false;
+    normalData->buttons[ControllerButton::LSTICK_CLICK] = joystick_data.buttons[GetConfig().buttons_pin[ControllerButton::LSTICK_CLICK]] ? true : false;
+    normalData->buttons[ControllerButton::RSTICK_CLICK] = joystick_data.buttons[GetConfig().buttons_pin[ControllerButton::RSTICK_CLICK]] ? true : false;
+    normalData->buttons[ControllerButton::L] = joystick_data.buttons[GetConfig().buttons_pin[ControllerButton::L]] ? true : false;
+    normalData->buttons[ControllerButton::R] = joystick_data.buttons[GetConfig().buttons_pin[ControllerButton::R]] ? true : false;
+    normalData->buttons[ControllerButton::ZL] = joystick_data.buttons[GetConfig().buttons_pin[ControllerButton::ZL]] ? true : false;
+    normalData->buttons[ControllerButton::ZR] = joystick_data.buttons[GetConfig().buttons_pin[ControllerButton::ZR]] ? true : false;
+    normalData->buttons[ControllerButton::MINUS] = joystick_data.buttons[GetConfig().buttons_pin[ControllerButton::MINUS]] ? true : false;
+    normalData->buttons[ControllerButton::PLUS] = joystick_data.buttons[GetConfig().buttons_pin[ControllerButton::PLUS]] ? true : false;
+    normalData->buttons[ControllerButton::DPAD_UP] = joystick_data.hat_switch == HIDJoystickHatSwitch::UP || joystick_data.hat_switch == HIDJoystickHatSwitch::UP_RIGHT || joystick_data.hat_switch == HIDJoystickHatSwitch::UP_LEFT;
+    normalData->buttons[ControllerButton::DPAD_RIGHT] = joystick_data.hat_switch == HIDJoystickHatSwitch::RIGHT || joystick_data.hat_switch == HIDJoystickHatSwitch::UP_RIGHT || joystick_data.hat_switch == HIDJoystickHatSwitch::DOWN_RIGHT;
+    normalData->buttons[ControllerButton::DPAD_DOWN] = joystick_data.hat_switch == HIDJoystickHatSwitch::DOWN || joystick_data.hat_switch == HIDJoystickHatSwitch::DOWN_RIGHT || joystick_data.hat_switch == HIDJoystickHatSwitch::DOWN_LEFT;
+    normalData->buttons[ControllerButton::DPAD_LEFT] = joystick_data.hat_switch == HIDJoystickHatSwitch::LEFT || joystick_data.hat_switch == HIDJoystickHatSwitch::UP_LEFT || joystick_data.hat_switch == HIDJoystickHatSwitch::DOWN_LEFT;
 
     R_SUCCEED();
 }

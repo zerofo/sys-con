@@ -60,6 +60,7 @@ ams::Result SwitchHDLHandler::InitHdlState()
         // Set the controller type to Pro-Controller, and set the npadInterfaceType.
         m_deviceInfo[i].deviceType = HidDeviceType_FullKey15;
         m_deviceInfo[i].npadInterfaceType = HidNpadInterfaceType_USB;
+
         // Set the controller colors. The grip colors are for Pro-Controller on [9.0.0+].
         const ControllerConfig &config = m_controller->GetConfig();
         m_deviceInfo[i].singleColorBody = config.bodyColor.rgbaValue;
@@ -102,89 +103,54 @@ ams::Result SwitchHDLHandler::UpdateHdlState(const NormalizedButtonData &data, u
     // we convert the input packet into switch-specific button states
     hdlState->buttons = 0;
 
-    if (data.buttons[0])
+    if (data.buttons[ControllerButton::X])
         hdlState->buttons |= HidNpadButton_X;
-    if (data.buttons[1])
+    if (data.buttons[ControllerButton::A])
         hdlState->buttons |= HidNpadButton_A;
-    if (data.buttons[2])
+    if (data.buttons[ControllerButton::B])
         hdlState->buttons |= HidNpadButton_B;
-    if (data.buttons[3])
+    if (data.buttons[ControllerButton::Y])
         hdlState->buttons |= HidNpadButton_Y;
-    if (data.buttons[4])
+    if (data.buttons[ControllerButton::LSTICK_CLICK])
         hdlState->buttons |= HidNpadButton_StickL;
-    if (data.buttons[5])
+    if (data.buttons[ControllerButton::RSTICK_CLICK])
         hdlState->buttons |= HidNpadButton_StickR;
-    if (data.buttons[6])
+    if (data.buttons[ControllerButton::L])
         hdlState->buttons |= HidNpadButton_L;
-    if (data.buttons[7])
+    if (data.buttons[ControllerButton::R])
         hdlState->buttons |= HidNpadButton_R;
-    if (data.buttons[8])
+    if (data.buttons[ControllerButton::ZL])
         hdlState->buttons |= HidNpadButton_ZL;
-    if (data.buttons[9])
+    if (data.buttons[ControllerButton::ZR])
         hdlState->buttons |= HidNpadButton_ZR;
-    if (data.buttons[10])
+    if (data.buttons[ControllerButton::MINUS])
         hdlState->buttons |= HidNpadButton_Minus;
-    if (data.buttons[11])
+    if (data.buttons[ControllerButton::PLUS])
         hdlState->buttons |= HidNpadButton_Plus;
-
-    const ControllerConfig &config = m_controller->GetConfig();
-
-    if (config.swapDPADandLSTICK)
-    {
-        if (data.sticks[0].axis_y > 0.5f)
-            hdlState->buttons |= HidNpadButton_Up;
-        if (data.sticks[0].axis_x > 0.5f)
-            hdlState->buttons |= HidNpadButton_Right;
-        if (data.sticks[0].axis_y < -0.5f)
-            hdlState->buttons |= HidNpadButton_Down;
-        if (data.sticks[0].axis_x < -0.5f)
-            hdlState->buttons |= HidNpadButton_Left;
-
-        float daxis_x{}, daxis_y{};
-
-        daxis_y += data.buttons[12] ? 1.0f : 0.0f;  // DUP
-        daxis_x += data.buttons[13] ? 1.0f : 0.0f;  // DRIGHT
-        daxis_y += data.buttons[14] ? -1.0f : 0.0f; // DDOWN
-        daxis_x += data.buttons[15] ? -1.0f : 0.0f; // DLEFT
-
-        // clamp lefstick values to their acceptable range of values
-        float real_magnitude = std::sqrt(daxis_x * daxis_x + daxis_y * daxis_y);
-        float clipped_magnitude = std::min(1.0f, real_magnitude);
-        float ratio = clipped_magnitude / real_magnitude;
-
-        daxis_x *= ratio;
-        daxis_y *= ratio;
-
-        ConvertAxisToSwitchAxis(daxis_x, daxis_y, 0, &hdlState->analog_stick_l.x, &hdlState->analog_stick_l.y);
-    }
-    else
-    {
-        if (data.buttons[12])
-            hdlState->buttons |= HidNpadButton_Up;
-        if (data.buttons[13])
-            hdlState->buttons |= HidNpadButton_Right;
-        if (data.buttons[14])
-            hdlState->buttons |= HidNpadButton_Down;
-        if (data.buttons[15])
-            hdlState->buttons |= HidNpadButton_Left;
-
-        ConvertAxisToSwitchAxis(data.sticks[0].axis_x, data.sticks[0].axis_y, 0, &hdlState->analog_stick_l.x, &hdlState->analog_stick_l.y);
-    }
-
-    ConvertAxisToSwitchAxis(data.sticks[1].axis_x, data.sticks[1].axis_y, 0, &hdlState->analog_stick_r.x, &hdlState->analog_stick_r.y);
-
-    if (data.buttons[16])
+    if (data.buttons[ControllerButton::DPAD_UP])
+        hdlState->buttons |= HidNpadButton_Up;
+    if (data.buttons[ControllerButton::DPAD_RIGHT])
+        hdlState->buttons |= HidNpadButton_Right;
+    if (data.buttons[ControllerButton::DPAD_DOWN])
+        hdlState->buttons |= HidNpadButton_Down;
+    if (data.buttons[ControllerButton::DPAD_LEFT])
+        hdlState->buttons |= HidNpadButton_Left;
+    if (data.buttons[ControllerButton::CAPTURE])
         hdlState->buttons |= HiddbgNpadButton_Capture;
-    if (data.buttons[17])
+    if (data.buttons[ControllerButton::HOME])
         hdlState->buttons |= HiddbgNpadButton_Home;
+
+    ConvertAxisToSwitchAxis(data.sticks[0].axis_x, data.sticks[0].axis_y, 0, &hdlState->analog_stick_l.x, &hdlState->analog_stick_l.y);
+    ConvertAxisToSwitchAxis(data.sticks[1].axis_x, data.sticks[1].axis_y, 0, &hdlState->analog_stick_r.x, &hdlState->analog_stick_r.y);
 
     syscon::logger::LogDebug("SwitchHDLHandler UpdateHdlState - Button: 0x%016X - Idx: %d ...", hdlState->buttons, input_idx);
 
     ams::Result rc = hiddbgSetHdlsState(m_hdlHandle[input_idx], hdlState);
     if (rc.GetValue() == 0x1c24ca)
     {
-        /*syscon::logger::LogInfo("SwitchHDLHandler Re-attaching device...");
+        syscon::logger::LogDebug("SwitchHDLHandler UpdateHDLState failed, Re-attaching device...");
 
+        /*
         // Re-attach virtual gamepad and set state
         R_TRY(hiddbgAttachHdlsVirtualDevice(&m_hdlHandle[input_idx], &m_deviceInfo[input_idx]));
         R_TRY(hiddbgSetHdlsState(m_hdlHandle[input_idx], hdlState));

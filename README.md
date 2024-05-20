@@ -23,7 +23,7 @@ For more verbose logs, edit config_global.ini and set :
 
 ```
 polling_frequency_ms=50
-;log_level Debug=0, Info=1, Warning=2, Error=3
+;log_level Trace=0, Debug=1, Info=2, Warning=3, Error=4
 log_level=0
 ```
 
@@ -83,14 +83,3 @@ https://docs.kernel.org/hid/hidintro.html#parsing-hid-report-descriptors
 
 Simple HID parser
 https://github.com/listff/hidparser/blob/main/hid.cpp
-
-# TODO
- - Add more generic HID decoding (According to protocol etc...)
- - Change mapping to something like button 1, 2 etc...
- - Merge  GetInput() / GetNormalizedButtonData() 
- - Add logs in controllers
- - support rumble (m_vibrationDeviceHandle not initialized)
- - protect m_outputBuffer buffer xbox360w
- - remove ini_section from configs
- - simplify 1 device 1 interface
- - issue when you boot the switch only 1 remote is detected

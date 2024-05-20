@@ -1,5 +1,6 @@
 #include "switch.h"
 #include "logger.h"
+#include <algorithm>
 #include <sys/stat.h>
 #include <stratosphere.hpp>
 #include <stratosphere/fs/fs_filesystem.hpp>
@@ -12,7 +13,7 @@ namespace syscon::logger
     char logBuffer[1024];
     char logPath[255];
     int logLevel = LOG_LEVEL_INFO;
-    char logLevelStr[LOG_LEVEL_COUNT] = {'D', 'I', 'W', 'E'};
+    char logLevelStr[LOG_LEVEL_COUNT] = {'T', 'D', 'I', 'W', 'E'};
 
     ams::Result Initialize(const char *log)
     {
@@ -97,12 +98,20 @@ namespace syscon::logger
         /* Format log */
         for (size_t i = 0; i < size; i += 16)
         {
-            for (size_t k = 0; k < 16; k++)
+            for (size_t k = 0; k < std::min((size_t)16, size - i); k++)
                 ams::util::SNPrintf(&logBuffer[start_offset + (k * 3)], ams::util::size(logBuffer) - (start_offset + (k * 3)), "%02X ", buffer[i + k]);
 
             /* Write in the file. */
             LogWriteToFile(logBuffer);
         }
+    }
+
+    void LogTrace(const char *fmt, ...)
+    {
+        ::std::va_list vl;
+        va_start(vl, fmt);
+        Log(LOG_LEVEL_DEBUG, fmt, vl);
+        va_end(vl);
     }
 
     void LogDebug(const char *fmt, ...)

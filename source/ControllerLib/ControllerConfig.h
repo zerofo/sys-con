@@ -5,30 +5,26 @@
 #define MAX_TRIGGERS           2
 #define MAX_CONTROLLER_BUTTONS 32
 
-enum ControllerButton : uint8_t
+enum ControllerButton
 {
-    DEFAULT = 0,
-    NONE,
-    FACE_UP,
-    FACE_RIGHT,
-    FACE_DOWN,
-    FACE_LEFT,
+    X = 0,
+    A,
+    B,
+    Y,
     LSTICK_CLICK,
     RSTICK_CLICK,
-    LEFT_BUMPER,
-    RIGHT_BUMPER,
-    LEFT_TRIGGER,
-    RIGHT_TRIGGER,
-    BACK,
-    START,
+    L,
+    R,
+    ZL,
+    ZR,
+    MINUS,
+    PLUS,
     DPAD_UP,
     DPAD_RIGHT,
     DPAD_DOWN,
     DPAD_LEFT,
     CAPTURE,
-    HOME,
-    SYNC,
-    TOUCHPAD,
+    HOME
 };
 
 struct NormalizedStick
@@ -52,19 +48,15 @@ union RGBAColor
 
 struct ControllerConfig
 {
-    char ini_section[32]{};
-
-    char driver[32]{};
-    uint8_t stickDeadzonePercent[MAX_JOYSTICKS]{};
-    uint16_t stickRotationDegrees[MAX_JOYSTICKS]{};
-    uint8_t triggerDeadzonePercent[MAX_TRIGGERS]{};
-    ControllerButton buttons[MAX_CONTROLLER_BUTTONS]{};
+    char driver[255]{0};
+    char profile[255]{0};
+    uint8_t stickDeadzonePercent[MAX_JOYSTICKS]{0};
+    uint8_t triggerDeadzonePercent[MAX_TRIGGERS]{0};
+    uint8_t buttons_pin[MAX_CONTROLLER_BUTTONS]{0};
     float triggers[MAX_TRIGGERS]{};
     NormalizedStick sticks[MAX_JOYSTICKS]{};
-    bool swapDPADandLSTICK{false};
-    RGBAColor bodyColor{107, 107, 107, 255};
+    RGBAColor bodyColor{0, 0, 0, 255};
     RGBAColor buttonsColor{0, 0, 0, 255};
-    RGBAColor leftGripColor{70, 70, 70, 255};
-    RGBAColor rightGripColor{70, 70, 70, 255};
-    RGBAColor ledColor{0, 0, 64, 255};
+    RGBAColor leftGripColor{0, 0, 0, 255};
+    RGBAColor rightGripColor{0, 0, 0, 255};
 };
