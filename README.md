@@ -5,8 +5,15 @@
 Tested on Switch FW 17.0.0
 
 ## Description
-This sysmodule aims to provide complete functionality for most popular game controllers not supported by Nintendo Switch.
+
+This sysmodule aims to provide complete functionality for any game controllers not supported by Nintendo Switch.
 Only USB connection is supported - For bluetooth connection you can use ndeadly's [MissionControl](https://github.com/ndeadly/MissionControl)
+
+
+## Why this fork ?
+
+This fork add a generic support to ANY HID game controllers. Meaning, any USB controller should work with this library.
+While the original library only support for Xbox/PS controller, this one add support to all others PC controller without any limit.
 
 ## Install
 
@@ -28,12 +35,23 @@ log_level=0
 ```
 
 ## Supported controller
-- [x] Xbox 360 Controller
-- [x] Xbox One X/S Controller
-- [x] Dualshock 3 Support
-- [x] Xbox 360 Wireless adapter
+- [x] Any Standard HID Controller (Supported by your PC without driver)
 - [x] Dualshock 4
+- [x] Dualshock 3
+- [x] Xbox 360 Controller
+- [x] Xbox 360 Wireless adapter
+- [x] Xbox One X/S Controller
+
+## Tested with
 - [x] Xinmotek XM-10 (Arcade controller)
+- [x] PSX Adapter
+- [x] Dualshock 4
+- [x] Xbox 360 Controller
+
+## Not Tested against
+- [x] Dualshock 3
+- [x] Xbox 360 Wireless adapter
+- [x] Xbox One X/S Controller
 
 ## Building (For developers)
 
@@ -67,19 +85,3 @@ For an in-depth explanation of how sys-con works, see [here](source).
 ### Debug the application
 All crash report goes to /atmosphere/fatal_errors/report_xxxxx.bin (e6)
 
-# Usefull HID links
-
-Dump HID report descriptor
-https://github.com/mutcher/win-hid-dump
-
-Parse HID report descriptor online
-https://eleccelerator.com/usbdescreqparser/
-
-Already dumped HID report descriptor
-https://github.com/DJm00n/ControllersInfo
-
-HID explained
-https://docs.kernel.org/hid/hidintro.html#parsing-hid-report-descriptors
-
-Simple HID parser
-https://github.com/listff/hidparser/blob/main/hid.cpp

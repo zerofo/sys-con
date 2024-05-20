@@ -94,13 +94,6 @@ namespace syscon::usb
                             break;
                         }
                     }
-                    /*else if ((total_entries = QueryInterfaces(interfaces, sizeof(interfaces), 0x58, 0x42, 0x00)) != 0)
-                    {
-
-                        syscon::logger::LogInfo("Initializing Xbox Original controller (Interface count: %d) ...", total_entries);
-                        controllers::Insert(std::make_unique<XboxController>(std::make_unique<SwitchUSBDevice>(interfaces, total_entries), std::make_unique<syscon::logger::Logger>()));
-                    }*/
-
                     else
                     {
                         syscon::logger::LogError("No HID interfaces found for this USB device !");
