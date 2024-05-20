@@ -83,13 +83,13 @@ ams::Result Dualshock3Controller::ReadInput(NormalizedButtonData *normalData, ui
 
         *input_idx = 0;
 
-        normalData->triggers[0] = NormalizeTrigger(GetConfig().triggerDeadzonePercent[0], buttonData->trigger_left_pressure, 0, 255);
-        normalData->triggers[1] = NormalizeTrigger(GetConfig().triggerDeadzonePercent[1], buttonData->trigger_right_pressure, 0, 255);
+        normalData->triggers[0] = Normalize(GetConfig().triggerDeadzonePercent[0], buttonData->trigger_left_pressure, 0, 255);
+        normalData->triggers[1] = Normalize(GetConfig().triggerDeadzonePercent[1], buttonData->trigger_right_pressure, 0, 255);
 
-        NormalizeAxis(buttonData->stick_left_x, buttonData->stick_left_y, GetConfig().stickDeadzonePercent[0],
-                      &normalData->sticks[0].axis_x, &normalData->sticks[0].axis_y, 0, 255);
-        NormalizeAxis(buttonData->stick_right_x, buttonData->stick_right_y, GetConfig().stickDeadzonePercent[1],
-                      &normalData->sticks[1].axis_x, &normalData->sticks[1].axis_y, 0, 255);
+        normalData->sticks[0].axis_x = Normalize(GetConfig().stickDeadzonePercent[0], buttonData->stick_left_x, 0, 255);
+        normalData->sticks[0].axis_y = Normalize(GetConfig().stickDeadzonePercent[0], buttonData->stick_left_y, 0, 255);
+        normalData->sticks[1].axis_x = Normalize(GetConfig().stickDeadzonePercent[1], buttonData->stick_right_x, 0, 255);
+        normalData->sticks[1].axis_y = Normalize(GetConfig().stickDeadzonePercent[1], buttonData->stick_right_y, 0, 255);
 
         normalData->buttons[ControllerButton::A] = buttonData->circle;
         normalData->buttons[ControllerButton::B] = buttonData->cross;

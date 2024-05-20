@@ -143,7 +143,7 @@ ams::Result SwitchHDLHandler::UpdateHdlState(const NormalizedButtonData &data, u
     ConvertAxisToSwitchAxis(data.sticks[0].axis_x, data.sticks[0].axis_y, 0, &hdlState->analog_stick_l.x, &hdlState->analog_stick_l.y);
     ConvertAxisToSwitchAxis(data.sticks[1].axis_x, data.sticks[1].axis_y, 0, &hdlState->analog_stick_r.x, &hdlState->analog_stick_r.y);
 
-    syscon::logger::LogDebug("SwitchHDLHandler UpdateHdlState - Button: 0x%016X - Idx: %d ...", hdlState->buttons, input_idx);
+    syscon::logger::LogDebug("SwitchHDLHandler UpdateHdlState - Idx: %d [Button: 0x%016X LeftX: %d LeftY: %d RightX: %d RightY: %d]", input_idx, hdlState->buttons, hdlState->analog_stick_l.x, hdlState->analog_stick_l.y, hdlState->analog_stick_r.x, hdlState->analog_stick_r.y);
 
     ams::Result rc = hiddbgSetHdlsState(m_hdlHandle[input_idx], hdlState);
     if (rc.GetValue() == 0x1c24ca)

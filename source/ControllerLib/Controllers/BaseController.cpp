@@ -108,45 +108,26 @@ ams::Result BaseController::SetRumble(uint8_t strong_magnitude, uint8_t weak_mag
     return 9;
 }
 
-float BaseController::NormalizeTrigger(uint8_t deadzonePercent, uint8_t value, int16_t min, int16_t max)
+float BaseController::Normalize(uint8_t deadzonePercent, int32_t value, int32_t min, int32_t max)
 {
-    float real_deadzone = (max - min) * deadzonePercent / 100;
+    float range = (max - min) / 2;
+    float offset = range;
 
-    if (value < real_deadzone)
-        return 0;
+    if (range == max)
+        offset = 0;
 
-    float magnitude = std::min((float)(max - min), (float)(value - min));
-    magnitude -= real_deadzone;
-    return magnitude / (max - min - real_deadzone);
-}
+    float deadzone = range * deadzonePercent / 100;
 
-void BaseController::NormalizeAxis(uint8_t x, uint8_t y, uint8_t deadzonePercent, float *x_out, float *y_out, int32_t min, int32_t max)
-{
-    //*x_out, *y_out is between -1.0 and 1.0
-    float ratio = 0;
-    float x_val = x;
-    float y_val = y;
-    int32_t range = max;
+    int32_t value_tmp = value - offset;
+    if (std::abs(value_tmp) < deadzone)
+        return 0.0f;
 
-    if (min >= 0)
-    {
-        x_val = x - (max / 2);
-        y_val = (max / 2) - y;
-        range = (max / 2);
-    }
+    float ret = value_tmp / range;
 
-    float real_magnitude = std::sqrt(x_val * x_val + y_val * y_val);
-    float real_deadzone = (range * deadzonePercent) / 100;
-    if (real_magnitude > real_deadzone)
-    {
-        float magnitude = std::min((float)range, real_magnitude);
-        magnitude -= real_deadzone;
-        ratio = (magnitude / (range - real_deadzone)) / real_magnitude;
-    }
-    else
-    {
-        *x_out = *y_out = 0.0f;
-    }
-    *x_out = x_val * ratio;
-    *y_out = y_val * ratio;
+    if (ret > 1.0f)
+        ret = 1.0f;
+    else if (ret < -1.0f)
+        ret = -1.0f;
+
+    return ret;
 }

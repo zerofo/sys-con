@@ -66,12 +66,7 @@ void SwitchVirtualGamepadHandler::ConvertAxisToSwitchAxis(float x, float y, floa
     float newRange = (JOYSTICK_MAX - JOYSTICK_MIN);
 
     *x_out = (((x + 1.0f) * newRange) / floatRange) + JOYSTICK_MIN;
-    *y_out = (((y + 1.0f) * newRange) / floatRange) + JOYSTICK_MIN;
-    /*
-    OldRange = (OldMax - OldMin)
-    NewRange = (NewMax - NewMin)
-    NewValue = (((OldValue - OldMin) * NewRange) / OldRange) + NewMin
-    */
+    *y_out = -((((y + 1.0f) * newRange) / floatRange) + JOYSTICK_MIN);
 }
 
 ams::Result SwitchVirtualGamepadHandler::SetControllerVibration(float strong_mag, float weak_mag)

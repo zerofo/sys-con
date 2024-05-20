@@ -75,13 +75,13 @@ ams::Result Xbox360Controller::ReadInput(NormalizedButtonData *normalData, uint1
         /* Xbox360ButtonData *buttonData = reinterpret_cast<Xbox360ButtonData *>(input_bytes);
 
 
-        normalData->triggers[0] = NormalizeTrigger(GetConfig().triggerDeadzonePercent[0], buttonData->trigger_left, 0, 255);
-        normalData->triggers[1] = NormalizeTrigger(GetConfig().triggerDeadzonePercent[1], buttonData->trigger_right, 0, 255);
+        normalData->triggers[0] = Normalize(GetConfig().triggerDeadzonePercent[0], buttonData->trigger_left, 0, 255);
+        normalData->triggers[1] = Normalize(GetConfig().triggerDeadzonePercent[1], buttonData->trigger_right, 0, 255);
 
-        NormalizeAxis(buttonData->stick_left_x, buttonData->stick_left_y, GetConfig().stickDeadzonePercent[0],
-                      &normalData->sticks[0].axis_x, &normalData->sticks[0].axis_y, -32768, 32767);
-        NormalizeAxis(buttonData->stick_right_x, buttonData->stick_right_y, GetConfig().stickDeadzonePercent[1],
-                      &normalData->sticks[1].axis_x, &normalData->sticks[1].axis_y, -32768, 32767);
+        normalData->sticks[0].axis_x = Normalize(GetConfig().stickDeadzonePercent[0], buttonData->stick_left_x, -32768, 32767);
+        normalData->sticks[0].axis_y = Normalize(GetConfig().stickDeadzonePercent[0], buttonData->stick_left_y, -32768, 32767);
+        normalData->sticks[1].axis_x = Normalize(GetConfig().stickDeadzonePercent[1], buttonData->stick_right_x, -32768, 32767);
+        normalData->sticks[1].axis_y = Normalize(GetConfig().stickDeadzonePercent[1], buttonData->stick_right_y, -32768, 32767);
 
 
                 bool buttons[MAX_CONTROLLER_BUTTONS]{
