@@ -62,11 +62,10 @@ ams::Result SwitchHDLHandler::InitHdlState()
         m_deviceInfo[i].npadInterfaceType = HidNpadInterfaceType_USB;
 
         // Set the controller colors. The grip colors are for Pro-Controller on [9.0.0+].
-        const ControllerConfig &config = m_controller->GetConfig();
-        m_deviceInfo[i].singleColorBody = config.bodyColor.rgbaValue;
-        m_deviceInfo[i].singleColorButtons = config.buttonsColor.rgbaValue;
-        m_deviceInfo[i].colorLeftGrip = config.leftGripColor.rgbaValue;
-        m_deviceInfo[i].colorRightGrip = config.rightGripColor.rgbaValue;
+        m_deviceInfo[i].singleColorBody = __builtin_bswap32(m_controller->GetConfig().bodyColor.rgbaValue);
+        m_deviceInfo[i].singleColorButtons = __builtin_bswap32(m_controller->GetConfig().buttonsColor.rgbaValue);
+        m_deviceInfo[i].colorLeftGrip = __builtin_bswap32(m_controller->GetConfig().leftGripColor.rgbaValue);
+        m_deviceInfo[i].colorRightGrip = __builtin_bswap32(m_controller->GetConfig().rightGripColor.rgbaValue);
 
         m_hdlState[i].battery_level = 4; // Set battery charge to full.
         m_hdlState[i].analog_stick_l.x = 0x1234;
