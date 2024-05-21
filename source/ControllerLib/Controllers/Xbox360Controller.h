@@ -1,6 +1,7 @@
 #pragma once
 
 #include "BaseController.h"
+#include "HIDJoystick.h"
 #include <vector>
 
 // References used:
@@ -11,12 +12,15 @@ struct Xbox360ButtonData
     uint8_t type;
     uint8_t length;
 
-    uint8_t hat_switch : 4;
+    bool dpad_up : 1;
+    bool dpad_down : 1;
+    bool dpad_left : 1;
+    bool dpad_right : 1;
 
+    bool button8 : 1; // start
+    bool button7 : 1; // back
     bool button9 : 1;
     bool button10 : 1;
-    bool button7 : 1;
-    bool button8 : 1;
 
     bool button5 : 1;
     bool button6 : 1;

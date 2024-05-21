@@ -192,6 +192,15 @@ namespace syscon::config
                 return 1;
         }
 
+        for (int i = 0; i < ControllerButton::COUNT; i++)
+        {
+            if (config->buttons_pin[i] >= MAX_CONTROLLER_BUTTONS)
+            {
+                syscon::logger::LogError("Invalid button pin: %d (Max: %d)", config->buttons_pin[i], MAX_CONTROLLER_BUTTONS);
+                return 1;
+            }
+        }
+
         syscon::logger::LogDebug("Loading controller successfull (B=%d, A=%d, Y=%d, X=%d, ...)", config->buttons_pin[ControllerButton::B], config->buttons_pin[ControllerButton::A], config->buttons_pin[ControllerButton::Y], config->buttons_pin[ControllerButton::X]);
 
         return 0;

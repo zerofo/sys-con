@@ -24,7 +24,9 @@ enum ControllerButton
     DPAD_DOWN,
     DPAD_LEFT,
     CAPTURE,
-    HOME
+    HOME,
+
+    COUNT
 };
 
 struct NormalizedStick
