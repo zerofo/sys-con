@@ -8,7 +8,6 @@ protected:
     IUSBEndpoint *m_inPipe = nullptr;
     IUSBEndpoint *m_outPipe = nullptr;
     IUSBInterface *m_interface = nullptr;
-    bool m_features[SUPPORTS_COUNT];
 
 public:
     BaseController(std::unique_ptr<IUSBDevice> &&device, const ControllerConfig &config, std::unique_ptr<ILogger> &&logger);

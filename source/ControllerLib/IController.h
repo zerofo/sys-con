@@ -55,8 +55,6 @@ public:
         return true;
     }
 
-    virtual ams::Result OutputBuffer() { R_RETURN(CONTROL_ERR_BUFFER_EMPTY); };
-
     virtual const ControllerConfig &GetConfig() const { return m_config; }
 
     inline IUSBDevice *GetDevice() { return m_device.get(); }

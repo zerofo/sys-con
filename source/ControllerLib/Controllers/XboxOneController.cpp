@@ -155,6 +155,14 @@ ams::Result XboxOneController::WriteAckGuideReport(uint8_t sequence)
     R_RETURN(m_outPipe->Write(report, sizeof(report)));
 }
 
+bool XboxOneController::Support(ControllerFeature feature)
+{
+    if (feature == SUPPORTS_RUMBLE)
+        return true;
+
+    return false;
+}
+
 ams::Result XboxOneController::SetRumble(uint8_t strong_magnitude, uint8_t weak_magnitude)
 {
     const uint8_t rumble_data[]{

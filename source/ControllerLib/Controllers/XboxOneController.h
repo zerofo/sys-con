@@ -87,5 +87,7 @@ public:
 
     ams::Result SendInitBytes();
     ams::Result WriteAckGuideReport(uint8_t sequence);
-    ams::Result SetRumble(uint8_t strong_magnitude, uint8_t weak_magnitude);
+
+    bool Support(ControllerFeature feature) override;
+    ams::Result SetRumble(uint8_t strong_magnitude, uint8_t weak_magnitude) override;
 };

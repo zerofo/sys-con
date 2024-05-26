@@ -88,7 +88,7 @@ class Xbox360Controller : public BaseController
 {
 private:
     bool m_is_wireless = false;
-    bool m_is_present = false;
+    bool m_is_connected = false;
     std::vector<OutputPacket> m_outputBuffer;
     Xbox360ButtonData m_buttonData{};
 
@@ -102,14 +102,17 @@ public:
 
     virtual ams::Result ReadInput(NormalizedButtonData *normalData, uint16_t *input_idx) override;
 
-    ams::Result SetRumble(uint8_t strong_magnitude, uint8_t weak_magnitude);
+    bool Support(ControllerFeature feature) override;
+    ams::Result SetRumble(uint8_t strong_magnitude, uint8_t weak_magnitude) override;
 
     ams::Result SetLED(Xbox360LEDValue value);
 
     ams::Result OnControllerConnect();
     ams::Result OnControllerDisconnect();
 
-    virtual ams::Result OutputBuffer() override;
-
-    bool IsControllerActive(uint16_t input_idx) override { return m_is_present; }
+    bool IsControllerActive(uint16_t input_idx) override
+    {
+        (void)input_idx;
+        return m_is_connected;
+    }
 };

@@ -190,10 +190,6 @@ void SwitchHDLHandler::UpdateInput()
 
 void SwitchHDLHandler::UpdateOutput()
 {
-    // Process a single output packet from a buffer
-    if (R_SUCCEEDED(m_controller->OutputBuffer()))
-        return;
-
     // Process rumble values if supported
     /*if (GetController()->Support(SUPPORTS_RUMBLE))
     {

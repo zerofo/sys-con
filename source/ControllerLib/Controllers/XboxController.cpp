@@ -50,6 +50,14 @@ ams::Result XboxController::ReadInput(NormalizedButtonData *normalData, uint16_t
     R_SUCCEED();
 }
 
+bool XboxController::Support(ControllerFeature feature)
+{
+    if (feature == SUPPORTS_RUMBLE)
+        return true;
+
+    return false;
+}
+
 ams::Result XboxController::SetRumble(uint8_t strong_magnitude, uint8_t weak_magnitude)
 {
     uint8_t rumbleData[]{0x00, 0x06, 0x00, strong_magnitude, weak_magnitude, 0x00, 0x00, 0x00};
