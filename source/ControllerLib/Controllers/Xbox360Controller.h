@@ -111,5 +111,5 @@ public:
 
     virtual ams::Result OutputBuffer() override;
 
-    bool IsControllerActive() override { return m_is_present; }
+    bool IsControllerActive(uint16_t input_idx) override { return m_is_present; }
 };

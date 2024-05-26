@@ -30,6 +30,8 @@ public:
     ams::Result InitHdlState();
     ams::Result UninitHdlState();
 
+    bool IsVirtualDeviceAttached(uint16_t input_idx);
+
     // Fills out the HDL state with the specified button data and passes it to HID
     ams::Result UpdateHdlState(const NormalizedButtonData &data, uint16_t input_idx);
 

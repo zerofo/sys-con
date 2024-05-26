@@ -49,7 +49,11 @@ public:
 
     virtual ams::Result SetRumble(uint8_t strong_magnitude, uint8_t weak_magnitude) = 0;
 
-    virtual bool IsControllerActive() { return true; }
+    virtual bool IsControllerActive(uint16_t input_idx)
+    {
+        (void)input_idx;
+        return true;
+    }
 
     virtual ams::Result OutputBuffer() { R_RETURN(CONTROL_ERR_BUFFER_EMPTY); };
 

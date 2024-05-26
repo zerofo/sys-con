@@ -10,6 +10,7 @@ static constexpr uint8_t ledPacketOn[]{0x00, 0x00, 0x08, 0x40 | XBOX360LED_TOPLE
 Xbox360Controller::Xbox360Controller(std::unique_ptr<IUSBDevice> &&interface, const ControllerConfig &config, std::unique_ptr<ILogger> &&logger)
     : BaseController(std::move(interface), config, std::move(logger))
 {
+    m_is_wireless = (m_device->GetProduct() == 0x0291) || (m_device->GetProduct() == 0x0719);
 }
 
 Xbox360Controller::~Xbox360Controller()
@@ -53,9 +54,11 @@ ams::Result Xbox360Controller::ReadInput(NormalizedButtonData *normalData, uint1
 
     Xbox360ButtonData *buttonData = reinterpret_cast<Xbox360ButtonData *>(input_bytes);
 
+    uint8_t type = input_bytes[0];
+
     if (m_is_wireless)
     {
-        if (buttonData->type & 0x08)
+        if (type & 0x08)
         {
             bool newPresence = (input_bytes[1] & 0x80) != 0;
 
@@ -70,11 +73,13 @@ ams::Result Xbox360Controller::ReadInput(NormalizedButtonData *normalData, uint1
             }
         }
 
-        if (input_bytes[1] != 0x1)
+        if (input_bytes[1] != 0x01)
             R_RETURN(CONTROL_ERR_UNEXPECTED_DATA);
+
+        buttonData = reinterpret_cast<Xbox360ButtonData *>(input_bytes + 4);
     }
 
-    if (buttonData->type == XBOX360INPUT_BUTTON) // Button data
+    if (type == XBOX360INPUT_BUTTON) // Button data
     {
         *input_idx = 0;
 
@@ -109,9 +114,9 @@ ams::Result Xbox360Controller::ReadInput(NormalizedButtonData *normalData, uint1
         normalData->triggers[1] = Normalize(GetConfig().triggerDeadzonePercent[1], buttonData->Rz, 0, 255);
 
         normalData->sticks[0].axis_x = Normalize(GetConfig().stickDeadzonePercent[0], buttonData->X, -32768, 32767);
-        normalData->sticks[0].axis_y = Normalize(GetConfig().stickDeadzonePercent[0], buttonData->Y, -32768, 32767);
+        normalData->sticks[0].axis_y = Normalize(GetConfig().stickDeadzonePercent[0], -buttonData->Y, -32768, 32767);
         normalData->sticks[1].axis_x = Normalize(GetConfig().stickDeadzonePercent[1], buttonData->Rx, -32768, 32767);
-        normalData->sticks[1].axis_y = Normalize(GetConfig().stickDeadzonePercent[1], buttonData->Ry, -32768, 32767);
+        normalData->sticks[1].axis_y = Normalize(GetConfig().stickDeadzonePercent[1], -buttonData->Ry, -32768, 32767);
 
         normalData->buttons[ControllerButton::X] = buttons_mapping[GetConfig().buttons_pin[ControllerButton::X]] ? true : false;
         normalData->buttons[ControllerButton::A] = buttons_mapping[GetConfig().buttons_pin[ControllerButton::A]] ? true : false;

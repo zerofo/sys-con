@@ -73,7 +73,7 @@ ams::Result SwitchHDLHandler::InitHdlState()
         m_hdlState[i].analog_stick_r.x = 0x5678;
         m_hdlState[i].analog_stick_r.y = -0x5678;
 
-        if (m_controller->IsControllerActive())
+        if (m_controller->IsControllerActive(i))
         {
             syscon::logger::LogDebug("SwitchHDLHandler hiddbgAttachHdlsVirtualDevice ...");
             R_TRY(hiddbgAttachHdlsVirtualDevice(&m_hdlHandle[i], &m_deviceInfo[i]));
@@ -89,15 +89,31 @@ ams::Result SwitchHDLHandler::UninitHdlState()
     syscon::logger::LogDebug("SwitchHDLHandler UninitHdlState .. !");
 
     for (int i = 0; i < m_controller->GetInputCount(); i++)
-        hiddbgDetachHdlsVirtualDevice(m_hdlHandle[i]);
+    {
+        if (IsVirtualDeviceAttached(i))
+            hiddbgDetachHdlsVirtualDevice(m_hdlHandle[i]);
+    }
 
     R_SUCCEED();
+}
+
+bool SwitchHDLHandler::IsVirtualDeviceAttached(uint16_t input_idx)
+{
+    syscon::logger::LogDebug("SwitchHDLHandler handle: %d ...", m_hdlHandle[input_idx].handle);
+
+    return m_hdlHandle[input_idx].handle != 0;
 }
 
 // Sets the state of the class's HDL controller to the state stored in class's hdl.state
 ams::Result SwitchHDLHandler::UpdateHdlState(const NormalizedButtonData &data, uint16_t input_idx)
 {
     HiddbgHdlsState *hdlState = &m_hdlState[input_idx];
+
+    if (!IsVirtualDeviceAttached(input_idx))
+    {
+        syscon::logger::LogDebug("SwitchHDLHandler hiddbgAttachHdlsVirtualDevice ...");
+        hiddbgAttachHdlsVirtualDevice(&m_hdlHandle[input_idx], &m_deviceInfo[input_idx]);
+    }
 
     // we convert the input packet into switch-specific button states
     hdlState->buttons = 0;
@@ -144,17 +160,7 @@ ams::Result SwitchHDLHandler::UpdateHdlState(const NormalizedButtonData &data, u
 
     syscon::logger::LogDebug("SwitchHDLHandler UpdateHdlState - Idx: %d [Button: 0x%016X LeftX: %d LeftY: %d RightX: %d RightY: %d]", input_idx, hdlState->buttons, hdlState->analog_stick_l.x, hdlState->analog_stick_l.y, hdlState->analog_stick_r.x, hdlState->analog_stick_r.y);
 
-    ams::Result rc = hiddbgSetHdlsState(m_hdlHandle[input_idx], hdlState);
-    if (rc.GetValue() == 0x1c24ca)
-    {
-        syscon::logger::LogDebug("SwitchHDLHandler UpdateHDLState failed, Re-attaching device...");
-
-        /*
-        // Re-attach virtual gamepad and set state
-        R_TRY(hiddbgAttachHdlsVirtualDevice(&m_hdlHandle[input_idx], &m_deviceInfo[input_idx]));
-        R_TRY(hiddbgSetHdlsState(m_hdlHandle[input_idx], hdlState));
-        */
-    }
+    R_TRY(hiddbgSetHdlsState(m_hdlHandle[input_idx], hdlState));
 
     R_SUCCEED();
 }
@@ -169,10 +175,10 @@ void SwitchHDLHandler::UpdateInput()
         return;
 
     // This is a check for controllers that can prompt themselves to go inactive - e.g. wireless Xbox 360 controllers
-    if (!m_controller->IsControllerActive())
+    if (!m_controller->IsControllerActive(input_idx))
     {
-        for (int i = 0; i < m_controller->GetInputCount(); i++)
-            hiddbgDetachHdlsVirtualDevice(m_hdlHandle[i]);
+        if (IsVirtualDeviceAttached(input_idx))
+            hiddbgDetachHdlsVirtualDevice(m_hdlHandle[input_idx]);
     }
     else
     {
