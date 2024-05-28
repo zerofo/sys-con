@@ -84,6 +84,11 @@ namespace ams
             if (hosversionAtLeast(7, 0, 0))
                 R_ABORT_UNLESS(hiddbgAttachHdlsWorkBuffer(&SwitchHDLHandler::GetHdlsSessionId(), g_hdls_buffer, sizeof(g_hdls_buffer)));
 
+            R_ABORT_UNLESS(hidInitialize());
+            hidInitializeNpad();
+            // R_ABORT_UNLESS(hidSetSupportedNpadIdType(NpadIdTypes, NumNpadIdTypes));
+            // R_ABORT_UNLESS(hidSetSupportedNpadStyleSet(HidNpadStyleSet_NpadStandard | HidNpadStyleTag_NpadSystemExt));
+
             R_ABORT_UNLESS(fs::MountSdCard("sdmc"));
         }
 

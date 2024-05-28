@@ -4,6 +4,21 @@
 
 static HiddbgHdlsSessionId g_hdlsSessionId;
 
+static uint32_t GetHidNpadMask()
+{
+    uint32_t HidNpadMask = 0;
+    for (HidNpadIdType i = HidNpadIdType_No1; i <= HidNpadIdType_No8; i = (HidNpadIdType)((int)i + 1))
+    {
+        u32 deviceType = hidGetNpadDeviceType(i);
+        if (deviceType == 0)
+            continue;
+
+        HidNpadMask |= 1 << i;
+    }
+
+    return HidNpadMask;
+}
+
 SwitchHDLHandler::SwitchHDLHandler(std::unique_ptr<IController> &&controller, int polling_frequency_ms)
     : SwitchVirtualGamepadHandler(std::move(controller), polling_frequency_ms)
 {
@@ -21,7 +36,7 @@ ams::Result SwitchHDLHandler::Initialize()
     R_TRY(m_controller->Initialize());
 
     if (GetController()->Support(SUPPORTS_NOTHING))
-        return 0;
+        R_SUCCEED();
 
     R_TRY(InitHdlState());
 
@@ -29,7 +44,7 @@ ams::Result SwitchHDLHandler::Initialize()
 
     syscon::logger::LogDebug("SwitchHDLHandler Initialized !");
 
-    return 0;
+    R_SUCCEED();
 }
 
 void SwitchHDLHandler::Exit()
@@ -45,39 +60,77 @@ void SwitchHDLHandler::Exit()
     UninitHdlState();
 }
 
+ams::Result SwitchHDLHandler::Attach(uint16_t input_idx)
+{
+    if (IsVirtualDeviceAttached(input_idx))
+        R_SUCCEED();
+
+    syscon::logger::LogDebug("SwitchHDLHandler Attaching device for input: %d ...", input_idx);
+
+    uint32_t HidNpadBefore = GetHidNpadMask();
+    R_TRY(hiddbgAttachHdlsVirtualDevice(&m_controllerData[input_idx].m_hdlHandle, &m_controllerData[input_idx].m_deviceInfo));
+
+    // Wait until the controller is attached to a HidNpadIdType_xxx
+    uint32_t HidNpadDiff = 0;
+    for (int i = 0; i < 1000; i++) // Timeout after 1 second
+    {
+        uint32_t HidNpadAfter = GetHidNpadMask();
+        HidNpadDiff = (HidNpadBefore ^ HidNpadAfter);
+        if (HidNpadDiff != 0)
+            break;
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+    }
+
+    // Detect which HidNpadIdType_xxx has been assigned to the controller
+    for (HidNpadIdType i = HidNpadIdType_No1; i <= HidNpadIdType_No8; i = (HidNpadIdType)((int)i + 1))
+    {
+        if ((HidNpadDiff & (1 << (int)i)) != 0)
+        {
+            m_controllerData[input_idx].m_npadId = i;
+            break;
+        }
+    }
+
+    syscon::logger::LogDebug("SwitchHDLHandler Attach - Idx: %d [NpadId: %d]", input_idx, m_controllerData[input_idx].m_npadId);
+    R_TRY(hidInitializeVibrationDevices(&m_controllerData[input_idx].m_vibrationDeviceHandle, 1, m_controllerData[input_idx].m_npadId, HidNpadStyleTag_NpadFullKey));
+
+    R_SUCCEED();
+}
+
+ams::Result SwitchHDLHandler::Detach(uint16_t input_idx)
+{
+    if (!IsVirtualDeviceAttached(input_idx))
+        R_SUCCEED();
+
+    hiddbgDetachHdlsVirtualDevice(m_controllerData[input_idx].m_hdlHandle);
+    R_SUCCEED();
+}
+
 ams::Result SwitchHDLHandler::InitHdlState()
 {
     syscon::logger::LogDebug("SwitchHDLHandler Initializing HDL state ...");
 
     for (int i = 0; i < m_controller->GetInputCount(); i++)
     {
-        m_hdlHandle[i] = {0};
-        m_deviceInfo[i] = {0};
-        m_hdlState[i] = {0};
+        m_controllerData[i].reset();
 
         syscon::logger::LogDebug("SwitchHDLHandler Initializing HDL device idx: %d ...", i);
 
         // Set the controller type to Pro-Controller, and set the npadInterfaceType.
-        m_deviceInfo[i].deviceType = HidDeviceType_FullKey15;
-        m_deviceInfo[i].npadInterfaceType = HidNpadInterfaceType_USB;
+        m_controllerData[i].m_deviceInfo.deviceType = HidDeviceType_FullKey15;
+        m_controllerData[i].m_deviceInfo.npadInterfaceType = HidNpadInterfaceType_USB;
 
         // Set the controller colors. The grip colors are for Pro-Controller on [9.0.0+].
-        m_deviceInfo[i].singleColorBody = __builtin_bswap32(m_controller->GetConfig().bodyColor.rgbaValue);
-        m_deviceInfo[i].singleColorButtons = __builtin_bswap32(m_controller->GetConfig().buttonsColor.rgbaValue);
-        m_deviceInfo[i].colorLeftGrip = __builtin_bswap32(m_controller->GetConfig().leftGripColor.rgbaValue);
-        m_deviceInfo[i].colorRightGrip = __builtin_bswap32(m_controller->GetConfig().rightGripColor.rgbaValue);
+        m_controllerData[i].m_deviceInfo.singleColorBody = __builtin_bswap32(m_controller->GetConfig().bodyColor.rgbaValue);
+        m_controllerData[i].m_deviceInfo.singleColorButtons = __builtin_bswap32(m_controller->GetConfig().buttonsColor.rgbaValue);
+        m_controllerData[i].m_deviceInfo.colorLeftGrip = __builtin_bswap32(m_controller->GetConfig().leftGripColor.rgbaValue);
+        m_controllerData[i].m_deviceInfo.colorRightGrip = __builtin_bswap32(m_controller->GetConfig().rightGripColor.rgbaValue);
 
-        m_hdlState[i].battery_level = 4; // Set battery charge to full.
-        m_hdlState[i].analog_stick_l.x = 0x1234;
-        m_hdlState[i].analog_stick_l.y = -0x1234;
-        m_hdlState[i].analog_stick_r.x = 0x5678;
-        m_hdlState[i].analog_stick_r.y = -0x5678;
-
-        if (m_controller->IsControllerActive(i))
-        {
-            syscon::logger::LogDebug("SwitchHDLHandler hiddbgAttachHdlsVirtualDevice ...");
-            R_TRY(hiddbgAttachHdlsVirtualDevice(&m_hdlHandle[i], &m_deviceInfo[i]));
-        }
+        m_controllerData[i].m_hdlState.battery_level = 4; // Set battery charge to full.
+        m_controllerData[i].m_hdlState.analog_stick_l.x = 0x1234;
+        m_controllerData[i].m_hdlState.analog_stick_l.y = -0x1234;
+        m_controllerData[i].m_hdlState.analog_stick_r.x = 0x5678;
+        m_controllerData[i].m_hdlState.analog_stick_r.y = -0x5678;
     }
 
     syscon::logger::LogDebug("SwitchHDLHandler HDL state successfully initialized !");
@@ -89,31 +142,22 @@ ams::Result SwitchHDLHandler::UninitHdlState()
     syscon::logger::LogDebug("SwitchHDLHandler UninitHdlState .. !");
 
     for (int i = 0; i < m_controller->GetInputCount(); i++)
-    {
-        if (IsVirtualDeviceAttached(i))
-            hiddbgDetachHdlsVirtualDevice(m_hdlHandle[i]);
-    }
+        Detach(i);
 
     R_SUCCEED();
 }
 
 bool SwitchHDLHandler::IsVirtualDeviceAttached(uint16_t input_idx)
 {
-    syscon::logger::LogDebug("SwitchHDLHandler handle: %d ...", m_hdlHandle[input_idx].handle);
+    syscon::logger::LogDebug("SwitchHDLHandler handle: %d ...", m_controllerData[input_idx].m_hdlHandle.handle);
 
-    return m_hdlHandle[input_idx].handle != 0;
+    return m_controllerData[input_idx].m_hdlHandle.handle != 0;
 }
 
 // Sets the state of the class's HDL controller to the state stored in class's hdl.state
 ams::Result SwitchHDLHandler::UpdateHdlState(const NormalizedButtonData &data, uint16_t input_idx)
 {
-    HiddbgHdlsState *hdlState = &m_hdlState[input_idx];
-
-    if (!IsVirtualDeviceAttached(input_idx))
-    {
-        syscon::logger::LogDebug("SwitchHDLHandler hiddbgAttachHdlsVirtualDevice ...");
-        hiddbgAttachHdlsVirtualDevice(&m_hdlHandle[input_idx], &m_deviceInfo[input_idx]);
-    }
+    HiddbgHdlsState *hdlState = &m_controllerData[input_idx].m_hdlState;
 
     // we convert the input packet into switch-specific button states
     hdlState->buttons = 0;
@@ -160,7 +204,7 @@ ams::Result SwitchHDLHandler::UpdateHdlState(const NormalizedButtonData &data, u
 
     syscon::logger::LogDebug("SwitchHDLHandler UpdateHdlState - Idx: %d [Button: 0x%016X LeftX: %d LeftY: %d RightX: %d RightY: %d]", input_idx, hdlState->buttons, hdlState->analog_stick_l.x, hdlState->analog_stick_l.y, hdlState->analog_stick_r.x, hdlState->analog_stick_r.y);
 
-    R_TRY(hiddbgSetHdlsState(m_hdlHandle[input_idx], hdlState));
+    R_TRY(hiddbgSetHdlsState(m_controllerData[input_idx].m_hdlHandle, hdlState));
 
     R_SUCCEED();
 }
@@ -175,34 +219,40 @@ void SwitchHDLHandler::UpdateInput()
         return;
 
     // This is a check for controllers that can prompt themselves to go inactive - e.g. wireless Xbox 360 controllers
-    if (!m_controller->IsControllerActive(input_idx))
+    if (!m_controller->IsControllerConnected(input_idx))
     {
-        if (IsVirtualDeviceAttached(input_idx))
-            hiddbgDetachHdlsVirtualDevice(m_hdlHandle[input_idx]);
+        Detach(input_idx);
+        return;
     }
-    else
-    {
-        // We get the button inputs from the input packet and update the state of our controller
-        if (R_FAILED(UpdateHdlState(data, input_idx)))
-            return;
-    }
+
+    Attach(input_idx);
+
+    // We get the button inputs from the input packet and update the state of our controller
+    UpdateHdlState(data, input_idx);
 }
 
 void SwitchHDLHandler::UpdateOutput()
 {
+    uint32_t HidNpadMask = GetHidNpadMask();
+    syscon::logger::LogDebug("SwitchHDLHandler: HidNpadMask %04X...", HidNpadMask);
+
     // Process rumble values if supported
-    /*if (GetController()->Support(SUPPORTS_RUMBLE))
+    if (GetController()->Support(SUPPORTS_RUMBLE))
     {
         HidVibrationValue value;
 
-        for (int i = 0; i < m_controller->GetInputCount(); i++)
+        for (uint16_t input_idx = 0; input_idx < m_controller->GetInputCount(); input_idx++)
         {
-            if (R_FAILED(hidGetActualVibrationValue(m_vibrationDeviceHandle[i], &value))
+            if (R_FAILED(hidGetActualVibrationValue(m_controllerData[input_idx].m_vibrationDeviceHandle, &value)))
+            {
+                syscon::logger::LogError("SwitchHDLHandler UpdateOutput - Failed to get vibration value for idx: %d", input_idx);
                 return;
+            }
 
-            m_controller->SetRumble(static_cast<uint8_t>(value.amp_high * 255.0f), static_cast<uint8_t>(value.amp_low * 255.0f));
+            syscon::logger::LogDebug("SwitchHDLHandler UpdateOutput - Idx: %d [AmpHigh: %d AmpLow: %d]", input_idx, value.amp_high * 255.0f, value.amp_low * 255.0f);
+            m_controller->SetRumble(input_idx, static_cast<uint8_t>(value.amp_high * 255.0f), static_cast<uint8_t>(value.amp_low * 255.0f));
         }
-    }*/
+    }
 }
 
 HiddbgHdlsSessionId &SwitchHDLHandler::GetHdlsSessionId()

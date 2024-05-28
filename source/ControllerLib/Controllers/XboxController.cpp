@@ -58,8 +58,9 @@ bool XboxController::Support(ControllerFeature feature)
     return false;
 }
 
-ams::Result XboxController::SetRumble(uint8_t strong_magnitude, uint8_t weak_magnitude)
+ams::Result XboxController::SetRumble(uint16_t input_idx, uint8_t strong_magnitude, uint8_t weak_magnitude)
 {
+    (void)input_idx;
     uint8_t rumbleData[]{0x00, 0x06, 0x00, strong_magnitude, weak_magnitude, 0x00, 0x00, 0x00};
     R_RETURN(m_outPipe->Write(rumbleData, sizeof(rumbleData)));
 }

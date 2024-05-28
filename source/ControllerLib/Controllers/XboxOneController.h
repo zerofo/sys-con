@@ -89,5 +89,5 @@ public:
     ams::Result WriteAckGuideReport(uint8_t sequence);
 
     bool Support(ControllerFeature feature) override;
-    ams::Result SetRumble(uint8_t strong_magnitude, uint8_t weak_magnitude) override;
+    ams::Result SetRumble(uint16_t input_idx, uint8_t strong_magnitude, uint8_t weak_magnitude) override;
 };

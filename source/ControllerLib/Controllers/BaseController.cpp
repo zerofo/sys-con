@@ -6,7 +6,7 @@
 BaseController::BaseController(std::unique_ptr<IUSBDevice> &&device, const ControllerConfig &config, std::unique_ptr<ILogger> &&logger)
     : IController(std::move(device), config, std::move(logger))
 {
-    LogPrint(LogLevelInfo, "BaseController Created for %04x-%04x", m_device->GetVendor(), m_device->GetProduct());
+    LogPrint(LogLevelDebug, "BaseController Created for %04x-%04x", m_device->GetVendor(), m_device->GetProduct());
 }
 
 BaseController::~BaseController()
@@ -100,8 +100,9 @@ bool BaseController::Support(ControllerFeature feature)
     }
 }
 
-ams::Result BaseController::SetRumble(uint8_t strong_magnitude, uint8_t weak_magnitude)
+ams::Result BaseController::SetRumble(uint16_t input_idx, uint8_t strong_magnitude, uint8_t weak_magnitude)
 {
+    (void)input_idx;
     (void)strong_magnitude;
     (void)weak_magnitude;
     // Not implemented yet

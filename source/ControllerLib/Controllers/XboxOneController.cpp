@@ -163,8 +163,9 @@ bool XboxOneController::Support(ControllerFeature feature)
     return false;
 }
 
-ams::Result XboxOneController::SetRumble(uint8_t strong_magnitude, uint8_t weak_magnitude)
+ams::Result XboxOneController::SetRumble(uint16_t input_idx, uint8_t strong_magnitude, uint8_t weak_magnitude)
 {
+    (void)input_idx;
     const uint8_t rumble_data[]{
         0x09, 0x00, 0x00,
         0x09, 0x00, 0x0f, 0x00, 0x00,

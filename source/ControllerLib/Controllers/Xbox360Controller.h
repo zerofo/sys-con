@@ -7,6 +7,8 @@
 // References used:
 // https://cs.chromium.org/chromium/src/device/gamepad/xbox_controller_mac.mm
 
+#define XBOX360_MAX_INPUTS 4
+
 struct Xbox360ButtonData
 {
     uint8_t type;
@@ -88,31 +90,28 @@ class Xbox360Controller : public BaseController
 {
 private:
     bool m_is_wireless = false;
-    bool m_is_connected = false;
-    std::vector<OutputPacket> m_outputBuffer;
-    Xbox360ButtonData m_buttonData{};
+    bool m_is_connected[XBOX360_MAX_INPUTS];
+
+    ams::Result SetLED(Xbox360LEDValue value);
+
+    ams::Result OnControllerConnect(uint16_t input_idx);
+    ams::Result OnControllerDisconnect(uint16_t input_idx);
+
+    void CloseInterfaces();
 
 public:
     Xbox360Controller(std::unique_ptr<IUSBDevice> &&device, const ControllerConfig &config, std::unique_ptr<ILogger> &&logger);
     virtual ~Xbox360Controller() override;
 
-    virtual ams::Result Initialize() override;
+    ams::Result Initialize() override;
 
-    void CloseInterfaces();
-
-    virtual ams::Result ReadInput(NormalizedButtonData *normalData, uint16_t *input_idx) override;
+    ams::Result ReadInput(NormalizedButtonData *normalData, uint16_t *input_idx) override;
 
     bool Support(ControllerFeature feature) override;
-    ams::Result SetRumble(uint8_t strong_magnitude, uint8_t weak_magnitude) override;
 
-    ams::Result SetLED(Xbox360LEDValue value);
+    uint16_t GetInputCount() override;
 
-    ams::Result OnControllerConnect();
-    ams::Result OnControllerDisconnect();
+    ams::Result SetRumble(uint16_t input_idx, uint8_t strong_magnitude, uint8_t weak_magnitude) override;
 
-    bool IsControllerActive(uint16_t input_idx) override
-    {
-        (void)input_idx;
-        return m_is_connected;
-    }
+    bool IsControllerConnected(uint16_t input_idx) override;
 };

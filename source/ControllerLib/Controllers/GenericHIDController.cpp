@@ -8,7 +8,7 @@
 GenericHIDController::GenericHIDController(std::unique_ptr<IUSBDevice> &&device, const ControllerConfig &config, std::unique_ptr<ILogger> &&logger)
     : BaseController(std::move(device), config, std::move(logger))
 {
-    LogPrint(LogLevelInfo, "GenericHIDController Created for %04x-%04x", m_device->GetVendor(), m_device->GetProduct());
+    LogPrint(LogLevelDebug, "GenericHIDController Created for %04x-%04x", m_device->GetVendor(), m_device->GetProduct());
 }
 
 GenericHIDController::~GenericHIDController()

@@ -68,11 +68,3 @@ void SwitchVirtualGamepadHandler::ConvertAxisToSwitchAxis(float x, float y, floa
     *x_out = (((x + 1.0f) * newRange) / floatRange) + JOYSTICK_MIN;
     *y_out = -((((y + 1.0f) * newRange) / floatRange) + JOYSTICK_MIN);
 }
-
-ams::Result SwitchVirtualGamepadHandler::SetControllerVibration(float strong_mag, float weak_mag)
-{
-    strong_mag = std::max<float>(0.0f, std::min<float>(strong_mag, 1.0f));
-    weak_mag = std::max<float>(0.0f, std::min<float>(weak_mag, 1.0f));
-
-    return m_controller->SetRumble(static_cast<uint8_t>(strong_mag * 255.0f), static_cast<uint8_t>(weak_mag * 255.0f));
-}

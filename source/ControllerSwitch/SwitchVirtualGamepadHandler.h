@@ -7,7 +7,6 @@
 class SwitchVirtualGamepadHandler
 {
 protected:
-    HidVibrationDeviceHandle m_vibrationDeviceHandle[CONTROLLER_MAX_INPUTS];
     std::unique_ptr<IController> m_controller;
     int m_polling_frequency_ms;
 
@@ -39,8 +38,6 @@ public:
     virtual void UpdateOutput() = 0;
 
     void ConvertAxisToSwitchAxis(float x, float y, float deadzone, s32 *x_out, s32 *y_out);
-
-    ams::Result SetControllerVibration(float strong_mag, float weak_mag);
 
     // Get the raw controller pointer
     inline IController *GetController() { return m_controller.get(); }
