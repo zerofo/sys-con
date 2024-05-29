@@ -47,7 +47,7 @@ public:
 
     virtual bool Support(ControllerFeature aFeature) = 0;
 
-    virtual ams::Result SetRumble(uint16_t input_idx, uint8_t strong_magnitude, uint8_t weak_magnitude) = 0;
+    virtual ams::Result SetRumble(uint16_t input_idx, float amp_high, float amp_low) = 0;
 
     virtual bool IsControllerConnected(uint16_t input_idx)
     {

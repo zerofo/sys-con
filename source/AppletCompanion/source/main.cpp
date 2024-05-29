@@ -125,13 +125,9 @@ int main()
 
         // Update vibrations
         if (buttonDown & HidNpadButton_Plus)
-            current_vibration += 0.1;
+            current_vibration = std::min(current_vibration + 0.1, 1.0);
         if (buttonDown & HidNpadButton_Minus)
-            current_vibration -= 0.1;
-        if (current_vibration > 1.0)
-            current_vibration = 1.0;
-        if (current_vibration < 0.0)
-            current_vibration = 0.0;
+            current_vibration = std::max(current_vibration - 0.1, 0.0);
 
         vibrationValue.amp_low = current_vibration;
         vibrationValue.amp_high = current_vibration;

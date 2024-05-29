@@ -43,16 +43,6 @@ struct Xbox360ButtonData
     int16_t Ry;
 };
 
-struct Xbox360RumbleData
-{
-    uint8_t command;
-    uint8_t size;
-    uint8_t dummy1;
-    uint8_t big;
-    uint8_t little;
-    uint8_t dummy2[3];
-};
-
 enum Xbox360InputPacketType : uint8_t
 {
     XBOX360INPUT_BUTTON = 0,
@@ -62,7 +52,7 @@ enum Xbox360InputPacketType : uint8_t
 
 enum Xbox360LEDValue : uint8_t
 {
-    XBOX360LED_OFF,
+    XBOX360LED_OFF = 0,
     XBOX360LED_ALLBLINK,
     XBOX360LED_TOPLEFTBLINK,
     XBOX360LED_TOPRIGHTBLINK,
@@ -92,7 +82,7 @@ private:
     bool m_is_wireless = false;
     bool m_is_connected[XBOX360_MAX_INPUTS];
 
-    ams::Result SetLED(Xbox360LEDValue value);
+    ams::Result SetLED(uint16_t input_idx, Xbox360LEDValue value);
 
     ams::Result OnControllerConnect(uint16_t input_idx);
     ams::Result OnControllerDisconnect(uint16_t input_idx);
@@ -111,7 +101,7 @@ public:
 
     uint16_t GetInputCount() override;
 
-    ams::Result SetRumble(uint16_t input_idx, uint8_t strong_magnitude, uint8_t weak_magnitude) override;
+    ams::Result SetRumble(uint16_t input_idx, float amp_high, float amp_low) override;
 
     bool IsControllerConnected(uint16_t input_idx) override;
 };

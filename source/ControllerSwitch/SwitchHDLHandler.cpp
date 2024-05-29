@@ -149,8 +149,6 @@ ams::Result SwitchHDLHandler::UninitHdlState()
 
 bool SwitchHDLHandler::IsVirtualDeviceAttached(uint16_t input_idx)
 {
-    syscon::logger::LogDebug("SwitchHDLHandler handle: %d ...", m_controllerData[input_idx].m_hdlHandle.handle);
-
     return m_controllerData[input_idx].m_hdlHandle.handle != 0;
 }
 
@@ -233,9 +231,6 @@ void SwitchHDLHandler::UpdateInput()
 
 void SwitchHDLHandler::UpdateOutput()
 {
-    uint32_t HidNpadMask = GetHidNpadMask();
-    syscon::logger::LogDebug("SwitchHDLHandler: HidNpadMask %04X...", HidNpadMask);
-
     // Process rumble values if supported
     if (GetController()->Support(SUPPORTS_RUMBLE))
     {
@@ -243,14 +238,22 @@ void SwitchHDLHandler::UpdateOutput()
 
         for (uint16_t input_idx = 0; input_idx < m_controller->GetInputCount(); input_idx++)
         {
+            if (!IsVirtualDeviceAttached(input_idx))
+                continue;
+
             if (R_FAILED(hidGetActualVibrationValue(m_controllerData[input_idx].m_vibrationDeviceHandle, &value)))
             {
                 syscon::logger::LogError("SwitchHDLHandler UpdateOutput - Failed to get vibration value for idx: %d", input_idx);
-                return;
+                continue;
             }
 
-            syscon::logger::LogDebug("SwitchHDLHandler UpdateOutput - Idx: %d [AmpHigh: %d AmpLow: %d]", input_idx, value.amp_high * 255.0f, value.amp_low * 255.0f);
-            m_controller->SetRumble(input_idx, static_cast<uint8_t>(value.amp_high * 255.0f), static_cast<uint8_t>(value.amp_low * 255.0f));
+            // if (value.amp_high == m_controllerData[input_idx].m_vibrationLastValue.amp_high && value.amp_low == m_controllerData[input_idx].m_vibrationLastValue.amp_low)
+            //     continue; // Do nothing if the values are the same
+
+            syscon::logger::LogDebug("SwitchHDLHandler UpdateOutput - Idx: %d [AmpHigh: %d%% AmpLow: %d%%]", input_idx, (uint8_t)(value.amp_high * 100), (uint8_t)(value.amp_low * 100));
+            m_controller->SetRumble(input_idx, value.amp_high, value.amp_low);
+
+            m_controllerData[input_idx].m_vibrationLastValue = value;
         }
     }
 }

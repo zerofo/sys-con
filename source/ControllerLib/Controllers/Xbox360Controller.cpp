@@ -10,6 +10,7 @@ Xbox360Controller::Xbox360Controller(std::unique_ptr<IUSBDevice> &&interface, co
     : BaseController(std::move(interface), config, std::move(logger))
 {
     m_is_wireless = (m_device->GetProduct() == 0x0291) || (m_device->GetProduct() == 0x0719);
+
     for (int i = 0; i < XBOX360_MAX_INPUTS; i++)
         m_is_connected[i] = false;
 }
@@ -26,7 +27,7 @@ ams::Result Xbox360Controller::Initialize()
     if (!m_is_wireless)
     {
         m_is_connected[0] = true;
-        SetLED(XBOX360LED_TOPLEFT);
+        SetLED(0, XBOX360LED_TOPLEFT);
     }
 
     R_SUCCEED();
@@ -61,9 +62,14 @@ ams::Result Xbox360Controller::ReadInput(NormalizedButtonData *normalData, uint1
 
     if (m_is_wireless)
     {
-        uint16_t controller_idx = (input_bytes[1] & 0x0F) - 1;
 
-        if (type & 0x08)
+        // https://github.com/felis/USB_Host_Shield_2.0/blob/master/XBOXRECV.cpp
+        LogPrint(LogLevelDebug, "Xbox360Controller Wireless Data: ");
+        LogBuffer(LogLevelDebug, input_bytes, size);
+
+        uint16_t controller_idx = 0;
+
+        if (type & 0x08) // Connect/Disconnect
         {
             bool is_connected = (input_bytes[1] & 0x80) != 0;
 
@@ -75,6 +81,18 @@ ams::Result Xbox360Controller::ReadInput(NormalizedButtonData *normalData, uint1
                     OnControllerDisconnect(controller_idx);
             }
         }
+
+        if (input_bytes[1] == 0x00) // Controller status report
+            R_RETURN(CONTROL_ERR_NOTHING_TODO);
+
+        if (input_bytes[1] == 0x0F) // ??
+            R_RETURN(CONTROL_ERR_NOTHING_TODO);
+
+        if (input_bytes[1] != 0x01) // Data
+            R_RETURN(CONTROL_ERR_NOTHING_TODO);
+
+        if (controller_idx > XBOX360_MAX_INPUTS)
+            R_RETURN(CONTROL_ERR_UNEXPECTED_DATA);
 
         *input_idx = controller_idx;
         buttonData = reinterpret_cast<Xbox360ButtonData *>(input_bytes + 4);
@@ -159,16 +177,16 @@ uint16_t Xbox360Controller::GetInputCount()
     return m_is_wireless ? XBOX360_MAX_INPUTS : 1;
 }
 
-ams::Result Xbox360Controller::SetRumble(uint16_t input_idx, uint8_t strong_magnitude, uint8_t weak_magnitude)
+ams::Result Xbox360Controller::SetRumble(uint16_t input_idx, float amp_high, float amp_low)
 {
     if (m_is_wireless)
     {
-        uint8_t rumbleData[]{0x00, (uint8_t)(input_idx + 1), 0x0F, 0xC0, 0x00, strong_magnitude, weak_magnitude, 0x00, 0x00, 0x00, 0x00, 0x00};
+        uint8_t rumbleData[]{0x00, (uint8_t)(input_idx + 1), 0x0F, 0xC0, 0x00, (uint8_t)(amp_high * 255), (uint8_t)(amp_low * 255), 0x00, 0x00, 0x00, 0x00, 0x00};
         R_RETURN(m_outPipe->Write(rumbleData, sizeof(rumbleData)));
     }
     else
     {
-        uint8_t rumbleData[]{0x00, sizeof(Xbox360RumbleData), 0x00, strong_magnitude, weak_magnitude, 0x00, 0x00, 0x00};
+        uint8_t rumbleData[]{0x00, 0x08, 0x00, (uint8_t)(amp_high * 255), (uint8_t)(amp_low * 255), 0x00, 0x00, 0x00};
         R_RETURN(m_outPipe->Write(rumbleData, sizeof(rumbleData)));
     }
 }
@@ -178,28 +196,28 @@ bool Xbox360Controller::IsControllerConnected(uint16_t input_idx)
     return m_is_connected[input_idx];
 }
 
-ams::Result Xbox360Controller::SetLED(Xbox360LEDValue value)
+ams::Result Xbox360Controller::SetLED(uint16_t input_idx, Xbox360LEDValue value)
 {
     if (m_is_wireless)
     {
-        uint8_t customLEDPacket[]{0x00, 0x00, 0x08, static_cast<uint8_t>(value | 0x40), 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
-        R_RETURN(m_outPipe->Write(customLEDPacket, sizeof(customLEDPacket)));
+        uint8_t ledPacket[]{0x00, (uint8_t)(input_idx + 1), 0x08, (uint8_t)(value | 0x40), 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+        R_RETURN(m_outPipe->Write(ledPacket, sizeof(ledPacket)));
     }
     else
     {
-        uint8_t ledPacket[]{0x01, 0x03, static_cast<uint8_t>(value)};
+        uint8_t ledPacket[]{0x01, 0x03, (uint8_t)(value)};
         R_RETURN(m_outPipe->Write(ledPacket, sizeof(ledPacket)));
     }
 }
 
 ams::Result Xbox360Controller::OnControllerConnect(uint16_t input_idx)
 {
-    LogPrint(LogLevelInfo, "Xbox360Controller Wireless controller connected ...");
+    LogPrint(LogLevelInfo, "Xbox360Controller Wireless controller connected (Idx: %d) ...", input_idx);
 
     m_outPipe->Write(reconnectPacket, sizeof(reconnectPacket));
     m_outPipe->Write(initDriverPacket, sizeof(initDriverPacket));
 
-    SetLED((Xbox360LEDValue)((int)XBOX360LED_TOPLEFT + input_idx));
+    SetLED(input_idx, (Xbox360LEDValue)((int)XBOX360LED_TOPLEFT + input_idx));
 
     m_is_connected[input_idx] = true;
 

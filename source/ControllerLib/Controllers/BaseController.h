@@ -25,7 +25,7 @@ public:
 
     virtual ams::Result ReadInput(NormalizedButtonData *normalData, uint16_t *input_idx) = 0;
 
-    ams::Result SetRumble(uint16_t input_idx, uint8_t strong_magnitude, uint8_t weak_magnitude);
+    ams::Result SetRumble(uint16_t input_idx, float amp_high, float amp_low) override;
 
     // Helper functions
     float Normalize(uint8_t deadzonePercent, int32_t value, int32_t min, int32_t max);

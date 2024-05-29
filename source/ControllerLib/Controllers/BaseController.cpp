@@ -51,7 +51,6 @@ ams::Result BaseController::OpenInterfaces()
                 if (inEndpoint)
                 {
                     R_TRY(inEndpoint->Open());
-
                     m_inPipe = inEndpoint;
                     break;
                 }
@@ -100,11 +99,11 @@ bool BaseController::Support(ControllerFeature feature)
     }
 }
 
-ams::Result BaseController::SetRumble(uint16_t input_idx, uint8_t strong_magnitude, uint8_t weak_magnitude)
+ams::Result BaseController::SetRumble(uint16_t input_idx, float amp_high, float amp_low)
 {
     (void)input_idx;
-    (void)strong_magnitude;
-    (void)weak_magnitude;
+    (void)amp_high;
+    (void)amp_low;
     // Not implemented yet
     return 9;
 }

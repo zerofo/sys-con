@@ -27,6 +27,7 @@ public:
     HiddbgHdlsDeviceInfo m_deviceInfo;
     HiddbgHdlsState m_hdlState;
     HidVibrationDeviceHandle m_vibrationDeviceHandle;
+    HidVibrationValue m_vibrationLastValue;
 };
 
 class SwitchHDLHandler : public SwitchVirtualGamepadHandler
