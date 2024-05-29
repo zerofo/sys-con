@@ -1,6 +1,8 @@
 #include "switch.h"
 #include <stdio.h>
 #include <string>
+#include <thread>
+#include <algorithm>
 
 std::string buttonToStr(u64 ButtonMask)
 {
@@ -72,48 +74,73 @@ std::string buttonToStr(u64 ButtonMask)
 int main()
 {
     char outputBuffer[256];
+    HidVibrationDeviceHandle vibrationDeviceHandle;
+    HidVibrationValue vibrationValue;
+    PadState pad;
 
-    PrintConsole *console = consoleGetDefault();
-
-    consoleInit(console);
+    PrintConsole *console = consoleInit(NULL);
 
     padConfigureInput(8, HidNpadStyleSet_NpadStandard);
-    PadState pad;
+
     padInitializeAny(&pad);
+
     hidSetNpadHandheldActivationMode(HidNpadHandheldActivationMode_Single);
 
+    if (R_FAILED(hidInitializeVibrationDevices(&vibrationDeviceHandle, 1, HidNpadIdType_No1, HidNpadStyleTag_NpadFullKey)))
+        printf("ERR: hidInitializeVibrationDevices failed !\n");
+
+    float current_vibration = 0.0;
+
+    vibrationValue.amp_low = 0.0;   // Max 1.0
+    vibrationValue.freq_low = 220;  // hz
+    vibrationValue.amp_high = 0.0;  // Max 1.0
+    vibrationValue.freq_high = 220; // hz
+
     printf("Welcome to sys-con debug application\n");
-    printf("Press + to increase vibration\n");
-    printf("Press - to decrease vibration\n");
-    printf("Press L+R (or Home) to exit !\n");
+    printf("Press + to increase vibration (On controller No1)\n");
+    printf("Press - to decrease vibration (On controller No1)\n");
+    printf("Press Home to exit\n");
     printf("\n");
 
     while (appletMainLoop())
     {
-        padUpdate(&pad);
 
-        u64 buttonDown = padGetButtons(&pad);
+        // Get current pad information (Button, stick, ...)
+        padUpdate(&pad);
+        u64 buttonPressed = padGetButtons(&pad);
+        u64 buttonDown = padGetButtonsDown(&pad);
         HidAnalogStickState stick1 = padGetStickPos(&pad, 0);
         HidAnalogStickState stick2 = padGetStickPos(&pad, 1);
 
-        snprintf(outputBuffer, console->consoleWidth, "Button: [%s] Stick1 [%06d, %06d] Stick2 [%06d, %06d]                                                   ",
-                 buttonToStr(buttonDown).c_str(),
+        // Print pad information
+        snprintf(outputBuffer, sizeof(outputBuffer), "Button: [%s] Stick1 [%06d, %06d] Stick2 [%06d, %06d] Vib [%d]                                                       ",
+                 buttonToStr(buttonPressed).c_str(),
                  stick1.x, stick1.y,
-                 stick2.x, stick2.y);
+                 stick2.x, stick2.y,
+                 (uint8_t)(current_vibration * 100));
 
         outputBuffer[console->consoleWidth - 1] = '\r';
         outputBuffer[console->consoleWidth] = '\0';
         printf(outputBuffer);
 
-        if (buttonDown & HidNpadButton_L && buttonDown & HidNpadButton_R)
-            break;
+        // Update vibrations
+        if (buttonDown & HidNpadButton_Plus)
+            current_vibration += 0.1;
+        if (buttonDown & HidNpadButton_Minus)
+            current_vibration -= 0.1;
+        if (current_vibration > 1.0)
+            current_vibration = 1.0;
+        if (current_vibration < 0.0)
+            current_vibration = 0.0;
 
-        if (buttonDown & HidNpadButton_Plus || buttonDown & HidNpadButton_Minus)
-        {
-            // Not implemented
-        }
+        vibrationValue.amp_low = current_vibration;
+        vibrationValue.amp_high = current_vibration;
+        hidSendVibrationValue(vibrationDeviceHandle, &vibrationValue);
 
+        // Update console
         consoleUpdate(console);
+
+        std::this_thread::sleep_for(std::chrono::milliseconds(10)); // Avoid 100% CPU usage
     }
 
     consoleExit(console);
