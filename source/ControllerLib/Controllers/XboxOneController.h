@@ -41,29 +41,6 @@ struct XboxOneButtonData
     int16_t stick_right_y;
 };
 
-struct XboxOneGuideData
-{
-    uint8_t down;
-    uint8_t dummy1;
-};
-
-struct XboxOneRumbleData
-{
-    uint8_t command;
-    uint8_t dummy1;
-    uint8_t counter;
-    uint8_t size;
-    uint8_t mode;
-    uint8_t rumble_mask;
-    uint8_t trigger_left;
-    uint8_t trigger_right;
-    uint8_t strong_magnitude;
-    uint8_t weak_magnitude;
-    uint8_t duration;
-    uint8_t period;
-    uint8_t extra;
-};
-
 enum XboxOneInputPacketType : uint8_t
 {
     XBONEINPUT_BUTTON = 0x20,
