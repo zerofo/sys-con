@@ -74,8 +74,10 @@ std::string buttonToStr(u64 ButtonMask)
 int main()
 {
     char outputBuffer[256];
+    bool isVibrationPermitted = false;
     HidVibrationDeviceHandle vibrationDeviceHandle;
     HidVibrationValue vibrationValue;
+    HidVibrationValue vibrationValueRead;
     PadState pad;
 
     PrintConsole *console = consoleInit(NULL);
@@ -99,7 +101,7 @@ int main()
     printf("Welcome to sys-con debug application\n");
     printf("Press + to increase vibration (On controller No1)\n");
     printf("Press - to decrease vibration (On controller No1)\n");
-    printf("Press Home to exit\n");
+    printf("Press + and - to exit\n");
     printf("\n");
 
     while (appletMainLoop())
@@ -112,12 +114,17 @@ int main()
         HidAnalogStickState stick1 = padGetStickPos(&pad, 0);
         HidAnalogStickState stick2 = padGetStickPos(&pad, 1);
 
+        hidIsVibrationDeviceMounted(vibrationDeviceHandle, &isVibrationPermitted);
+        hidGetActualVibrationValue(vibrationDeviceHandle, &vibrationValueRead);
+
         // Print pad information
-        snprintf(outputBuffer, sizeof(outputBuffer), "Button: [%s] Stick1 [%06d, %06d] Stick2 [%06d, %06d] Vib [%d]                                                       ",
+        snprintf(outputBuffer, sizeof(outputBuffer), "Button: [%s] Stick1 [%06d, %06d] Stick2 [%06d, %06d] Vib [%d/%d (%s)]                                                       ",
                  buttonToStr(buttonPressed).c_str(),
                  stick1.x, stick1.y,
                  stick2.x, stick2.y,
-                 (uint8_t)(current_vibration * 100));
+                 (uint8_t)(current_vibration * 100),
+                 (uint8_t)(vibrationValueRead.amp_low * 100),
+                 isVibrationPermitted ? "Permitted" : "Not Permitted");
 
         outputBuffer[console->consoleWidth - 1] = '\r';
         outputBuffer[console->consoleWidth] = '\0';
@@ -128,6 +135,9 @@ int main()
             current_vibration = std::min(current_vibration + 0.1, 1.0);
         if (buttonDown & HidNpadButton_Minus)
             current_vibration = std::max(current_vibration - 0.1, 0.0);
+
+        if ((buttonPressed & HidNpadButton_Plus) && (buttonPressed & HidNpadButton_Minus))
+            break;
 
         vibrationValue.amp_low = current_vibration;
         vibrationValue.amp_high = current_vibration;
