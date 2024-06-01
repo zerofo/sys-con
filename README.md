@@ -60,17 +60,15 @@ Most of the time you will only have to do the mapping, how to do it ?
 
 ### Method 1 (From a windows PC)
 
-Connect your controller to your PC
-
-1. Go to "Control Panel" > "Device Manager" and find your USB device under "Human Interface Devices".
-2. Double click the device or right click and select Properties.
-3. Go to the "Details" tab and select "Hardware IDs" to view its PID and VID. The PID/VID should look like HID\VID_0810&PID_0001&...
+1. Connect your controller to your PC
+2. Go to "Control Panel" > "Device Manager" and find your USB device under "Human Interface Devices".
+3. Double click the device or right click and select Properties.
+4. Go to the "Details" tab and select "Hardware IDs" to view its PID and VID. The PID/VID should look like HID\VID_0810&PID_0001&...
 From there you need to extract:
 `[0810-0001]`
-4- Open "joy.cpl" (Either from Win+R or directly in Start Menu)
-6- Select your controller and click "Properties"
-5- Here you should see a panel with button ID (1, 2, 3 ...)
-6- Press the button and take a note which button is on which ID.
+5. Open "joy.cpl" (Either from Win+R or directly in Start Menu)
+6. Select your controller and click "Properties"
+7. Here you should see a panel with button ID (1, 2, 3 ...), press the button and take a note (Which button is associated to which ID).
 
 Now Edit /config/sys-con/config.ini on your switch sdcard and add:
 ```
@@ -87,13 +85,14 @@ minus=9
 plus=10
 ```
 
-Where 1, 2, 3, 4, ... represent the button ID noted in step 6.
+Where 1, 2, 3, 4, ... represent the button ID noted in step 7.
 
 ### Method 2 (Directly from the switch logs)
 
 1- Connect your controller to your switch and unplug it
-2- Open /config/sys-con/logs.txt and look for a line like: 
-`Trying to find configuration for USB device: [0810-0001]`
+2- Open /config/sys-con/logs.txt and look for a line like
+ `Trying to find configuration for USB device: [0810-0001]`
+
 3- Now Edit /config/sys-con/config.ini on your switch sdcard and add:
 ```
 [0810-0001]
