@@ -247,8 +247,8 @@ void SwitchHDLHandler::UpdateOutput()
                 continue;
             }
 
-            // if (value.amp_high == m_controllerData[input_idx].m_vibrationLastValue.amp_high && value.amp_low == m_controllerData[input_idx].m_vibrationLastValue.amp_low)
-            //     continue; // Do nothing if the values are the same
+            if (value.amp_high == m_controllerData[input_idx].m_vibrationLastValue.amp_high && value.amp_low == m_controllerData[input_idx].m_vibrationLastValue.amp_low)
+                continue; // Do nothing if the values are the same
 
             syscon::logger::LogDebug("SwitchHDLHandler UpdateOutput - Idx: %d [AmpHigh: %d%% AmpLow: %d%%]", input_idx, (uint8_t)(value.amp_high * 100), (uint8_t)(value.amp_low * 100));
             m_controller->SetRumble(input_idx, value.amp_high, value.amp_low);

@@ -67,20 +67,25 @@ ams::Result SwitchUSBEndpoint::Read(void *outBuffer, size_t *bufferSizeInOut, Mo
     {
         u32 count = 0;
         UsbHsXferReport report;
+        u32 tmpXcferId = 0;
 
         if (m_xferIdRead == 0)
             R_TRY(usbHsEpPostBufferAsync(&m_epSession, m_usb_buffer_in, *bufferSizeInOut, 0, &m_xferIdRead))
 
-        R_TRY(eventWait(usbHsEpGetXferEvent(&m_epSession), 1)); // Wait 1nS (Indeed it's a blocking call, but it's the only way to get the data asynchronously.)
-
+        R_TRY(eventWait(usbHsEpGetXferEvent(&m_epSession), 1000)); // Wait 1uS (Indeed it's a blocking call, but it's the only way to get the data asynchronously.)
         eventClear(usbHsEpGetXferEvent(&m_epSession));
+
+        tmpXcferId = m_xferIdRead;
         m_xferIdRead = 0;
 
         memset(&report, 0, sizeof(report));
         R_TRY(usbHsEpGetXferReport(&m_epSession, &report, 1, &count));
 
-        if ((count <= 0) || (m_xferIdRead != report.xferId))
+        if ((count <= 0) || (tmpXcferId != report.xferId))
+        {
+            ::syscon::logger::LogError("SwitchUSBEndpoint::Read failed (Invalid XFerId or NoData returned - Count: %d, xferId %d/%d)", count, tmpXcferId, report.xferId);
             R_RETURN(CONTROL_ERR_NO_DATA_AVAILABLE);
+        }
 
         memcpy(outBuffer, m_usb_buffer_in, report.transferredSize);
         *bufferSizeInOut = report.transferredSize;
