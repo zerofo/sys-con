@@ -35,31 +35,60 @@ ams::Result SwitchUSBEndpoint::Write(const void *inBuffer, size_t bufferSize)
 {
     u32 transferredSize = 0;
 
-    memcpy(m_usb_buffer, inBuffer, bufferSize);
+    memcpy(m_usb_buffer_out, inBuffer, bufferSize);
 
     if (GetDirection() == USB_ENDPOINT_IN)
         ::syscon::logger::LogError("SwitchUSBEndpoint::Write: Trying to write on an IN endpoint!");
 
-    R_TRY(usbHsEpPostBuffer(&m_epSession, m_usb_buffer, bufferSize, &transferredSize));
+    R_TRY(usbHsEpPostBuffer(&m_epSession, m_usb_buffer_out, bufferSize, &transferredSize));
 
     svcSleepThread(m_descriptor->bInterval * 1000000);
 
     R_SUCCEED();
 }
 
-ams::Result SwitchUSBEndpoint::Read(void *outBuffer, size_t *bufferSizeInOut)
+ams::Result SwitchUSBEndpoint::Read(void *outBuffer, size_t *bufferSizeInOut, Mode mode)
 {
-    u32 transferredSize;
-
     if (GetDirection() == USB_ENDPOINT_OUT)
         ::syscon::logger::LogError("SwitchUSBEndpoint::Read: Trying to read on an OUT endpoint!");
 
-    R_TRY(usbHsEpPostBuffer(&m_epSession, m_usb_buffer, *bufferSizeInOut, &transferredSize));
+    if (mode & IUSBEndpoint::USB_MODE_BLOCKING)
+    {
+        u32 transferredSize;
+        R_TRY(usbHsEpPostBuffer(&m_epSession, m_usb_buffer_in, *bufferSizeInOut, &transferredSize));
 
-    memcpy(outBuffer, m_usb_buffer, transferredSize);
-    *bufferSizeInOut = transferredSize;
+        memcpy(outBuffer, m_usb_buffer_in, transferredSize);
+        *bufferSizeInOut = transferredSize;
 
-    R_SUCCEED();
+        R_SUCCEED()
+    }
+
+    if (mode & IUSBEndpoint::USB_MODE_NON_BLOCKING)
+    {
+        u32 count = 0;
+        UsbHsXferReport report;
+
+        if (m_xferIdRead == 0)
+            R_TRY(usbHsEpPostBufferAsync(&m_epSession, m_usb_buffer_in, *bufferSizeInOut, 0, &m_xferIdRead))
+
+        R_TRY(eventWait(usbHsEpGetXferEvent(&m_epSession), 1)); // Wait 1nS (Indeed it's a blocking call, but it's the only way to get the data asynchronously.)
+
+        eventClear(usbHsEpGetXferEvent(&m_epSession));
+        m_xferIdRead = 0;
+
+        memset(&report, 0, sizeof(report));
+        R_TRY(usbHsEpGetXferReport(&m_epSession, &report, 1, &count));
+
+        if ((count <= 0) || (m_xferIdRead != report.xferId))
+            R_RETURN(CONTROL_ERR_NO_DATA_AVAILABLE);
+
+        memcpy(outBuffer, m_usb_buffer_in, report.transferredSize);
+        *bufferSizeInOut = report.transferredSize;
+        return report.res;
+    }
+
+    ::syscon::logger::LogError("SwitchUSBEndpoint::Read: Invalid mode provided: 0x%02X", mode);
+    R_RETURN(CONTROL_ERR_INVALID_ARGUMENT);
 }
 
 IUSBEndpoint::Direction SwitchUSBEndpoint::GetDirection()

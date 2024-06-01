@@ -2,9 +2,16 @@
 #include "SwitchLogger.h"
 #include <cstring> //for memset
 
-SwitchUSBDevice::SwitchUSBDevice(UsbHsInterface *interfaces, int length)
+SwitchUSBDevice::SwitchUSBDevice(UsbHsInterface interfaces[], int size)
 {
-    SetInterfaces(interfaces, length);
+    if (size > 0)
+    {
+        m_vendorID = interfaces[0].device_desc.idVendor;
+        m_productID = interfaces[0].device_desc.idProduct;
+    }
+
+    for (int i = 0; i < size; i++)
+        m_interfaces.push_back(std::make_unique<SwitchUSBInterface>(interfaces[i]));
 }
 
 SwitchUSBDevice::~SwitchUSBDevice()
@@ -18,9 +25,9 @@ SwitchUSBDevice::SwitchUSBDevice()
 ams::Result SwitchUSBDevice::Open()
 {
     if (m_interfaces.size() != 0)
-        return 0;
-    else
-        return 51;
+        R_SUCCEED();
+
+    R_RETURN(CONTROL_ERR_NO_INTERFACES);
 }
 
 void SwitchUSBDevice::Close()
@@ -38,19 +45,4 @@ void SwitchUSBDevice::Reset()
     // TODO: needs testing
     if (m_interfaces.size() != 0)
         m_interfaces[0]->Reset();
-}
-
-void SwitchUSBDevice::SetInterfaces(UsbHsInterface *interfaces, int length)
-{
-    if (length > 0)
-    {
-        m_vendorID = interfaces->device_desc.idVendor;
-        m_productID = interfaces->device_desc.idProduct;
-        m_interfaces.clear();
-        m_interfaces.reserve(length);
-        for (int i = 0; i < length; i++)
-        {
-            m_interfaces.push_back(std::make_unique<SwitchUSBInterface>(interfaces[i]));
-        }
-    }
 }

@@ -8,8 +8,8 @@ class IUSBDevice
 protected:
     std::vector<std::unique_ptr<IUSBInterface>> m_interfaces{};
 
-    uint16_t m_vendorID;
-    uint16_t m_productID;
+    uint16_t m_vendorID = 0;
+    uint16_t m_productID = 0;
 
 public:
     virtual ~IUSBDevice() = default;

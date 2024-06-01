@@ -87,7 +87,7 @@ namespace syscon::logger
 
         ams::TimeSpan ts = ams::os::ConvertToTimeSpan(ams::os::GetSystemTick());
 
-        ams::util::SNPrintf(logBuffer, sizeof(logBuffer), "|%c|%02li:%02li:%02li| ", logLevelStr[lvl], ts.GetHours() % 24, ts.GetMinutes() % 60, ts.GetSeconds() % 60);
+        ams::util::SNPrintf(logBuffer, sizeof(logBuffer), "|%c|%02li:%02li:%02li.%04li| ", logLevelStr[lvl], ts.GetHours() % 24, ts.GetMinutes() % 60, ts.GetSeconds() % 60, ts.GetMilliSeconds() % 1000);
 
         size_t start_offset = strlen(logBuffer);
 

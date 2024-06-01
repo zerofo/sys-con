@@ -9,7 +9,9 @@ private:
     UsbHsClientEpSession m_epSession{};
     UsbHsClientIfSession *m_ifSession;
     usb_endpoint_descriptor *m_descriptor;
-    alignas(0x1000) u8 m_usb_buffer[0x1000];
+    u32 m_xferIdRead = 0;
+    alignas(0x1000) u8 m_usb_buffer_in[512];
+    alignas(0x1000) u8 m_usb_buffer_out[512];
 
 public:
     // Pass the necessary information to be able to open the endpoint
@@ -24,7 +26,7 @@ public:
     virtual ams::Result Write(const void *inBuffer, size_t bufferSize) override;
 
     // The data received will be put in the outBuffer array for the length of the specified size.
-    virtual ams::Result Read(void *outBuffer, size_t *bufferSizeInOut) override;
+    virtual ams::Result Read(void *outBuffer, size_t *bufferSizeInOut, Mode mode) override;
 
     // Gets the direction of this endpoint (IN or OUT)
     virtual IUSBEndpoint::Direction GetDirection() override;

@@ -70,30 +70,26 @@ enum Xbox360LEDValue : uint8_t
     XBOX360LED_BLINKONCE,
 };
 
-struct OutputPacket
-{
-    const uint8_t *packet;
-    uint8_t length;
-};
-
 class Xbox360Controller : public BaseController
 {
 private:
     bool m_is_wireless = false;
     bool m_is_connected[XBOX360_MAX_INPUTS];
+    uint8_t m_current_controller_idx = 0;
 
     ams::Result SetLED(uint16_t input_idx, Xbox360LEDValue value);
 
     ams::Result OnControllerConnect(uint16_t input_idx);
     ams::Result OnControllerDisconnect(uint16_t input_idx);
 
-    void CloseInterfaces();
-
 public:
-    Xbox360Controller(std::unique_ptr<IUSBDevice> &&device, const ControllerConfig &config, std::unique_ptr<ILogger> &&logger);
+    Xbox360Controller(std::unique_ptr<IUSBDevice> &&device, const ControllerConfig &config, std::unique_ptr<ILogger> &&logger, bool is_wireless);
     virtual ~Xbox360Controller() override;
 
     ams::Result Initialize() override;
+
+    ams::Result OpenInterfaces() override;
+    void CloseInterfaces() override;
 
     ams::Result ReadInput(NormalizedButtonData *normalData, uint16_t *input_idx) override;
 

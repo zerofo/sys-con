@@ -14,7 +14,7 @@ ams::Result XboxController::ReadInput(NormalizedButtonData *normalData, uint16_t
     uint8_t input_bytes[64];
     size_t size = sizeof(input_bytes);
 
-    R_TRY(m_inPipe->Read(input_bytes, &size));
+    R_TRY(m_inPipe[0]->Read(input_bytes, &size, IUSBEndpoint::USB_MODE_BLOCKING));
 
     XboxButtonData *buttonData = reinterpret_cast<XboxButtonData *>(input_bytes);
 
@@ -62,5 +62,5 @@ ams::Result XboxController::SetRumble(uint16_t input_idx, float amp_high, float 
 {
     (void)input_idx;
     uint8_t rumbleData[]{0x00, 0x06, 0x00, (uint8_t)(amp_high * 255), (uint8_t)(amp_low * 255), 0x00, 0x00, 0x00};
-    R_RETURN(m_outPipe->Write(rumbleData, sizeof(rumbleData)));
+    R_RETURN(m_outPipe[input_idx]->Write(rumbleData, sizeof(rumbleData)));
 }

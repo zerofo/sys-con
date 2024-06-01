@@ -34,6 +34,7 @@ uint16_t BaseController::GetInputCount()
 
 ams::Result BaseController::OpenInterfaces()
 {
+    int interfaceCount = 0;
     LogPrint(LogLevelDebug, "BaseController Opening interfaces ...");
 
     R_TRY(m_device->Open());
@@ -41,43 +42,34 @@ ams::Result BaseController::OpenInterfaces()
     std::vector<std::unique_ptr<IUSBInterface>> &interfaces = m_device->GetInterfaces();
     for (auto &&interface : interfaces)
     {
+        LogPrint(LogLevelDebug, "BaseController Opening interface %d ...", interfaceCount++);
+
         R_TRY(interface->Open());
 
-        if (!m_inPipe)
+        for (uint8_t idx = 0; idx < 15; idx++)
         {
-            for (int i = 0; i < 15; i++)
-            {
-                IUSBEndpoint *inEndpoint = interface->GetEndpoint(IUSBEndpoint::USB_ENDPOINT_IN, i);
-                if (inEndpoint)
-                {
-                    R_TRY(inEndpoint->Open());
-                    m_inPipe = inEndpoint;
-                    break;
-                }
-            }
+            IUSBEndpoint *inEndpoint = interface->GetEndpoint(IUSBEndpoint::USB_ENDPOINT_IN, idx);
+            if (inEndpoint == NULL)
+                continue;
+
+            R_TRY(inEndpoint->Open());
+            m_inPipe.push_back(inEndpoint);
         }
 
-        if (!m_outPipe)
+        for (uint8_t idx = 0; idx < 15; idx++)
         {
-            for (int i = 0; i < 15; i++)
-            {
-                IUSBEndpoint *outEndpoint = interface->GetEndpoint(IUSBEndpoint::USB_ENDPOINT_OUT, i);
-                if (outEndpoint)
-                {
-                    R_TRY(outEndpoint->Open());
+            IUSBEndpoint *outEndpoint = interface->GetEndpoint(IUSBEndpoint::USB_ENDPOINT_OUT, idx);
+            if (outEndpoint == NULL)
+                continue;
 
-                    m_outPipe = outEndpoint;
-                    break;
-                }
-            }
+            R_TRY(outEndpoint->Open());
+            m_outPipe.push_back(outEndpoint);
         }
 
-        m_interface = interface.get();
-
-        break; // Stop after the first interface
+        m_interfaces.push_back(interface.get());
     }
 
-    if (!m_inPipe)
+    if (m_inPipe.empty())
         R_RETURN(CONTROL_ERR_INVALID_ENDPOINT);
 
     LogPrint(LogLevelInfo, "BaseController successfully opened !");

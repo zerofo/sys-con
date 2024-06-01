@@ -69,7 +69,7 @@ XboxOneController::~XboxOneController()
 ams::Result XboxOneController::Initialize()
 {
     R_TRY(BaseController::Initialize());
-    R_TRY(SendInitBytes());
+    R_TRY(SendInitBytes(0));
 
     R_SUCCEED();
 }
@@ -79,7 +79,7 @@ ams::Result XboxOneController::ReadInput(NormalizedButtonData *normalData, uint1
     uint8_t input_bytes[64];
     size_t size = sizeof(input_bytes);
 
-    R_TRY(m_inPipe->Read(input_bytes, &size));
+    R_TRY(m_inPipe[0]->Read(input_bytes, &size, IUSBEndpoint::USB_MODE_BLOCKING));
 
     uint8_t type = input_bytes[0];
 
@@ -122,14 +122,14 @@ ams::Result XboxOneController::ReadInput(NormalizedButtonData *normalData, uint1
         // TODO: needs testing
         if (input_bytes[1] == 0x30)
         {
-            R_TRY(WriteAckGuideReport(input_bytes[2]));
+            R_TRY(WriteAckGuideReport(*input_idx, input_bytes[2]));
         }
     }
 
     R_SUCCEED();
 }
 
-ams::Result XboxOneController::SendInitBytes()
+ams::Result XboxOneController::SendInitBytes(uint16_t input_idx)
 {
     uint16_t vendor = m_device->GetVendor();
     uint16_t product = m_device->GetProduct();
@@ -140,19 +140,19 @@ ams::Result XboxOneController::SendInitBytes()
         if (init_packets[i].ProductID != 0 && init_packets[i].ProductID != product)
             continue;
 
-        R_TRY(m_outPipe->Write(init_packets[i].Packet, init_packets[i].Length));
+        R_TRY(m_outPipe[input_idx]->Write(init_packets[i].Packet, init_packets[i].Length));
     }
 
     R_SUCCEED();
 }
 
-ams::Result XboxOneController::WriteAckGuideReport(uint8_t sequence)
+ams::Result XboxOneController::WriteAckGuideReport(uint16_t input_idx, uint8_t sequence)
 {
     uint8_t report[] = {
         0x01, 0x20,
         sequence,
         0x09, 0x00, 0x07, 0x20, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00};
-    R_RETURN(m_outPipe->Write(report, sizeof(report)));
+    R_RETURN(m_outPipe[input_idx]->Write(report, sizeof(report)));
 }
 
 bool XboxOneController::Support(ControllerFeature feature)
@@ -172,5 +172,5 @@ ams::Result XboxOneController::SetRumble(uint16_t input_idx, float amp_high, flo
         (uint8_t)(amp_high * 255),
         (uint8_t)(amp_low * 255),
         0xff, 0x00, 0x00};
-    R_RETURN(m_outPipe->Write(rumble_data, sizeof(rumble_data)));
+    R_RETURN(m_outPipe[input_idx]->Write(rumble_data, sizeof(rumble_data)));
 }

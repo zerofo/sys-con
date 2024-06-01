@@ -53,6 +53,8 @@ class XboxOneController : public BaseController
 {
 private:
     bool m_GuidePressed{false};
+    ams::Result SendInitBytes(uint16_t input_idx);
+    ams::Result WriteAckGuideReport(uint16_t input_idx, uint8_t sequence);
 
 public:
     XboxOneController(std::unique_ptr<IUSBDevice> &&device, const ControllerConfig &config, std::unique_ptr<ILogger> &&logger);
@@ -62,9 +64,7 @@ public:
 
     virtual ams::Result ReadInput(NormalizedButtonData *normalData, uint16_t *input_idx) override;
 
-    ams::Result SendInitBytes();
-    ams::Result WriteAckGuideReport(uint8_t sequence);
-
     bool Support(ControllerFeature feature) override;
+
     ams::Result SetRumble(uint16_t input_idx, float amp_high, float amp_low) override;
 };

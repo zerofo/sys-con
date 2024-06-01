@@ -1,13 +1,14 @@
 #pragma once
 
 #include "IController.h"
+#include <vector>
 
 class BaseController : public IController
 {
 protected:
-    IUSBEndpoint *m_inPipe = nullptr;
-    IUSBEndpoint *m_outPipe = nullptr;
-    IUSBInterface *m_interface = nullptr;
+    std::vector<IUSBEndpoint *> m_inPipe;
+    std::vector<IUSBEndpoint *> m_outPipe;
+    std::vector<IUSBInterface *> m_interfaces;
 
 public:
     BaseController(std::unique_ptr<IUSBDevice> &&device, const ControllerConfig &config, std::unique_ptr<ILogger> &&logger);

@@ -37,8 +37,11 @@ namespace syscon::usb
         int g_usbEventCount = 0;
 
         UsbHsInterface interfaces[MaxUsbHsInterfacesSize] = {};
+        UsbHsInterface interfacesTmp[MaxUsbHsInterfacesSize] = {};
 
         s32 QueryAvailableInterfacesByClass(UsbHsInterface *interfaces, size_t interfaces_maxsize, u8 iclass);
+        s32 QueryInterfaces(UsbHsInterface *interfaces, size_t interfaces_maxsize, u8 iclass, u8 isubclass, u8 iprotocol);
+
         Result AddEvent(UsbHsInterfaceFilter *filter);
 
         void UsbEventThreadFunc(void *arg)
@@ -75,10 +78,16 @@ namespace syscon::usb
                                 syscon::logger::LogInfo("Initializing Dualshock 3 controller ...");
                                 controllers::Insert(std::make_unique<Dualshock3Controller>(std::make_unique<SwitchUSBDevice>(&interfaces[i], 1), config, std::make_unique<syscon::logger::Logger>()));
                             }
+                            else if (strcmp(config.driver, "xbox360w") == 0)
+                            {
+                                s32 total_interfaces = QueryInterfaces(interfacesTmp, sizeof(interfacesTmp), USB_CLASS_VENDOR_SPEC, 0x5D, 0x81);
+                                syscon::logger::LogInfo("Initializing Xbox 360 Wireless controller (Interface count: %d) ...", total_interfaces);
+                                controllers::Insert(std::make_unique<Xbox360Controller>(std::make_unique<SwitchUSBDevice>(interfacesTmp, total_interfaces), config, std::make_unique<syscon::logger::Logger>(), true));
+                            }
                             else if (strcmp(config.driver, "xbox360") == 0)
                             {
                                 syscon::logger::LogInfo("Initializing Xbox 360 controller ...");
-                                controllers::Insert(std::make_unique<Xbox360Controller>(std::make_unique<SwitchUSBDevice>(&interfaces[i], 1), config, std::make_unique<syscon::logger::Logger>()));
+                                controllers::Insert(std::make_unique<Xbox360Controller>(std::make_unique<SwitchUSBDevice>(&interfaces[i], 1), config, std::make_unique<syscon::logger::Logger>(), false));
                             }
                             else if (strcmp(config.driver, "xboxone") == 0)
                             {
@@ -99,7 +108,6 @@ namespace syscon::usb
                         syscon::logger::LogError("No HID interfaces found for this USB device !");
                     }
                 }
-
             } while (is_usb_event_thread_running);
         }
 
@@ -148,6 +156,22 @@ namespace syscon::usb
                 }
 
             } while (is_usb_interface_change_thread_running);
+        }
+
+        s32 QueryInterfaces(UsbHsInterface *interfaces, size_t interfaces_maxsize, u8 iclass, u8 isubclass, u8 iprotocol)
+        {
+            UsbHsInterfaceFilter filter{
+                .Flags = UsbHsInterfaceFilterFlags_bInterfaceClass | UsbHsInterfaceFilterFlags_bInterfaceSubClass | UsbHsInterfaceFilterFlags_bInterfaceProtocol,
+                .bInterfaceClass = iclass,
+                .bInterfaceSubClass = isubclass,
+                .bInterfaceProtocol = iprotocol,
+            };
+            s32 out_entries = 0;
+            memset(interfaces, 0, interfaces_maxsize);
+
+            usbHsQueryAvailableInterfaces(&filter, interfaces, interfaces_maxsize, &out_entries);
+
+            return out_entries;
         }
 
         s32 QueryAvailableInterfacesByClass(UsbHsInterface *interfaces, size_t interfaces_maxsize, u8 iclass)

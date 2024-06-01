@@ -25,9 +25,9 @@ ams::Result GenericHIDController::Initialize()
     uint16_t size = sizeof(buffer);
 
     // Get the HID report descriptor
-    R_TRY(m_interface->ControlTransferInput((uint8_t)USB_ENDPOINT_IN | (uint8_t)USB_RECIPIENT_INTERFACE, USB_REQUEST_GET_DESCRIPTOR, (USB_DT_REPORT << 8) | m_interface->GetDescriptor()->bInterfaceNumber, 0, buffer, &size));
+    R_TRY(m_interfaces[0]->ControlTransferInput((uint8_t)USB_ENDPOINT_IN | (uint8_t)USB_RECIPIENT_INTERFACE, USB_REQUEST_GET_DESCRIPTOR, (USB_DT_REPORT << 8) | m_interfaces[0]->GetDescriptor()->bInterfaceNumber, 0, buffer, &size));
 
-    LogPrint(LogLevelTrace, "GenericHIDController Got descriptor for interface %d", m_interface->GetDescriptor()->bInterfaceNumber);
+    LogPrint(LogLevelTrace, "GenericHIDController Got descriptor for interface %d", m_interfaces[0]->GetDescriptor()->bInterfaceNumber);
     LogBuffer(LogLevelTrace, buffer, size);
 
     LogPrint(LogLevelDebug, "GenericHIDController Parsing descriptor ...");
@@ -59,7 +59,7 @@ ams::Result GenericHIDController::ReadInput(NormalizedButtonData *normalData, ui
     uint8_t input_bytes[CONTROLLER_INPUT_BUFFER_SIZE];
     size_t size = sizeof(input_bytes);
 
-    R_TRY(m_inPipe->Read(input_bytes, &size));
+    R_TRY(m_inPipe[0]->Read(input_bytes, &size, IUSBEndpoint::USB_MODE_BLOCKING));
 
     LogPrint(LogLevelTrace, "GenericHIDController ReadInput %d bytes", size);
     LogBuffer(LogLevelTrace, input_bytes, size);

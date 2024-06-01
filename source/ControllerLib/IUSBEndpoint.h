@@ -12,6 +12,12 @@ public:
         USB_ENDPOINT_OUT = 0x00,
     };
 
+    enum Mode : uint8_t
+    {
+        USB_MODE_NON_BLOCKING = 0x01,
+        USB_MODE_BLOCKING = 0x02,
+    };
+
     struct EndpointDescriptor
     {
         uint8_t bLength;
@@ -32,7 +38,7 @@ public:
     virtual ams::Result Write(const void *inBuffer, size_t bufferSize) = 0;
 
     // This will read from the endpoint and put the data in the outBuffer pointer for the specified size.
-    virtual ams::Result Read(void *outBuffer, size_t *bufferSizeInOut) = 0;
+    virtual ams::Result Read(void *outBuffer, size_t *bufferSizeInOut, Mode mode) = 0;
 
     // Get endpoint's direction. (IN or OUT)
     virtual IUSBEndpoint::Direction GetDirection() = 0;

@@ -19,7 +19,7 @@ ams::Result SwitchUSBInterface::Open()
 
     R_TRY(usbHsAcquireUsbIf(&m_session, &m_interface));
 
-    for (int i = 0; i < 15; i++)
+    for (int i = 0; i < SWITCH_USB_MAX_ENDPOINTS; i++)
     {
         usb_endpoint_descriptor &epdesc = m_session.inf.inf.input_endpoint_descs[i];
         if (epdesc.bLength != 0)
@@ -33,12 +33,12 @@ ams::Result SwitchUSBInterface::Open()
         }
     }
 
-    for (int i = 0; i < 15; i++)
+    for (int i = 0; i < SWITCH_USB_MAX_ENDPOINTS; i++)
     {
         usb_endpoint_descriptor &epdesc = m_session.inf.inf.output_endpoint_descs[i];
         if (epdesc.bLength != 0)
         {
-            ::syscon::logger::LogDebug("SwitchUSBInterface(%x-%x) Output endpoint found %x (Idx: %d)", m_interface.device_desc.idVendor, m_interface.device_desc.idProduct, epdesc.bEndpointAddress, i);
+            ::syscon::logger::LogDebug("SwitchUSBInterface(%x-%x) Output endpoint found 0x%x (Idx: %d)", m_interface.device_desc.idVendor, m_interface.device_desc.idProduct, epdesc.bEndpointAddress, i);
             m_outEndpoints[i] = std::make_unique<SwitchUSBEndpoint>(m_session, epdesc);
         }
         else
@@ -54,7 +54,7 @@ void SwitchUSBInterface::Close()
 {
     ::syscon::logger::LogDebug("SwitchUSBInterface(%x-%x) Closing...", m_interface.device_desc.idVendor, m_interface.device_desc.idProduct);
 
-    for (int i = 0; i < 15; i++)
+    for (int i = 0; i < SWITCH_USB_MAX_ENDPOINTS; i++)
     {
         if (m_inEndpoints[i])
             m_inEndpoints[i]->Close();
@@ -112,6 +112,9 @@ ams::Result SwitchUSBInterface::ControlTransferOutput(u8 bmRequestType, u8 bmReq
 
 IUSBEndpoint *SwitchUSBInterface::GetEndpoint(IUSBEndpoint::Direction direction, uint8_t index)
 {
+    if (index >= SWITCH_USB_MAX_ENDPOINTS)
+        return NULL;
+
     if (direction == IUSBEndpoint::USB_ENDPOINT_IN)
         return m_inEndpoints[index].get();
     else
