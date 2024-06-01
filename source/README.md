@@ -9,5 +9,5 @@ The controller driver library. Since it is up to the user to provide the USB imp
 ## ControllerSwitch
 The switch implementation for **ControllerLib**. It contains the wrappers for the abstract classes, as well as classes responsible for creating a virtual controller on the switch.
 
-#Sysmodule
+## Sysmodule
 The background process that does all the work. Responsible for detecting controllers and holding controller information, applying any changes in the config, writing to log.
