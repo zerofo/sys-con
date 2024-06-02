@@ -135,7 +135,7 @@ namespace syscon::config
             return 1; // Success
         }
 
-        Result ReadFromConfig(const char *path, ams::util::ini::Handler h, void *config)
+        ams::Result ReadFromConfig(const char *path, ams::util::ini::Handler h, void *config)
         {
             ams::fs::FileHandle file;
             {
@@ -148,11 +148,18 @@ namespace syscon::config
             ON_SCOPE_EXIT { ams::fs::CloseFile(file); };
 
             /* Parse the config. */
-            return ams::util::ini::ParseFile(file, config, h);
+            Result rc = ams::util::ini::ParseFile(file, config, h);
+            if (R_FAILED(rc))
+            {
+                syscon::logger::LogError("Failed to parse configuration file: '%s' !", path);
+                return 1;
+            }
+
+            R_SUCCEED();
         }
     } // namespace
 
-    Result LoadGlobalConfig(GlobalConfig *config)
+    ams::Result LoadGlobalConfig(GlobalConfig *config)
     {
         ConfigINIData cfg;
         cfg.global_config = config;
@@ -166,7 +173,7 @@ namespace syscon::config
         return 0;
     }
 
-    Result LoadControllerConfig(ControllerConfig *config, uint16_t vendor_id, uint16_t product_id)
+    ams::Result LoadControllerConfig(ControllerConfig *config, uint16_t vendor_id, uint16_t product_id)
     {
         ConfigINIData cfg;
         cfg.config = config;
@@ -188,6 +195,13 @@ namespace syscon::config
         {
             syscon::logger::LogDebug("Loading controller config: '%s' (Profile: %s) ... ", CONFIG_FULLPATH, config->profile);
             snprintf(cfg.ini_section, sizeof(cfg.ini_section), "%s", config->profile);
+            if (R_FAILED(ReadFromConfig(CONFIG_FULLPATH, ParseControllerConfigLine, &cfg)))
+                return 1;
+
+            // Re-Override with vendor specific config
+            // We are doing this to allow the profile to be overrided by the vendor specific config
+            // In other words we will like to have default overrided by profile overrided by vendor specific
+            snprintf(cfg.ini_section, sizeof(cfg.ini_section), "%04x-%04x", vendor_id, product_id);
             if (R_FAILED(ReadFromConfig(CONFIG_FULLPATH, ParseControllerConfigLine, &cfg)))
                 return 1;
         }

@@ -3,6 +3,7 @@
 #include "ControllerConfig.h"
 #include <string>
 #include <switch.h>
+#include <stratosphere.hpp>
 
 #define CONFIG_PATH     "sdmc:///config/sys-con/"
 #define CONFIG_FULLPATH CONFIG_PATH "config.ini"
@@ -15,7 +16,7 @@ namespace syscon::config
         int log_level;
     };
 
-    Result LoadGlobalConfig(GlobalConfig *config);
+    ams::Result LoadGlobalConfig(GlobalConfig *config);
 
-    Result LoadControllerConfig(ControllerConfig *config, uint16_t vendor_id, uint16_t product_id);
+    ams::Result LoadControllerConfig(ControllerConfig *config, uint16_t vendor_id, uint16_t product_id);
 }; // namespace syscon::config

@@ -40,7 +40,7 @@ namespace syscon::usb
         UsbHsInterface interfacesTmp[MaxUsbHsInterfacesSize] = {};
 
         s32 QueryAvailableInterfacesByClass(UsbHsInterface *interfaces, size_t interfaces_maxsize, u8 iclass);
-        s32 QueryInterfaces(UsbHsInterface *interfaces, size_t interfaces_maxsize, u8 iclass, u8 isubclass, u8 iprotocol);
+        s32 QueryAvailableInterfacesByClassSubClassProtocol(UsbHsInterface *interfaces, size_t interfaces_maxsize, u8 iclass, u8 isubclass, u8 iprotocol);
 
         Result AddEvent(UsbHsInterfaceFilter *filter);
 
@@ -80,7 +80,18 @@ namespace syscon::usb
                             }
                             else if (strcmp(config.driver, "xbox360w") == 0)
                             {
-                                s32 total_interfaces = QueryInterfaces(interfacesTmp, sizeof(interfacesTmp), USB_CLASS_VENDOR_SPEC, 0x5D, 0x81);
+                                /*
+                                    Special case for XBOX360 Wireless controller
+                                    The original USB_CLASS_VENDOR_SPEC will only return the first interface of the device and not all of them.
+                                    However, for xbox360 wireless controller, we need to get all the interfaces to be able to communicate with all players controllers (Up to 4)
+                                    Otherwise, we will only be able to communicate with the first controller.
+                                */
+                                s32 total_interfaces = QueryAvailableInterfacesByClassSubClassProtocol(interfacesTmp, sizeof(interfacesTmp), USB_CLASS_VENDOR_SPEC, 0x5D, 0x81);
+                                if (total_interfaces == 0)
+                                {
+                                    syscon::logger::LogError("No interfaces found for XBOX 360 Wireless controller !");
+                                    continue;
+                                }
                                 syscon::logger::LogInfo("Initializing Xbox 360 Wireless controller (Interface count: %d) ...", total_interfaces);
                                 controllers::Insert(std::make_unique<Xbox360Controller>(std::make_unique<SwitchUSBDevice>(interfacesTmp, total_interfaces), config, std::make_unique<syscon::logger::Logger>(), true));
                             }
@@ -158,7 +169,7 @@ namespace syscon::usb
             } while (is_usb_interface_change_thread_running);
         }
 
-        s32 QueryInterfaces(UsbHsInterface *interfaces, size_t interfaces_maxsize, u8 iclass, u8 isubclass, u8 iprotocol)
+        s32 QueryAvailableInterfacesByClassSubClassProtocol(UsbHsInterface *interfaces, size_t interfaces_maxsize, u8 iclass, u8 isubclass, u8 iprotocol)
         {
             UsbHsInterfaceFilter filter{
                 .Flags = UsbHsInterfaceFilterFlags_bInterfaceClass | UsbHsInterfaceFilterFlags_bInterfaceSubClass | UsbHsInterfaceFilterFlags_bInterfaceProtocol,
@@ -166,6 +177,7 @@ namespace syscon::usb
                 .bInterfaceSubClass = isubclass,
                 .bInterfaceProtocol = iprotocol,
             };
+
             s32 out_entries = 0;
             memset(interfaces, 0, interfaces_maxsize);
 

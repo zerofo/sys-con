@@ -124,7 +124,7 @@ Like all other switch projects, you will need [devkitA64](https://switchbrew.org
 (Direct link for windows https://github.com/devkitPro/installer/releases/tag/v3.0.3)
 
 ### Install dependencies
-Open MSYS2 console from devkitA64 and type below command
+Open MSYS2 console from devkitA64 and type below commands
 ```
 pacman -S switch-libjpeg-turbo
 make -C lib/libnx install

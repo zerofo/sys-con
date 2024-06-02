@@ -1,7 +1,7 @@
 #pragma once
 namespace syscon::version
 {
-const char * syscon_tag = "v0.6.4";
-const char * syscon_git_hash = "7d5df5f";
-const unsigned int syscon_commit_count = 22;
-}
+    const char *syscon_tag = "0.0.0";
+    const char *syscon_git_hash = "0000000";
+    const unsigned int syscon_commit_count = 0;
+} // namespace syscon::version

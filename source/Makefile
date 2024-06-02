@@ -35,5 +35,5 @@ clean:
 	$(MAKE) -C Sysmodule clean
 	
 mrproper: clean
-	$(MAKE) -C libstratosphere clean
-	$(MAKE) -C libhiddatainterpreter clean
+	$(MAKE) -C ../lib/Atmosphere-libs/libstratosphere clean
+	$(MAKE) -C ../lib/HIDDataInterpreter/build/switch clean
