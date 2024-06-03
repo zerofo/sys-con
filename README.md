@@ -150,6 +150,5 @@ For an in-depth explanation of how sys-con works, see [here](source).
 - All crash reports goes to /atmosphere/fatal_errors/report_xxxxx.bin (e6)
 - All logs goes to /config/sys-con/logs.txt
 
-### Support
-If you want to support my work
+
 [![ko-fi](https://www.ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/o0Zzz)

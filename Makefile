@@ -1,8 +1,15 @@
 .PHONY: all build clean mrproper
 
+GIT_TAG := $(shell git describe --tags `git rev-list --tags --max-count=1`)
+GIT_TAG_COMMIT_COUNT := +$(shell git rev-list  `git rev-list --tags --no-walk --max-count=1`..HEAD --count)
+ifeq ($(GIT_TAG_COMMIT_COUNT),+0)
+	GIT_TAG_COMMIT_COUNT := 
+endif
+
 SOURCE_DIR		:=	source
 OUT_DIR			:=	out
 DIST_DIR		:=	dist
+OUT_ZIP			:=	sys-con-$(GIT_TAG)$(GIT_TAG_COMMIT_COUNT).zip
 
 all: build
 	rm -rf $(OUT_DIR)
@@ -15,14 +22,19 @@ all: build
 	cp -r $(DIST_DIR)/. $(OUT_DIR)/
 	@echo [DONE] sys-con compiled successfully. All files have been placed in $(OUT_DIR)/
 
+dist: mrproper all
+	cd $(OUT_DIR)/ && zip -r ../$(OUT_ZIP) .
+
 build:
 	$(MAKE) -C $(SOURCE_DIR)
 
 clean:
 	$(MAKE) -C $(SOURCE_DIR) clean
 	rm -rf $(OUT_DIR)
+	rm -f $(OUT_ZIP)
 	
-mrproper:
+mrproper: clean
 	$(MAKE) -C $(SOURCE_DIR) mrproper
 	rm -rf $(OUT_DIR)
+	rm -f $(OUT_ZIP)
 	
