@@ -3,7 +3,6 @@
 #### A Nintendo Switch custom sysmodule for third-party controller support. No man-in-the-middle required, No specific hardware required !
 
 ###### \[Switch FW 7.0.0+\] [Atmosphère only]
-Tested on Switch FW 17.0.0
 
 ## Description
 This sysmodule aims to provide complete functionality for any joystick or gamepad not supported natively by Nintendo Switch.
@@ -31,12 +30,16 @@ For more verbose logs, edit config.ini and set :
 ;log_level Trace=0, Debug=1, Info=2, Warning=3, Error=4
 log_level=0
 ```
+
+**Important note**: If you enable trace or debug, the driver will automatically switch the polling frequency to 100ms (debug) or 500ms (trace). This will make the controller unresponsive or at least with a very high latency. Typically, if you want to press a key, you will have to hold it down for a long time.
+These log levels (Trace and Debug) cannot be used to play a game, they are only for debugging purposes, as the name suggests ;)
+
 ## Features
+- [x] HID joystick/gamepad supported (PC Controller compatible)
 - [x] Key mapping using VID/PID or profile
 - [x] Configurable deadzone
 - [x] Configurable polling frequency
 - [x] Configurable controller color using #RGBA
-- [x] HID joystick/gamepad supported (PC Controller compatible)
 - [ ] Rumble (Implemented but not supported by libnx for now)
 
 ## Supported controller
@@ -44,7 +47,7 @@ log_level=0
 - [x] Dualshock 4
 - [x] Dualshock 3
 - [x] Xbox 360 Controller
-- [x] Xbox 360 Wireless adapter
+- [x] Xbox 360 Wireless adapter (Up to 4 controller can be connected)
 - [x] Xbox One X/S Controller
 
 ## Tested
@@ -53,11 +56,12 @@ log_level=0
 - [x] Dualshock 4
 - [x] Xbox 360 Controller
 - [x] Xbox 360 Wireless adapter
+- [x] Logitech Driving Force GT (Wheel)
 
 ## Not Tested
 - [ ] Dualshock 3
 - [ ] Xbox One X/S Controller
-- [ ] Many other HID controller...
+- [ ] Many other HID controller
 
 ## How to add a new controller ?
 Most of the time you will only have to do the mapping, how to do it ?
@@ -145,3 +149,7 @@ For an in-depth explanation of how sys-con works, see [here](source).
 ### Debug the application
 - All crash reports goes to /atmosphere/fatal_errors/report_xxxxx.bin (e6)
 - All logs goes to /config/sys-con/logs.txt
+
+### Support
+If you want to support my work
+[![ko-fi](https://www.ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/o0Zzz)

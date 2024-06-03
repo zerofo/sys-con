@@ -17,4 +17,4 @@ A clear and concise description of what the bug is.
 4. See errors/crashes...
 
 **Logs**
-- Enable the logs in debug mode (See README.md) and provide the logs.
+- Enable the logs in debug or trace mode (See README.md) and provide the logs.
