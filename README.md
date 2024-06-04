@@ -22,7 +22,7 @@ Grab the latest zip from the [releases page](https://github.com/o0zz/sys-con/rel
 sys-con comes with a config folder located at `/config/sys-con/`. It contains options for adjusting stick/trigger deadzone, as well as remapping inputs. 
 
 ## Logs
-In case of issue, you can look at the logs in `/config/sys-con/logs.txt`
+In case of issue, you can look at the logs in `/config/sys-con/log.log`
 For more verbose logs, edit config.ini and set :
 
 ```
@@ -148,7 +148,7 @@ For an in-depth explanation of how sys-con works, see [here](source).
 
 ### Debug the application
 - All crash reports goes to /atmosphere/fatal_errors/report_xxxxx.bin (e6)
-- All logs goes to /config/sys-con/logs.txt
+- All logs goes to /config/sys-con/log.log
 
 
 [![ko-fi](https://www.ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/o0Zzz)

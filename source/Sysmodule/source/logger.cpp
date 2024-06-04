@@ -19,22 +19,20 @@ namespace syscon::logger
     {
         std::scoped_lock printLock(printMutex);
         s64 fileOffset = 0;
+        ams::fs::FileHandle file;
 
         strncpy(logPath, log, sizeof(logPath));
 
+        if (R_SUCCEEDED(ams::fs::OpenFile(std::addressof(file), logPath, ams::fs::OpenMode_Read)))
         {
-            ams::fs::FileHandle file;
-            R_TRY(ams::fs::OpenFile(std::addressof(file), logPath, ams::fs::OpenMode_Read));
-            ON_SCOPE_EXIT { ams::fs::CloseFile(file); };
-            R_TRY(ams::fs::GetFileSize(&fileOffset, file));
+            ams::fs::GetFileSize(&fileOffset, file);
+            ams::fs::CloseFile(file);
         }
 
         if (fileOffset >= (128 * 1024))
             ams::fs::DeleteFile(logPath);
 
         /* Create the log file if it doesn't exist. */
-        // ams::fs::CreateDirectory(CONFIG_PATH);
-
         ams::fs::CreateFile(logPath, 0);
 
         R_SUCCEED();
