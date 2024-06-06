@@ -22,7 +22,10 @@ all: build
 	cp -r $(DIST_DIR)/. $(OUT_DIR)/
 	@echo [DONE] sys-con compiled successfully. All files have been placed in $(OUT_DIR)/
 
-dist: mrproper all
+dist: clean all
+	cd $(OUT_DIR)/ && zip -r ../$(OUT_ZIP) .
+
+distclean: mrproper all
 	cd $(OUT_DIR)/ && zip -r ../$(OUT_ZIP) .
 
 build:
