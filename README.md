@@ -30,9 +30,12 @@ For more verbose logs, edit config.ini and set :
 ;log_level Trace=0, Debug=1, Info=2, Warning=3, Error=4
 log_level=0
 ```
+Reboot the Nintendo Switch.
 
-**Important note**: If you enable trace or debug, the driver will automatically switch the polling frequency to 100ms (debug) or 500ms (trace). This will make the controller unresponsive or at least with a very high latency. Typically, if you want to press a key, you will have to hold it down for a long time.
-These log levels (Trace and Debug) cannot be used to play a game, they are only for debugging purposes, as the name suggests ;)
+**Important note**: If you enable Trace or Debug log, the driver will automatically switch the polling frequency to 100ms (For debug) or 500ms (For trace). 
+This will make the controller unresponsive or at least with a very high latency. 
+Typically, if you want to press a key, you will have to hold it down for 1s.
+These log levels (Trace and Debug) cannot be used to play a game, they are only here for debugging purposes.
 
 ## Features
 - [x] HID joystick/gamepad supported (PC Controller compatible)
@@ -40,7 +43,7 @@ These log levels (Trace and Debug) cannot be used to play a game, they are only 
 - [x] Configurable deadzone
 - [x] Configurable polling frequency
 - [x] Configurable controller color using #RGBA
-- [ ] Rumble (Implemented but not supported by libnx for now)
+- [ ] Rumble
 
 ## Supported controller
 - [x] Any Standard HID Controller (PC Compatible without driver)
@@ -49,6 +52,7 @@ These log levels (Trace and Debug) cannot be used to play a game, they are only 
 - [x] Xbox 360 Controller
 - [x] Xbox 360 Wireless adapter (Up to 4 controller can be connected)
 - [x] Xbox One X/S Controller
+- [x] Wheels
 
 ## Tested
 - [x] Xinmotek XM-10 (Arcade controller)
@@ -57,6 +61,7 @@ These log levels (Trace and Debug) cannot be used to play a game, they are only 
 - [x] Xbox 360 Controller
 - [x] Xbox 360 Wireless adapter
 - [x] Logitech Driving Force GT (Wheel)
+- [x] Trustmaster T150 Pro (Wheel)
 
 ## Not Tested
 - [ ] Dualshock 3
@@ -64,7 +69,8 @@ These log levels (Trace and Debug) cannot be used to play a game, they are only 
 - [ ] Many other HID controller
 
 ## How to add a new controller ?
-Most of the time you will only have to do the mapping, how to do it ?
+When you plug in a new controller, most of the time only the arrow and the joystick will work, the buttons won't work by default.
+You will have to do the key mapping yourself, follow the method below to do it.
 
 ### Method 1 (From a windows PC)
 
@@ -90,6 +96,8 @@ minus=9
 plus=10
 ```
 Where 1, 2, 3, 4, ... is the key ID noted in step 7.
+
+Note: Depending to the controller, this windows procedure might not works. If the mapping is incorrect, please switch to the Method 2.
 
 ### Method 2 (Directly from the switch logs)
 
@@ -117,7 +125,7 @@ Where 1, 2, 3, 4, ... are randomly set.
 
 ## Contribution
 All contributions are welcome, you can be a simple user or developer, if you did some mapping work in the config.ini or if you have any feedback or proposal, feel free to send your pull request.
-I'm currently looking for testers or peoples with lot of 3rd party controllers - My owns are very limited (I have only 5 differents) - Thus if you have many controller i'm interrested to know if they works and feel free to share the mapping you did, it might help others folks ;)
+I'm currently looking for testers or peoples with lot of 3rd party controllers - My owns are very limited (I have only 5 differents) - Thus if you have many controller I'm interrested to know if they works and feel free to share the mapping you did, it might help others gamers !
 
 ## Building (For developers)
 

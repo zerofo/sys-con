@@ -7,6 +7,8 @@ assignees: ''
 
 ---
 
+**IMPORTANT**: Before posting a new issue, please make sure to visit firt the troubleshooting guide: https://github.com/o0Zz/sys-con/blob/master/Troubleshooting.md
+
 **Description**
 A clear and concise description of what the bug is.
 
@@ -17,4 +19,5 @@ A clear and concise description of what the bug is.
 4. See errors/crashes...
 
 **Logs**
-- Enable the logs in debug or trace mode (See README.md) and provide the logs.
+- Enable the logs in "Trace" mode (Refer you to https://github.com/o0Zz/sys-con?tab=readme-ov-file#logs) and provide the logs.
+- If relevant, provide also your config.ini
