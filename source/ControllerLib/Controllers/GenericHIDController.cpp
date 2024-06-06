@@ -113,6 +113,9 @@ ams::Result GenericHIDController::ReadInput(NormalizedButtonData *normalData, ui
 
     normalData->buttons[ControllerButton::MINUS] = joystick_data.buttons[GetConfig().buttons_pin[ControllerButton::MINUS]] ? true : false;
     normalData->buttons[ControllerButton::PLUS] = joystick_data.buttons[GetConfig().buttons_pin[ControllerButton::PLUS]] ? true : false;
+    normalData->buttons[ControllerButton::CAPTURE] = joystick_data.buttons[GetConfig().buttons_pin[ControllerButton::CAPTURE]] ? true : false;
+    normalData->buttons[ControllerButton::HOME] = joystick_data.buttons[GetConfig().buttons_pin[ControllerButton::HOME]] ? true : false;
+
     normalData->buttons[ControllerButton::DPAD_UP] = joystick_data.hat_switch == HIDJoystickHatSwitch::UP || joystick_data.hat_switch == HIDJoystickHatSwitch::UP_RIGHT || joystick_data.hat_switch == HIDJoystickHatSwitch::UP_LEFT;
     normalData->buttons[ControllerButton::DPAD_RIGHT] = joystick_data.hat_switch == HIDJoystickHatSwitch::RIGHT || joystick_data.hat_switch == HIDJoystickHatSwitch::UP_RIGHT || joystick_data.hat_switch == HIDJoystickHatSwitch::DOWN_RIGHT;
     normalData->buttons[ControllerButton::DPAD_DOWN] = joystick_data.hat_switch == HIDJoystickHatSwitch::DOWN || joystick_data.hat_switch == HIDJoystickHatSwitch::DOWN_RIGHT || joystick_data.hat_switch == HIDJoystickHatSwitch::DOWN_LEFT;

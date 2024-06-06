@@ -113,6 +113,8 @@ ams::Result XboxOneController::ReadInput(NormalizedButtonData *normalData, uint1
         normalData->buttons[ControllerButton::DPAD_RIGHT] = buttonData->dpad_right;
         normalData->buttons[ControllerButton::DPAD_DOWN] = buttonData->dpad_down;
         normalData->buttons[ControllerButton::DPAD_LEFT] = buttonData->dpad_left;
+        normalData->buttons[ControllerButton::CAPTURE] = false;
+        normalData->buttons[ControllerButton::HOME] = false;
     }
     else if (type == XBONEINPUT_GUIDEBUTTON) // Guide button Result
     {

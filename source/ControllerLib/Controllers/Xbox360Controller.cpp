@@ -172,6 +172,8 @@ ams::Result Xbox360Controller::ReadInput(NormalizedButtonData *normalData, uint1
 
         normalData->buttons[ControllerButton::MINUS] = buttons_mapping[GetConfig().buttons_pin[ControllerButton::MINUS]] ? true : false;
         normalData->buttons[ControllerButton::PLUS] = buttons_mapping[GetConfig().buttons_pin[ControllerButton::PLUS]] ? true : false;
+        normalData->buttons[ControllerButton::CAPTURE] = buttons_mapping[GetConfig().buttons_pin[ControllerButton::CAPTURE]] ? true : false;
+        normalData->buttons[ControllerButton::HOME] = buttons_mapping[GetConfig().buttons_pin[ControllerButton::HOME]] ? true : false;
 
         normalData->buttons[ControllerButton::DPAD_UP] = buttonData->dpad_up;
         normalData->buttons[ControllerButton::DPAD_RIGHT] = buttonData->dpad_right;
