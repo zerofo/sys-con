@@ -19,7 +19,19 @@ Most of the code has been rewritten and the configuration has been completely re
 Grab the latest zip from the [releases page](https://github.com/o0zz/sys-con/releases). Extract it in your SD card and boot/reboot your switch.
 
 ## Config
-sys-con comes with a config folder located at `/config/sys-con/`. It contains options for adjusting stick/trigger deadzone, as well as remapping inputs. 
+sys-con comes with a config folder located at `/config/sys-con/`. It contains options for adjusting the stick/trigger deadzone and input remapping. 
+The configuration is loaded in the following way:
+    - The [global] section is only loaded once, when the switch boots, so if you want to apply a setting, you have to reboot the switch.
+    - Other sections are for controller configuration, they are loaded each time you plug a controller, so if you want to apply a setting you will have to unplug and then replug your controller to apply it.
+
+Load controller mapping order.
+    When you plug in a new controller, it will
+     - First load the [default] section
+     - Then it will try to find a [VID-PID] section, if found it will override the default value.
+     - If [VID-PID] contains a [profile], it will first load the [profile] then load [VID-PID].
+
+In other words, the loading order is: [Default] [Profile] [VID-PID].
+If you want to override a setting for only 1 controller, it is better to write down your configuration in [VID-PID].
 
 ## Logs
 In case of issue, you can look at the logs in `/config/sys-con/log.log`
@@ -54,7 +66,7 @@ These log levels (Trace and Debug) cannot be used to play a game, they are only 
 - [x] Xbox One X/S Controller
 - [x] Wheels
 
-## Tested
+## Controller tested
 - [x] Xinmotek XM-10 (Arcade controller)
 - [x] PSX Adapter
 - [x] Dualshock 4
@@ -62,6 +74,7 @@ These log levels (Trace and Debug) cannot be used to play a game, they are only 
 - [x] Xbox 360 Wireless adapter
 - [x] Logitech Driving Force GT (Wheel)
 - [x] Trustmaster T150 Pro (Wheel)
+- [x] BSP-D9 Mobile Phone Stretch Game Controller 
 
 ## Not Tested
 - [ ] Dualshock 3
