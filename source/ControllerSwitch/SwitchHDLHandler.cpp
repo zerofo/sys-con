@@ -202,7 +202,12 @@ ams::Result SwitchHDLHandler::UpdateHdlState(const NormalizedButtonData &data, u
 
     syscon::logger::LogDebug("SwitchHDLHandler UpdateHdlState - Idx: %d [Button: 0x%016X LeftX: %d LeftY: %d RightX: %d RightY: %d]", input_idx, hdlState->buttons, hdlState->analog_stick_l.x, hdlState->analog_stick_l.y, hdlState->analog_stick_r.x, hdlState->analog_stick_r.y);
 
-    R_TRY(hiddbgSetHdlsState(m_controllerData[input_idx].m_hdlHandle, hdlState));
+    Result rc = hiddbgSetHdlsState(m_controllerData[input_idx].m_hdlHandle, hdlState);
+    if (R_FAILED(rc))
+    {
+        syscon::logger::LogError("SwitchHDLHandler UpdateHdlState - Failed to set HDL state for idx: %d (Ret: 0x%X)", input_idx, rc);
+        R_RETURN(rc);
+    }
 
     R_SUCCEED();
 }
@@ -213,8 +218,7 @@ void SwitchHDLHandler::UpdateInput()
     uint16_t input_idx = 0;
 
     // We process any input packets here. If it fails, return and try again
-    if (R_FAILED(m_controller->ReadInput(&data, &input_idx)))
-        return;
+    ams::Result read_rc = m_controller->ReadInput(&data, &input_idx);
 
     // This is a check for controllers that can prompt themselves to go inactive - e.g. wireless Xbox 360 controllers
     if (!m_controller->IsControllerConnected(input_idx))
@@ -222,6 +226,9 @@ void SwitchHDLHandler::UpdateInput()
         Detach(input_idx);
         return;
     }
+
+    if (R_FAILED(read_rc))
+        return;
 
     Attach(input_idx);
 
