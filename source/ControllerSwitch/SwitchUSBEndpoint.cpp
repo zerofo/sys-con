@@ -60,6 +60,9 @@ ams::Result SwitchUSBEndpoint::Read(void *outBuffer, size_t *bufferSizeInOut, Mo
         memcpy(outBuffer, m_usb_buffer_in, transferredSize);
         *bufferSizeInOut = transferredSize;
 
+        if (transferredSize == 0)
+            R_RETURN(CONTROL_ERR_NO_DATA_AVAILABLE);
+
         R_SUCCEED()
     }
 
@@ -89,7 +92,11 @@ ams::Result SwitchUSBEndpoint::Read(void *outBuffer, size_t *bufferSizeInOut, Mo
 
         memcpy(outBuffer, m_usb_buffer_in, report.transferredSize);
         *bufferSizeInOut = report.transferredSize;
-        return report.res;
+
+        if (report.transferredSize == 0)
+            R_RETURN(CONTROL_ERR_NO_DATA_AVAILABLE);
+
+        R_RETURN(report.res);
     }
 
     ::syscon::logger::LogError("SwitchUSBEndpoint::Read: Invalid mode provided: 0x%02X", mode);

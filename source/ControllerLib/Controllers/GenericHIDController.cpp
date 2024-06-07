@@ -64,9 +64,6 @@ ams::Result GenericHIDController::ReadInput(NormalizedButtonData *normalData, ui
     LogPrint(LogLevelTrace, "GenericHIDController ReadInput %d bytes", size);
     LogBuffer(LogLevelTrace, input_bytes, size);
 
-    if (size == 0)
-        R_RETURN(CONTROL_ERR_NO_DATA_AVAILABLE);
-
     if (!m_joystick->parseData(input_bytes, size, &joystick_data))
     {
         LogPrint(LogLevelError, "GenericHIDController Failed to parse input data");

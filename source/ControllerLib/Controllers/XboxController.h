@@ -3,7 +3,7 @@
 #include "BaseController.h"
 
 // References used:
-// http://euc.jp/periphs/xbox-controller.ja.html
+// https://github.com/felis/USB_Host_Shield_2.0/blob/master/XBOXOLD.cpp
 
 struct XboxButtonData
 {
@@ -15,21 +15,21 @@ struct XboxButtonData
     bool dpad_left : 1;
     bool dpad_right : 1;
 
-    bool start : 1;
-    bool back : 1;
-    bool stick_left_click : 1;
-    bool stick_right_click : 1;
+    bool button8 : 1;
+    bool button7 : 1;
+    bool button10 : 1;
+    bool button9 : 1;
 
     uint8_t reserved;
 
     // These are analog
-    uint8_t a;
-    uint8_t b;
-    uint8_t x;
-    uint8_t y;
+    uint8_t button2;
+    uint8_t button1;
+    uint8_t button4;
+    uint8_t button3;
 
-    uint8_t black_button;
-    uint8_t white_button;
+    uint8_t button6;
+    uint8_t button5;
 
     uint8_t trigger_left;
     uint8_t trigger_right;
