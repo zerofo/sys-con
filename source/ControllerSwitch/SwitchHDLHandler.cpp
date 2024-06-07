@@ -104,7 +104,11 @@ ams::Result SwitchHDLHandler::Detach(uint16_t input_idx)
     if (!IsVirtualDeviceAttached(input_idx))
         R_SUCCEED();
 
+    syscon::logger::LogDebug("SwitchHDLHandler Detaching device for input: %d ...", input_idx);
+
     hiddbgDetachHdlsVirtualDevice(m_controllerData[input_idx].m_hdlHandle);
+    m_controllerData[input_idx].m_hdlHandle.handle = 0;
+
     R_SUCCEED();
 }
 

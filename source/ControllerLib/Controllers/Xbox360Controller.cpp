@@ -92,6 +92,8 @@ ams::Result Xbox360Controller::ReadInput(NormalizedButtonData *normalData, uint1
                 else
                     OnControllerDisconnect(controller_idx);
             }
+
+            R_RETURN(CONTROL_ERR_NOTHING_TODO);
         }
         else if (input_bytes[0] == 0x00 && input_bytes[1] == 0x0f && input_bytes[2] == 0x00 && input_bytes[3] == 0xf0)
         {
@@ -246,7 +248,7 @@ ams::Result Xbox360Controller::OnControllerConnect(uint16_t input_idx)
 
 ams::Result Xbox360Controller::OnControllerDisconnect(uint16_t input_idx)
 {
-    LogPrint(LogLevelInfo, "Xbox360Controller Wireless controller disconnected ...");
+    LogPrint(LogLevelInfo, "Xbox360Controller Wireless controller disconnected (Idx: %d) ...", input_idx);
 
     m_outPipe[input_idx]->Write(poweroffPacket, sizeof(poweroffPacket));
 
