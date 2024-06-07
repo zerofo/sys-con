@@ -93,8 +93,8 @@ ams::Result GenericHIDController::ReadInput(NormalizedButtonData *normalData, ui
 
     normalData->sticks[0].axis_x = Normalize(GetConfig().stickDeadzonePercent[0], joystick_data.X, -32768, 32767);
     normalData->sticks[0].axis_y = Normalize(GetConfig().stickDeadzonePercent[0], joystick_data.Y, -32768, 32767);
-    normalData->sticks[1].axis_x = Normalize(GetConfig().stickDeadzonePercent[1], joystick_data.Rz, -32768, 32767);
-    normalData->sticks[1].axis_y = Normalize(GetConfig().stickDeadzonePercent[1], joystick_data.Z, -32768, 32767);
+    normalData->sticks[1].axis_x = Normalize(GetConfig().stickDeadzonePercent[1], joystick_data.Z, -32768, 32767);
+    normalData->sticks[1].axis_y = Normalize(GetConfig().stickDeadzonePercent[1], joystick_data.Rz, -32768, 32767);
 
     normalData->buttons[ControllerButton::X] = joystick_data.buttons[GetConfig().buttons_pin[ControllerButton::X]] ? true : false;
     normalData->buttons[ControllerButton::A] = joystick_data.buttons[GetConfig().buttons_pin[ControllerButton::A]] ? true : false;
