@@ -69,7 +69,7 @@ namespace syscon::logger
         ams::TimeSpan ts = ams::os::ConvertToTimeSpan(ams::os::GetSystemTick());
 
         /* Format log */
-        ams::util::SNPrintf(logBuffer, sizeof(logBuffer), "|%c|%02li:%02li:%02li.%04li| ", logLevelStr[lvl], ts.GetHours() % 24, ts.GetMinutes() % 60, ts.GetSeconds() % 60, ts.GetMilliSeconds() % 1000);
+        ams::util::SNPrintf(logBuffer, sizeof(logBuffer), "|%c|%02li:%02li:%02li.%04li|%08X| ", logLevelStr[lvl], ts.GetHours() % 24, ts.GetMinutes() % 60, ts.GetSeconds() % 60, ts.GetMilliSeconds() % 1000, (uint32_t)ams::os::GetThreadId(ams::os::GetCurrentThread()));
         ams::util::VSNPrintf(&logBuffer[strlen(logBuffer)], ams::util::size(logBuffer) - strlen(logBuffer), fmt, vl); //-1 to leave space for the \n
 
         /* Write in the file. */
@@ -85,7 +85,7 @@ namespace syscon::logger
 
         ams::TimeSpan ts = ams::os::ConvertToTimeSpan(ams::os::GetSystemTick());
 
-        ams::util::SNPrintf(logBuffer, sizeof(logBuffer), "|%c|%02li:%02li:%02li.%04li| ", logLevelStr[lvl], ts.GetHours() % 24, ts.GetMinutes() % 60, ts.GetSeconds() % 60, ts.GetMilliSeconds() % 1000);
+        ams::util::SNPrintf(logBuffer, sizeof(logBuffer), "|%c|%02li:%02li:%02li.%04li|%08X| ", logLevelStr[lvl], ts.GetHours() % 24, ts.GetMinutes() % 60, ts.GetSeconds() % 60, ts.GetMilliSeconds() % 1000, (uint32_t)ams::os::GetThreadId(ams::os::GetCurrentThread()));
 
         size_t start_offset = strlen(logBuffer);
 

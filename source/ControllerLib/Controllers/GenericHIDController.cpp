@@ -64,6 +64,9 @@ ams::Result GenericHIDController::ReadInput(NormalizedButtonData *normalData, ui
     LogPrint(LogLevelTrace, "GenericHIDController ReadInput %d bytes", size);
     LogBuffer(LogLevelTrace, input_bytes, size);
 
+    if (size == 0)
+        R_RETURN(CONTROL_ERR_NO_DATA_AVAILABLE);
+
     if (!m_joystick->parseData(input_bytes, size, &joystick_data))
     {
         LogPrint(LogLevelError, "GenericHIDController Failed to parse input data");
@@ -85,13 +88,13 @@ ams::Result GenericHIDController::ReadInput(NormalizedButtonData *normalData, ui
 
     *input_idx = joystick_data.index;
 
-    normalData->triggers[0] = Normalize(GetConfig().triggerDeadzonePercent[0], joystick_data.Z, -32768, 32767);
-    normalData->triggers[1] = Normalize(GetConfig().triggerDeadzonePercent[1], joystick_data.Rz, -32768, 32767);
+    normalData->triggers[0] = Normalize(GetConfig().triggerDeadzonePercent[0], joystick_data.Rx, -32768, 32767);
+    normalData->triggers[1] = Normalize(GetConfig().triggerDeadzonePercent[1], joystick_data.Ry, -32768, 32767);
 
     normalData->sticks[0].axis_x = Normalize(GetConfig().stickDeadzonePercent[0], joystick_data.X, -32768, 32767);
     normalData->sticks[0].axis_y = Normalize(GetConfig().stickDeadzonePercent[0], joystick_data.Y, -32768, 32767);
-    normalData->sticks[1].axis_x = Normalize(GetConfig().stickDeadzonePercent[1], joystick_data.Rx, -32768, 32767);
-    normalData->sticks[1].axis_y = Normalize(GetConfig().stickDeadzonePercent[1], joystick_data.Ry, -32768, 32767);
+    normalData->sticks[1].axis_x = Normalize(GetConfig().stickDeadzonePercent[1], joystick_data.Rz, -32768, 32767);
+    normalData->sticks[1].axis_y = Normalize(GetConfig().stickDeadzonePercent[1], joystick_data.Z, -32768, 32767);
 
     normalData->buttons[ControllerButton::X] = joystick_data.buttons[GetConfig().buttons_pin[ControllerButton::X]] ? true : false;
     normalData->buttons[ControllerButton::A] = joystick_data.buttons[GetConfig().buttons_pin[ControllerButton::A]] ? true : false;

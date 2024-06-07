@@ -13,12 +13,13 @@ This fork add support to **any** HID game controllers. Meaning, any USB controll
 While the original sys-con only support for Xbox/PS controllers, this one add support to all others PC controller without any limit.
 
 **Important note:** This fork has not been integrated to the original one because it is far away from the original source code.
-Most of the code has been rewritten and the configuration has been completely rethought. This means that if you already have a configuration from the original sys-con, you will have to drop it and redo it on this new fork, but it should be fairly straightforward ;).
+Most of the code has been rewritten and the configuration has been completely rethought. 
+This means that if you already have a configuration from the original sys-con, you will have to drop it and redo it on this new fork, but it should be fairly straightforward ;).
 
-## Install
+## Installation
 Grab the latest zip from the [releases page](https://github.com/o0zz/sys-con/releases). Extract it in your SD card and boot/reboot your switch.
 
-## Config
+## Configuration
 sys-con comes with a config folder located at `/config/sys-con/`. It contains options for adjusting the stick/trigger deadzone and input remapping. 
 The configuration is loaded in the following way:
 - The [global] section is only loaded once, when the switch boots, so if you want to apply a setting, you have to reboot the switch.

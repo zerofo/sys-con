@@ -49,6 +49,8 @@ ams::Result SwitchHDLHandler::Initialize()
 
 void SwitchHDLHandler::Exit()
 {
+    syscon::logger::LogDebug("SwitchHDLHandler Exiting ...");
+
     if (GetController()->Support(SUPPORTS_NOTHING))
     {
         m_controller->Exit();
@@ -217,10 +219,14 @@ void SwitchHDLHandler::UpdateInput()
     NormalizedButtonData data = {0};
     uint16_t input_idx = 0;
 
-    // We process any input packets here. If it fails, return and try again
     ams::Result read_rc = m_controller->ReadInput(&data, &input_idx);
 
-    // This is a check for controllers that can prompt themselves to go inactive - e.g. wireless Xbox 360 controllers
+    /*
+        Note: We must not return here if readInput fail, because it might have change the ControllerConnected state.
+        So, we must check if the controller is connected and detach it if it's not.
+        This case happen with wireless Xbox 360 controllers
+    */
+
     if (!m_controller->IsControllerConnected(input_idx))
     {
         Detach(input_idx);
