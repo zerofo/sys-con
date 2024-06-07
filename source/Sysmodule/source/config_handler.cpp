@@ -4,6 +4,8 @@
 #include "ControllerConfig.h"
 #include "logger.h"
 #include <cstring>
+#include <cstdlib>
+#include <vector>
 #include <stratosphere.hpp>
 #include <stratosphere/util/util_ini.hpp>
 
@@ -17,6 +19,7 @@ namespace syscon::config
             char ini_section[32] = {0};
             struct ControllerConfig *config;
             struct GlobalConfig *global_config;
+            std::vector<ControllerVidPid> *vid_pid;
         };
 
         RGBAColor DecodeColorValue(const char *value)
@@ -51,6 +54,8 @@ namespace syscon::config
                     ini_data->global_config->polling_frequency_ms = atoi(value);
                 else if (strcmp(name, "log_level") == 0)
                     ini_data->global_config->log_level = atoi(value);
+                else if (strcmp(name, "discovery_mode") == 0)
+                    ini_data->global_config->discovery_mode = static_cast<DiscoveryMode>(atoi(value));
                 else
                 {
                     syscon::logger::LogError("Unknown key: %s", name);
@@ -135,6 +140,30 @@ namespace syscon::config
             return 1; // Success
         }
 
+        int ParseControllerList(void *data, const char *section, const char *name, const char *value)
+        {
+            (void)name;
+            (void)value;
+
+            ConfigINIData *ini_data = static_cast<ConfigINIData *>(data);
+
+            std::string sectionStr = section;
+
+            std::size_t delimIdx = sectionStr.find('-');
+            if (delimIdx != std::string::npos)
+            {
+                std::string vid = sectionStr.substr(0, delimIdx);
+                std::string pid = sectionStr.substr(delimIdx + 1);
+
+                ControllerVidPid value((uint16_t)strtol(vid.c_str(), NULL, 16), (uint16_t)strtol(pid.c_str(), NULL, 16));
+
+                if (std::find(ini_data->vid_pid->begin(), ini_data->vid_pid->end(), value) == ini_data->vid_pid->end())
+                    ini_data->vid_pid->push_back(value);
+            }
+
+            return 1; // Success
+        }
+
         ams::Result ReadFromConfig(const char *path, ams::util::ini::Handler h, void *config)
         {
             ams::fs::FileHandle file;
@@ -167,10 +196,21 @@ namespace syscon::config
 
         syscon::logger::LogDebug("Loading global config: '%s' ...", CONFIG_FULLPATH);
 
-        if (R_FAILED(ReadFromConfig(CONFIG_FULLPATH, ParseGlobalConfigLine, &cfg)))
-            return 1;
+        R_TRY(ReadFromConfig(CONFIG_FULLPATH, ParseGlobalConfigLine, &cfg));
 
-        return 0;
+        R_SUCCEED();
+    }
+
+    ams::Result LoadControllerList(std::vector<ControllerVidPid> *vid_pid)
+    {
+        ConfigINIData cfg;
+        cfg.vid_pid = vid_pid;
+
+        syscon::logger::LogDebug("Loading controller list: '%s' ...", CONFIG_FULLPATH);
+
+        R_TRY(ReadFromConfig(CONFIG_FULLPATH, ParseControllerList, &cfg));
+
+        R_SUCCEED();
     }
 
     ams::Result LoadControllerConfig(ControllerConfig *config, uint16_t vendor_id, uint16_t product_id)
@@ -178,32 +218,28 @@ namespace syscon::config
         ConfigINIData cfg;
         cfg.config = config;
 
-        syscon::logger::LogDebug("Loading controller config: '%s' (default) ...", CONFIG_FULLPATH);
+        syscon::logger::LogDebug("Loading controller config: '%s' [default] ...", CONFIG_FULLPATH);
 
         snprintf(cfg.ini_section, sizeof(cfg.ini_section), "default");
-        if (R_FAILED(ReadFromConfig(CONFIG_FULLPATH, ParseControllerConfigLine, &cfg)))
-            return 1;
+        R_TRY(ReadFromConfig(CONFIG_FULLPATH, ParseControllerConfigLine, &cfg));
 
         // Override with vendor specific config
-        syscon::logger::LogDebug("Loading controller config: '%s' (%04x-%04x) ...", CONFIG_FULLPATH, vendor_id, product_id);
+        syscon::logger::LogDebug("Loading controller config: '%s' [%04x-%04x] ...", CONFIG_FULLPATH, vendor_id, product_id);
         snprintf(cfg.ini_section, sizeof(cfg.ini_section), "%04x-%04x", vendor_id, product_id);
-        if (R_FAILED(ReadFromConfig(CONFIG_FULLPATH, ParseControllerConfigLine, &cfg)))
-            return 1;
+        R_TRY(ReadFromConfig(CONFIG_FULLPATH, ParseControllerConfigLine, &cfg));
 
         // Check if have a "profile"
         if (strlen(config->profile) != 0)
         {
             syscon::logger::LogDebug("Loading controller config: '%s' (Profile: %s) ... ", CONFIG_FULLPATH, config->profile);
             snprintf(cfg.ini_section, sizeof(cfg.ini_section), "%s", config->profile);
-            if (R_FAILED(ReadFromConfig(CONFIG_FULLPATH, ParseControllerConfigLine, &cfg)))
-                return 1;
+            R_TRY(ReadFromConfig(CONFIG_FULLPATH, ParseControllerConfigLine, &cfg));
 
             // Re-Override with vendor specific config
             // We are doing this to allow the profile to be overrided by the vendor specific config
             // In other words we will like to have default overrided by profile overrided by vendor specific
             snprintf(cfg.ini_section, sizeof(cfg.ini_section), "%04x-%04x", vendor_id, product_id);
-            if (R_FAILED(ReadFromConfig(CONFIG_FULLPATH, ParseControllerConfigLine, &cfg)))
-                return 1;
+            R_TRY(ReadFromConfig(CONFIG_FULLPATH, ParseControllerConfigLine, &cfg));
         }
 
         for (int i = 0; i < ControllerButton::COUNT; i++)
@@ -215,8 +251,11 @@ namespace syscon::config
             }
         }
 
-        syscon::logger::LogDebug("Loading controller successfull (B=%d, A=%d, Y=%d, X=%d, ...)", config->buttons_pin[ControllerButton::B], config->buttons_pin[ControllerButton::A], config->buttons_pin[ControllerButton::Y], config->buttons_pin[ControllerButton::X]);
+        if (config->buttons_pin[ControllerButton::B] == 0 && config->buttons_pin[ControllerButton::A] == 0 && config->buttons_pin[ControllerButton::Y] == 0 && config->buttons_pin[ControllerButton::X] == 0)
+            syscon::logger::LogError("No buttons configured for this controller [%04x-%04x] - Stick might works but buttons will not !", vendor_id, product_id);
+        else
+            syscon::logger::LogInfo("Controller successfully loaded (B=%d, A=%d, Y=%d, X=%d, ...) !", config->buttons_pin[ControllerButton::B], config->buttons_pin[ControllerButton::A], config->buttons_pin[ControllerButton::Y], config->buttons_pin[ControllerButton::X]);
 
-        return 0;
+        R_SUCCEED();
     }
 } // namespace syscon::config

@@ -4,7 +4,7 @@
 You need to map your keys. Refer you to the readme: https://github.com/o0Zz/sys-con?tab=readme-ov-file#how-to-add-a-new-controller-
 
 ## My official Switch controller don't works when sys-con is enabled
-Edit the config.ini and change discover from 1 to 0. Reboot the switch.
+Edit the config.ini and change discover from 0 to 1. Reboot the switch.
 
 ## Controller not working or not discover
 Enable logs in Debug (https://github.com/o0Zz/sys-con?tab=readme-ov-file#logs) and looks at the logs.

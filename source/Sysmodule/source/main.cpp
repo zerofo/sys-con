@@ -136,7 +136,7 @@ namespace ams
         ::syscon::controllers::SetPollingFrequency(globalConfig.polling_frequency_ms);
 
         ::syscon::logger::LogDebug("Initializing USB stack ...");
-        ::syscon::usb::Initialize();
+        ::syscon::usb::Initialize(globalConfig.discovery_mode);
 
         ::syscon::logger::LogDebug("Initializing power supply managment ...");
         ::syscon::psc::Initialize();
