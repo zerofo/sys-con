@@ -23,8 +23,12 @@ ams::Result GenericHIDController::Initialize()
 
     uint8_t buffer[CONTROLLER_HID_REPORT_BUFFER_SIZE];
     uint16_t size = sizeof(buffer);
+    // https://www.usb.org/sites/default/files/hid1_11.pdf
 
-    // Get the HID report descriptor
+    // SET IDLE to 0
+    R_TRY(m_interfaces[0]->ControlTransferOutput((uint8_t)0x20 | (uint8_t)USB_RECIPIENT_INTERFACE, 0x0A, 0x0000, m_interfaces[0]->GetDescriptor()->bInterfaceNumber, NULL, 0));
+
+    // Get HID report descriptor
     R_TRY(m_interfaces[0]->ControlTransferInput((uint8_t)USB_ENDPOINT_IN | (uint8_t)USB_RECIPIENT_INTERFACE, USB_REQUEST_GET_DESCRIPTOR, (USB_DT_REPORT << 8) | m_interfaces[0]->GetDescriptor()->bInterfaceNumber, 0, buffer, &size));
 
     LogPrint(LogLevelTrace, "GenericHIDController Got descriptor for interface %d", m_interfaces[0]->GetDescriptor()->bInterfaceNumber);

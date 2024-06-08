@@ -16,8 +16,8 @@ namespace syscon::usb
     {
         constexpr size_t MaxUsbHsInterfacesSize = 8;
 
-        // MaxUsbEvents is limited by usbHsCreateInterfaceAvailableEvent which is limited to "u8" indexes (255).
-        constexpr size_t MaxUsbEvents = 255;
+        // MaxUsbEvents is limited by usbHsCreateInterfaceAvailableEvent, we can have only up to 3 events 
+        constexpr size_t MaxUsbEvents = 3;
 
         ams::os::Mutex usbMutex(false);
 
