@@ -74,7 +74,7 @@ ams::Result Dualshock3Controller::ReadInput(NormalizedButtonData *normalData, ui
 
 ams::Result Dualshock3Controller::SendCommand(Dualshock3FeatureValue feature, const void *buffer, uint16_t size)
 {
-    R_RETURN(m_interfaces[0]->ControlTransferOutput(USB_ENDPOINT_OUT | 0x21, 0x09, static_cast<uint16_t>(feature), 0, buffer, size));
+    R_RETURN(m_interfaces[0]->ControlTransferOutput(0x21, 0x09, static_cast<uint16_t>(feature), 0, buffer, size));
 }
 
 ams::Result Dualshock3Controller::SetLED(Dualshock3LEDValue value)
