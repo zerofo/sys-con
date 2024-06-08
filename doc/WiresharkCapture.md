@@ -1,25 +1,25 @@
 # Wireshark capture
 
 ## Introduction
-This document introduce how to do a wireshark capture in order to debug deep issues
+This document shows how to perform a Wireshark capture to debug deep problems.
 
 ## Download wireshark
-
-https://www.wireshark.org/download.html
-Usually you have to install "Windows x64 Installer"
+https://www.wireshark.org/download.html - Usually you have to install "Windows x64 Installer"
 
 ## Install wireshark
 
-This steps is important, you will have to install wireshark with "USBPcap"
-Start wireshark installation (Next, Next ...)
-When you meet this screen:
+This step is important, you have to install Wireshark **with** "USBPcap".
+
+Start the Wireshark installation (Next, Next ...)
+
+When you reach this screen:
 
 ![wireshark_install](img/wireshark_install.png)
 
 You have to check Install USBPcap, then continue the installation
 
 ## Capture
-This chapter describe how to capture USB traffic with wireshark
+This chapter describes how to capture USB traffic with Wireshark.
 
 ### How to start a capture
 ![wireshark_start](img/wireshark_start.png)
@@ -28,26 +28,25 @@ This chapter describe how to capture USB traffic with wireshark
 ![wireshark_stop](img/wireshark_stop.png)
 
 ### How to find the correct USBPcap
-You problay see multiple USBPcap when you try to start a capture, you might have USBPcap1, USBPcap2, USBPcap3, USBPcap4 ...
-It corresponds to the USB host controller present on your system, so it depends to your system.
-We will have to find the correct USB host controller (Where is plug your controller)
+(Skip this step if you have only 1 USBPcap - USBPcap1)
 
-1. Start a capture on one USBPcap (USBPcap1, USBPcap2, ...)
-2. Wait without using any USB device (Mouse, Keyboard, ...)
-Here you will have 2 behaviours, either nothing will move, or you will have a constant flow of data.
-3. Now plug your controller
-  If you see new data comming (acceleration of logs for example), You found the correct USBPcap. 
-  If you notice no changes, It means you selected the incorrect USBPcap. Re-execute these steps with the next USBPcap.
+You will probably see multiple USBPcaps when you try to start a capture, you may have USBPcap1, USBPcap2, USBPcap3, USBPcap4 ... This corresponds to the USB host controller present on your system, so it depends on your system. We need to find the correct USB host controller (where is your controller plugged in)
+
+1. Start a capture on a USBPcap (USBPcap1, USBPcap2, ...)
+2. Wait without using any USB device (mouse, keyboard, ...) - Here you will have 2 behaviours, either nothing will move or you will have a constant flow of data.
+3. Now connect your controller:
+  - If you see new data coming (e.g. acceleration of data), you have found the correct USBPcap. 
+  - If you do not see any changes, you have selected the wrong USBPcap. Repeat these steps with the next USBPcap.
 
 ### Procedure to have a clean capture
-Once you found the correct USBPcap (Refer you to above steps), we can start a clean capture.
-In order to capture with wireshark the boot sequence, you need to first unplug your USB device
-During the wireshark capture, try not using your other USB devices (Mouse, Keyboard, Audio etc...) - It will simplify the investigation for the maintainer.
+Once you have found the correct USBPcap (see the steps above), we can start a clean capture.
+To capture the boot sequence with Wireshark, you need to unplug your USB controller first.
+During the Wireshark capture, try not to use your other USB devices (mouse, keyboard, audio etc...) - it will make the investigation easier for the maintainer.
 
 Steps:
  - Start the capture on the correct USBPcap
- - Plug the USB controller
+ - Connect the USB controller
  - Wait 1s or 2s
- - Then press/release 1 button multiple time (This will help maintainer to find your controller)
+ - Then press/release one button several times (This will help the maintainer to find your controller)
  - Stop the capture
- - Save it (File -> Save As).
+ - Save it (File -> Save As)
