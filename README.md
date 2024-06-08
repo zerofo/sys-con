@@ -136,6 +136,9 @@ Where 1, 2, 3, 4, ... are randomly set.
 5. On your switch go to: Settings -> Controllers & Sensors > Test Input Devices
 6. Try to press button you will quickly understand that the mapping is incorrect, you need now to remap it correctly by changing the /config/sys-con/config.ini
 
+## Troubleshooting
+For common issues a troubleshooting guide is available: https://github.com/o0Zz/sys-con/blob/master/doc/Troubleshooting.md
+
 ## Contribution
 All contributions are welcome, you can be a simple user or developer, if you did some mapping work in the config.ini or if you have any feedback or proposal, feel free to send your pull request.
 I'm currently looking for testers or peoples with lot of 3rd party controllers - My owns are very limited (I have only 5 differents) - Thus if you have many controller I'm interrested to know if they works and feel free to share the mapping you did, it might help others gamers !

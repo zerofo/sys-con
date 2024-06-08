@@ -7,7 +7,7 @@ assignees: ''
 
 ---
 
-**IMPORTANT**: Before posting a new issue, please make sure to visit firt the troubleshooting guide: https://github.com/o0Zz/sys-con/blob/master/Troubleshooting.md and https://github.com/o0Zz/sys-con/blob/master/README.md 
+**IMPORTANT**: Before posting a new issue, please make sure to visit firt the troubleshooting guide: https://github.com/o0Zz/sys-con/blob/master/doc/Troubleshooting.md and https://github.com/o0Zz/sys-con/blob/master/README.md 
 
 **Description**
 A clear and concise description of what the bug is.
