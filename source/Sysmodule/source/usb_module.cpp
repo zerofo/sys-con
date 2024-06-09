@@ -16,7 +16,7 @@ namespace syscon::usb
     {
         constexpr size_t MaxUsbHsInterfacesSize = 8;
 
-        // MaxUsbEvents is limited by usbHsCreateInterfaceAvailableEvent, we can have only up to 3 events 
+        // MaxUsbEvents is limited by usbHsCreateInterfaceAvailableEvent, we can have only up to 3 events
         constexpr size_t MaxUsbEvents = 3;
 
         ams::os::Mutex usbMutex(false);
@@ -68,7 +68,7 @@ namespace syscon::usb
                         UsbHsInterface *interface = &interfaces[0];
                         syscon::logger::LogInfo("New USB device(s) detected (%d), checking for controllers ...", total_entries);
 
-                        syscon::logger::LogInfo("Trying to initialize USB device: [%04x-%04x] (Class: 0x%02X, SubClass: 0x%02X, Protocol: 0x%02X, dbc: : 0x%04X)...",
+                        syscon::logger::LogInfo("Trying to initialize USB device: [%04x-%04x] (Class: 0x%02X, SubClass: 0x%02X, Protocol: 0x%02X, bcd: 0x%04X)...",
                                                 interface->device_desc.idVendor,
                                                 interface->device_desc.idProduct,
                                                 interface->device_desc.bDeviceClass,
@@ -224,11 +224,16 @@ namespace syscon::usb
         {
             if (g_usbEventCount >= MaxUsbEvents)
             {
-                syscon::logger::LogError("Unable to add event with filter: %s ! (Max USB events reached !)", name.c_str());
+                static bool isMaxEventLogged = false;
+                if (!isMaxEventLogged)
+                {
+                    syscon::logger::LogError("Unable to add future events ! (Max USB events reached !)");
+                    isMaxEventLogged = true;
+                }
                 return CONTROL_ERR_OUT_OF_MEMORY;
             }
 
-            syscon::logger::LogDebug("Adding event with filter: %s (%d/%d)...", name.c_str(), g_usbEventCount, MaxUsbEvents);
+            syscon::logger::LogDebug("Adding event with filter: %s (%d/%d)...", name.c_str(), g_usbEventCount + 1, MaxUsbEvents);
             Result ret = usbHsCreateInterfaceAvailableEvent(&g_usbEvent[g_usbEventCount], true, g_usbEventCount, filter);
 
             g_usbEventCount++;
@@ -237,47 +242,54 @@ namespace syscon::usb
 
     } // namespace
 
-    void Initialize(syscon::config::DiscoveryMode discovery_mode)
+    void Initialize(syscon::config::DiscoveryMode discovery_mode, std::vector<syscon::config::ControllerVidPid> &discovery_vidpid)
     {
         is_usb_event_thread_running = true;
         R_ABORT_UNLESS(threadCreate(&g_usb_event_thread, &UsbEventThreadFunc, nullptr, usb_event_thread_stack, sizeof(usb_event_thread_stack), 0x3A, -2));
         R_ABORT_UNLESS(threadStart(&g_usb_event_thread));
 
-        if (discovery_mode == syscon::config::DiscoveryMode::OnlyKnownVIDPID)
+        syscon::logger::LogInfo("Discovery mode: %d", discovery_mode);
+
+        if (discovery_mode == syscon::config::DiscoveryMode::HID_AND_XBOX || discovery_mode == syscon::config::DiscoveryMode::VIDPID_AND_XBOX)
         {
-            syscon::logger::LogInfo("Discovery mode set to OnlyKnownVIDPID, filtering only known VID/PID ...");
-
-            std::vector<::syscon::config::ControllerVidPid> vid_pid;
-
-            (void)LoadControllerList(&vid_pid);
-
-            for (auto &&vp : vid_pid)
-            {
-                UsbHsInterfaceFilter filterKnownDevice{
-                    .Flags = UsbHsInterfaceFilterFlags_idVendor | UsbHsInterfaceFilterFlags_idProduct,
-                    .idVendor = vp.vid,
-                    .idProduct = vp.pid,
-                };
-
-                AddEvent(&filterKnownDevice, vp);
-            }
-        }
-        else if (discovery_mode == syscon::config::DiscoveryMode::Everything)
-        {
-            syscon::logger::LogInfo("Discovery mode set to Everything, filtering all devices ...");
-
+            // Filter use to detect XBOX controllers
             UsbHsInterfaceFilter filterAllDevices1{
                 .Flags = UsbHsInterfaceFilterFlags_bcdDevice_Min,
                 .bcdDevice_Min = 0x0000,
             };
-            AddEvent(&filterAllDevices1, "bcdDevice_Min");
+            AddEvent(&filterAllDevices1, "XBOX");
+        }
 
+        if (discovery_mode == syscon::config::DiscoveryMode::HID_AND_XBOX)
+        {
+            // Filter used to detect Generic HID controllers
+            // Cause issue with Native Switch Controllers
             UsbHsInterfaceFilter filterAllDevices2{
                 .Flags = UsbHsInterfaceFilterFlags_bInterfaceClass | UsbHsInterfaceFilterFlags_bcdDevice_Min,
                 .bcdDevice_Min = 0x0000,
                 .bInterfaceClass = USB_CLASS_HID,
             };
             AddEvent(&filterAllDevices2, "USB_CLASS_HID");
+        }
+
+        if (discovery_mode == syscon::config::DiscoveryMode::VIDPID || discovery_mode == syscon::config::DiscoveryMode::VIDPID_AND_XBOX)
+        {
+            // Filter known VID/PID
+            for (syscon::config::ControllerVidPid &vidpid : discovery_vidpid)
+            {
+                UsbHsInterfaceFilter filterKnownDevice{
+                    .Flags = UsbHsInterfaceFilterFlags_idVendor,
+                    .idVendor = vidpid.vid,
+                };
+
+                if (vidpid.pid != 0)
+                {
+                    filterKnownDevice.Flags |= UsbHsInterfaceFilterFlags_idProduct;
+                    filterKnownDevice.idProduct = vidpid.pid;
+                }
+
+                AddEvent(&filterKnownDevice, std::string(vidpid));
+            }
         }
 
         is_usb_interface_change_thread_running = true;

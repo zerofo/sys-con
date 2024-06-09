@@ -5,7 +5,6 @@
 #include "logger.h"
 #include <cstring>
 #include <cstdlib>
-#include <vector>
 #include <stratosphere.hpp>
 #include <stratosphere/util/util_ini.hpp>
 
@@ -19,7 +18,6 @@ namespace syscon::config
             char ini_section[32] = {0};
             struct ControllerConfig *config;
             struct GlobalConfig *global_config;
-            std::vector<ControllerVidPid> *vid_pid;
         };
 
         RGBAColor DecodeColorValue(const char *value)
@@ -56,6 +54,16 @@ namespace syscon::config
                     ini_data->global_config->log_level = atoi(value);
                 else if (strcmp(name, "discovery_mode") == 0)
                     ini_data->global_config->discovery_mode = static_cast<DiscoveryMode>(atoi(value));
+                else if (strcmp(name, "discovery_vidpid") == 0)
+                {
+                    char *tok = strtok(const_cast<char *>(value), ",");
+
+                    while (tok != NULL)
+                    {
+                        ini_data->global_config->discovery_vidpid.push_back(ControllerVidPid(tok));
+                        tok = strtok(NULL, ",");
+                    }
+                }
                 else
                 {
                     syscon::logger::LogError("Unknown key: %s", name);
@@ -140,30 +148,6 @@ namespace syscon::config
             return 1; // Success
         }
 
-        int ParseControllerList(void *data, const char *section, const char *name, const char *value)
-        {
-            (void)name;
-            (void)value;
-
-            ConfigINIData *ini_data = static_cast<ConfigINIData *>(data);
-
-            std::string sectionStr = section;
-
-            std::size_t delimIdx = sectionStr.find('-');
-            if (delimIdx != std::string::npos)
-            {
-                std::string vid = sectionStr.substr(0, delimIdx);
-                std::string pid = sectionStr.substr(delimIdx + 1);
-
-                ControllerVidPid value((uint16_t)strtol(vid.c_str(), NULL, 16), (uint16_t)strtol(pid.c_str(), NULL, 16));
-
-                if (std::find(ini_data->vid_pid->begin(), ini_data->vid_pid->end(), value) == ini_data->vid_pid->end())
-                    ini_data->vid_pid->push_back(value);
-            }
-
-            return 1; // Success
-        }
-
         ams::Result ReadFromConfig(const char *path, ams::util::ini::Handler h, void *config)
         {
             ams::fs::FileHandle file;
@@ -197,18 +181,6 @@ namespace syscon::config
         syscon::logger::LogDebug("Loading global config: '%s' ...", CONFIG_FULLPATH);
 
         R_TRY(ReadFromConfig(CONFIG_FULLPATH, ParseGlobalConfigLine, &cfg));
-
-        R_SUCCEED();
-    }
-
-    ams::Result LoadControllerList(std::vector<ControllerVidPid> *vid_pid)
-    {
-        ConfigINIData cfg;
-        cfg.vid_pid = vid_pid;
-
-        syscon::logger::LogDebug("Loading controller list: '%s' ...", CONFIG_FULLPATH);
-
-        R_TRY(ReadFromConfig(CONFIG_FULLPATH, ParseControllerList, &cfg));
 
         R_SUCCEED();
     }

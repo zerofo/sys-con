@@ -1,7 +1,9 @@
 #pragma once
 #include "ControllerTypes.h"
 #include "ControllerConfig.h"
+#include "logger.h"
 #include <string>
+#include <vector>
 #include <switch.h>
 #include <stratosphere.hpp>
 
@@ -10,25 +12,20 @@
 
 namespace syscon::config
 {
-    typedef enum DiscoveryMode
-    {
-        Everything = 0,
-        OnlyKnownVIDPID = 1,
-    } DiscoveryMode;
-
-    struct GlobalConfig
-    {
-        uint16_t polling_frequency_ms;
-        int log_level;
-        DiscoveryMode discovery_mode;
-    };
-
     class ControllerVidPid
     {
     public:
-        ControllerVidPid(uint16_t vid, uint16_t pid)
-            : vid(vid), pid(pid)
+        ControllerVidPid(const std::string &vidpid) : vid(0), pid(0)
         {
+            std::size_t delimIdx = vidpid.find('-');
+            if (delimIdx != std::string::npos)
+            {
+                std::string vidStr = vidpid.substr(0, delimIdx);
+                std::string pidStr = vidpid.substr(delimIdx + 1);
+
+                vid = strtol(vidStr.c_str(), NULL, 16);
+                pid = strtol(pidStr.c_str(), NULL, 16);
+            }
         }
 
         operator std::string() const
@@ -49,10 +46,23 @@ namespace syscon::config
         uint16_t pid;
     };
 
+    typedef enum DiscoveryMode
+    {
+        HID_AND_XBOX = 0,
+        VIDPID_AND_XBOX = 1,
+        VIDPID = 2,
+    } DiscoveryMode;
+
+    struct GlobalConfig
+    {
+        uint16_t polling_frequency_ms;
+        int log_level;
+        DiscoveryMode discovery_mode;
+        std::vector<ControllerVidPid> discovery_vidpid;
+    };
+
     ams::Result LoadGlobalConfig(GlobalConfig *config);
 
     ams::Result LoadControllerConfig(ControllerConfig *config, uint16_t vendor_id, uint16_t product_id);
-
-    ams::Result LoadControllerList(std::vector<ControllerVidPid> *vid_pid);
 
 }; // namespace syscon::config
