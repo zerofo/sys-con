@@ -9,6 +9,7 @@
 
 namespace syscon::logger
 {
+    void LogTrace(const char *fmt, ...);
     void LogDebug(const char *fmt, ...);
     void LogInfo(const char *fmt, ...);
     void LogWarning(const char *fmt, ...);

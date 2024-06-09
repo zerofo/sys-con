@@ -7,7 +7,7 @@
 #include <switch.h>
 #include <stratosphere.hpp>
 
-#define CONFIG_PATH     "sdmc:///config/sys-con/"
+#define CONFIG_PATH     "sdmc:/config/sys-con/"
 #define CONFIG_FULLPATH CONFIG_PATH "config.ini"
 
 namespace syscon::config

@@ -87,6 +87,21 @@ ams::Result XboxOneController::ReadInput(NormalizedButtonData *normalData, uint1
     {
         XboxOneButtonData *buttonData = reinterpret_cast<XboxOneButtonData *>(input_bytes);
 
+        bool buttons_mapping[MAX_CONTROLLER_BUTTONS]{
+            false,
+            buttonData->button1,
+            buttonData->button2,
+            buttonData->button3,
+            buttonData->button4,
+            buttonData->button5,
+            buttonData->button6,
+            buttonData->button7,
+            buttonData->button8,
+            buttonData->button9,
+            buttonData->button10,
+            buttonData->button11,
+            buttonData->button12};
+
         *input_idx = 0;
 
         normalData->triggers[0] = Normalize(GetConfig().triggerDeadzonePercent[0], buttonData->trigger_left, 0, 255);
@@ -97,31 +112,36 @@ ams::Result XboxOneController::ReadInput(NormalizedButtonData *normalData, uint1
         normalData->sticks[1].axis_x = Normalize(GetConfig().stickDeadzonePercent[1], buttonData->stick_right_x, -32768, 32767);
         normalData->sticks[1].axis_y = Normalize(GetConfig().stickDeadzonePercent[1], -buttonData->stick_right_y, -32768, 32767);
 
-        normalData->buttons[ControllerButton::X] = buttonData->y;
-        normalData->buttons[ControllerButton::A] = buttonData->b;
-        normalData->buttons[ControllerButton::B] = buttonData->a;
-        normalData->buttons[ControllerButton::Y] = buttonData->x;
-        normalData->buttons[ControllerButton::LSTICK_CLICK] = buttonData->stick_left_click;
-        normalData->buttons[ControllerButton::RSTICK_CLICK] = buttonData->stick_right_click;
-        normalData->buttons[ControllerButton::L] = buttonData->bumper_left;
-        normalData->buttons[ControllerButton::R] = buttonData->bumper_right;
-        normalData->buttons[ControllerButton::ZL] = normalData->triggers[0] > 0 ? true : false;
-        normalData->buttons[ControllerButton::ZR] = normalData->triggers[1] > 0 ? true : false;
-        normalData->buttons[ControllerButton::MINUS] = buttonData->back;
-        normalData->buttons[ControllerButton::PLUS] = buttonData->start;
+        normalData->buttons[ControllerButton::X] = buttons_mapping[GetConfig().buttons_pin[ControllerButton::X]] ? true : false;
+        normalData->buttons[ControllerButton::A] = buttons_mapping[GetConfig().buttons_pin[ControllerButton::A]] ? true : false;
+        normalData->buttons[ControllerButton::B] = buttons_mapping[GetConfig().buttons_pin[ControllerButton::B]] ? true : false;
+        normalData->buttons[ControllerButton::Y] = buttons_mapping[GetConfig().buttons_pin[ControllerButton::Y]] ? true : false;
+        normalData->buttons[ControllerButton::LSTICK_CLICK] = buttons_mapping[GetConfig().buttons_pin[ControllerButton::LSTICK_CLICK]] ? true : false;
+        normalData->buttons[ControllerButton::RSTICK_CLICK] = buttons_mapping[GetConfig().buttons_pin[ControllerButton::RSTICK_CLICK]] ? true : false;
+        normalData->buttons[ControllerButton::L] = buttons_mapping[GetConfig().buttons_pin[ControllerButton::L]] ? true : false;
+        normalData->buttons[ControllerButton::R] = buttons_mapping[GetConfig().buttons_pin[ControllerButton::R]] ? true : false;
+
+        normalData->buttons[ControllerButton::ZL] = buttons_mapping[GetConfig().buttons_pin[ControllerButton::ZL]] ? true : false;
+        normalData->buttons[ControllerButton::ZR] = buttons_mapping[GetConfig().buttons_pin[ControllerButton::ZR]] ? true : false;
+
+        if (GetConfig().buttons_pin[ControllerButton::ZL] == 0)
+            normalData->buttons[ControllerButton::ZL] = normalData->triggers[0] > 0;
+        if (GetConfig().buttons_pin[ControllerButton::ZR] == 0)
+            normalData->buttons[ControllerButton::ZR] = normalData->triggers[1] > 0;
+
+        normalData->buttons[ControllerButton::MINUS] = buttons_mapping[GetConfig().buttons_pin[ControllerButton::MINUS]] ? true : false;
+        normalData->buttons[ControllerButton::PLUS] = buttons_mapping[GetConfig().buttons_pin[ControllerButton::PLUS]] ? true : false;
+        normalData->buttons[ControllerButton::CAPTURE] = buttons_mapping[GetConfig().buttons_pin[ControllerButton::CAPTURE]] ? true : false;
+        normalData->buttons[ControllerButton::HOME] = buttons_mapping[GetConfig().buttons_pin[ControllerButton::HOME]] ? true : false;
+
         normalData->buttons[ControllerButton::DPAD_UP] = buttonData->dpad_up;
         normalData->buttons[ControllerButton::DPAD_RIGHT] = buttonData->dpad_right;
         normalData->buttons[ControllerButton::DPAD_DOWN] = buttonData->dpad_down;
         normalData->buttons[ControllerButton::DPAD_LEFT] = buttonData->dpad_left;
-        normalData->buttons[ControllerButton::CAPTURE] = false;
-        normalData->buttons[ControllerButton::HOME] = false;
     }
     else if (type == XBONEINPUT_GUIDEBUTTON) // Guide button Result
     {
         m_GuidePressed = input_bytes[4];
-
-        // Xbox one S needs to be sent an ack report for guide buttons
-        // TODO: needs testing
         if (input_bytes[1] == 0x30)
         {
             R_TRY(WriteAckGuideReport(*input_idx, input_bytes[2]));

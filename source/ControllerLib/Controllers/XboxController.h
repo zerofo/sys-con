@@ -15,21 +15,21 @@ struct XboxButtonData
     bool dpad_left : 1;
     bool dpad_right : 1;
 
-    bool button8 : 1;
     bool button7 : 1;
-    bool button10 : 1;
+    bool button8 : 1;
     bool button9 : 1;
+    bool button10 : 1;
 
     uint8_t reserved;
 
     // These are analog
-    uint8_t button2;
     uint8_t button1;
-    uint8_t button4;
+    uint8_t button2;
     uint8_t button3;
+    uint8_t button4;
 
-    uint8_t button6;
     uint8_t button5;
+    uint8_t button6;
 
     uint8_t trigger_left;
     uint8_t trigger_right;

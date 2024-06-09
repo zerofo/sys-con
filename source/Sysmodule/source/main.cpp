@@ -149,6 +149,7 @@ namespace ams
         ::syscon::psc::Exit();
         ::syscon::usb::Exit();
         ::syscon::controllers::Exit();
+        ::syscon::logger::Exit();
     }
 
 } // namespace ams

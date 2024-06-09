@@ -72,6 +72,7 @@ ams::Result SwitchHDLHandler::Attach(uint16_t input_idx)
     uint32_t HidNpadBefore = GetHidNpadMask();
     R_TRY(hiddbgAttachHdlsVirtualDevice(&m_controllerData[input_idx].m_hdlHandle, &m_controllerData[input_idx].m_deviceInfo));
 
+    syscon::logger::LogTrace("SwitchHDLHandler Searching for NpadId ...");
     // Wait until the controller is attached to a HidNpadIdType_xxx
     uint32_t HidNpadDiff = 0;
     for (int i = 0; i < 1000; i++) // Timeout after 1 second
