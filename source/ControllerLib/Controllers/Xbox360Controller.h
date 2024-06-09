@@ -19,15 +19,15 @@ struct Xbox360ButtonData
     bool dpad_left : 1;
     bool dpad_right : 1;
 
-    bool button7 : 1; // start
-    bool button8 : 1; // back
+    bool button7 : 1;
+    bool button8 : 1;
     bool button9 : 1;
     bool button10 : 1;
 
     bool button5 : 1;
     bool button6 : 1;
     bool button11 : 1;
-    bool dummy1 : 1; // Always 0.
+    bool dummy1 : 1;
 
     bool button1 : 1;
     bool button2 : 1;

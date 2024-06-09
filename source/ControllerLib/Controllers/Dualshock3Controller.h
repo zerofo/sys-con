@@ -27,10 +27,10 @@ struct Dualshock3ButtonData
     uint8_t pad0;
 
     // byte2
-    bool back : 1;
-    bool stick_left_click : 1;
-    bool stick_right_click : 1;
-    bool start : 1;
+    bool button9 : 1;  // back
+    bool button10 : 1; // stick_left_click
+    bool button11 : 1; // stick_right_click
+    bool button12 : 1; // start
 
     bool dpad_up : 1;
     bool dpad_right : 1;
@@ -38,15 +38,15 @@ struct Dualshock3ButtonData
     bool dpad_left : 1;
 
     // byte3
-    bool trigger_left : 1;
-    bool trigger_right : 1;
-    bool bumper_left : 1;
-    bool bumper_right : 1;
+    bool button5 : 1; // trigger_left
+    bool button6 : 1; // trigger_right
+    bool button7 : 1; // bumper_left
+    bool button8 : 1; // bumper_right
 
-    bool triangle : 1;
-    bool circle : 1;
-    bool cross : 1;
-    bool square : 1;
+    bool button1 : 1; // triangle
+    bool button2 : 1; // circle
+    bool button3 : 1; // cross
+    bool button4 : 1; // square
 
     // byte4
     bool guide : 1;
