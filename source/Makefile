@@ -10,7 +10,7 @@ GIT_TAG_COMMIT_COUNT := $(shell git rev-list  `git rev-list --tags --no-walk --m
 all: $(TARGETS)
 
 libstratosphere:
-	$(MAKE) -C ../lib/Atmosphere-libs/libstratosphere
+	$(MAKE) -C ../lib/Atmosphere-libs/libstratosphere -j8
 	
 libhiddatainterpreter:
 	$(MAKE) -C ../lib/HIDDataInterpreter/build/switch
