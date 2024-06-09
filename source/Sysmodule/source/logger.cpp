@@ -7,11 +7,13 @@
 #include <stratosphere/fs/fs_file.hpp>
 #include <vapours/util/util_format_string.hpp>
 
+#define LOG_FILE_SIZE_MAX (128 * 1024)
+
 namespace syscon::logger
 {
     static ams::os::Mutex printMutex(false);
     char logBuffer[1024];
-    char logPath[255];
+    std::string logPath;
     int logLevel = LOG_LEVEL_INFO;
     char logLevelStr[LOG_LEVEL_COUNT] = {'T', 'D', 'I', 'W', 'E'};
 
@@ -21,19 +23,27 @@ namespace syscon::logger
         s64 fileOffset = 0;
         ams::fs::FileHandle file;
 
-        strncpy(logPath, log, sizeof(logPath));
+        logPath = std::string(log);
 
-        if (R_SUCCEEDED(ams::fs::OpenFile(std::addressof(file), logPath, ams::fs::OpenMode_Read)))
+        // Create folder if it doesn't exist.
+        std::size_t delimBasePath = logPath.rfind('/');
+        if (delimBasePath != std::string::npos)
+        {
+            std::string basePath = logPath.substr(0, delimBasePath);
+            ams::fs::CreateDirectory(basePath.c_str());
+        }
+
+        // Check if the log file is too big, if so, delete it.
+        if (R_SUCCEEDED(ams::fs::OpenFile(std::addressof(file), logPath.c_str(), ams::fs::OpenMode_Read)))
         {
             ams::fs::GetFileSize(&fileOffset, file);
             ams::fs::CloseFile(file);
         }
+        if (fileOffset >= LOG_FILE_SIZE_MAX)
+            ams::fs::DeleteFile(logPath.c_str());
 
-        if (fileOffset >= (128 * 1024))
-            ams::fs::DeleteFile(logPath);
-
-        /* Create the log file if it doesn't exist. */
-        ams::fs::CreateFile(logPath, 0);
+        // Create the log file if it doesn't exist (Or previously deleted)
+        ams::fs::CreateFile(logPath.c_str(), 0);
 
         R_SUCCEED();
     }
@@ -48,7 +58,7 @@ namespace syscon::logger
         s64 fileOffset;
         ams::fs::FileHandle file;
 
-        R_TRY(ams::fs::OpenFile(std::addressof(file), logPath, ams::fs::OpenMode_Write | ams::fs::OpenMode_AllowAppend));
+        R_TRY(ams::fs::OpenFile(std::addressof(file), logPath.c_str(), ams::fs::OpenMode_Write | ams::fs::OpenMode_AllowAppend));
         ON_SCOPE_EXIT { ams::fs::CloseFile(file); };
 
         R_TRY(ams::fs::GetFileSize(&fileOffset, file));
@@ -69,7 +79,7 @@ namespace syscon::logger
         ams::TimeSpan ts = ams::os::ConvertToTimeSpan(ams::os::GetSystemTick());
 
         /* Format log */
-        ams::util::SNPrintf(logBuffer, sizeof(logBuffer), "|%c|%02li:%02li:%02li.%04li|%08X| ", logLevelStr[lvl], ts.GetHours() % 24, ts.GetMinutes() % 60, ts.GetSeconds() % 60, ts.GetMilliSeconds() % 1000, (uint32_t)((uint64_t)threadGetSelf()));
+        ams::util::SNPrintf(logBuffer, sizeof(logBuffer), "|%c|%02li:%02li:%02li.%03li|%08X| ", logLevelStr[lvl], ts.GetHours() % 24, ts.GetMinutes() % 60, ts.GetSeconds() % 60, ts.GetMilliSeconds() % 1000, (uint32_t)((uint64_t)threadGetSelf()));
         ams::util::VSNPrintf(&logBuffer[strlen(logBuffer)], ams::util::size(logBuffer) - strlen(logBuffer), fmt, vl);
 
         /* Write in the file. */
@@ -85,7 +95,7 @@ namespace syscon::logger
 
         ams::TimeSpan ts = ams::os::ConvertToTimeSpan(ams::os::GetSystemTick());
 
-        ams::util::SNPrintf(logBuffer, sizeof(logBuffer), "|%c|%02li:%02li:%02li.%04li|%08X| ", logLevelStr[lvl], ts.GetHours() % 24, ts.GetMinutes() % 60, ts.GetSeconds() % 60, ts.GetMilliSeconds() % 1000, (uint32_t)((uint64_t)threadGetSelf()));
+        ams::util::SNPrintf(logBuffer, sizeof(logBuffer), "|%c|%02li:%02li:%02li.%03li|%08X| ", logLevelStr[lvl], ts.GetHours() % 24, ts.GetMinutes() % 60, ts.GetSeconds() % 60, ts.GetMilliSeconds() % 1000, (uint32_t)((uint64_t)threadGetSelf()));
 
         size_t start_offset = strlen(logBuffer);
 
