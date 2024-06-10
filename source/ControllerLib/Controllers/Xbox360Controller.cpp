@@ -78,9 +78,6 @@ ams::Result Xbox360Controller::ReadInput(NormalizedButtonData *normalData, uint1
     {
         // https://github.com/xboxdrv/xboxdrv/blob/stable/src/xbox360_controller.cpp
         // https://github.com/felis/USB_Host_Shield_2.0/blob/master/XBOXRECV.cpp
-        LogPrint(LogLevelTrace, "Xbox360Controller Wireless Data: ");
-        LogBuffer(LogLevelTrace, input_bytes, size);
-
         if (input_bytes[0] & 0x08) // Connect/Disconnect
         {
             bool is_connected = (input_bytes[1] & 0x80) != 0;
