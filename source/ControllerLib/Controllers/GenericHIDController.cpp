@@ -62,9 +62,6 @@ ams::Result GenericHIDController::ReadInput(NormalizedButtonData *normalData, ui
 
     R_TRY(m_inPipe[0]->Read(input_bytes, &size, IUSBEndpoint::USB_MODE_BLOCKING));
 
-    LogPrint(LogLevelTrace, "GenericHIDController ReadInput %d bytes", size);
-    LogBuffer(LogLevelTrace, input_bytes, size);
-
     if (!m_joystick->parseData(input_bytes, size, &joystick_data))
     {
         LogPrint(LogLevelError, "GenericHIDController Failed to parse input data");

@@ -134,6 +134,7 @@ namespace ams
         if (globalConfig.log_level == LOG_LEVEL_DEBUG && globalConfig.polling_frequency_ms < 100)
             globalConfig.polling_frequency_ms = 100;
 
+        ::syscon::logger::LogDebug("Polling frequency: %d ms", globalConfig.polling_frequency_ms);
         ::syscon::controllers::SetPollingFrequency(globalConfig.polling_frequency_ms);
 
         ::syscon::logger::LogDebug("Initializing USB stack ...");

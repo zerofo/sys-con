@@ -118,7 +118,7 @@ namespace syscon::logger
     {
         ::std::va_list vl;
         va_start(vl, fmt);
-        Log(LOG_LEVEL_DEBUG, fmt, vl);
+        Log(LOG_LEVEL_TRACE, fmt, vl);
         va_end(vl);
     }
 

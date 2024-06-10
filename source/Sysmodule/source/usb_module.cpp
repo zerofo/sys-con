@@ -36,6 +36,7 @@ namespace syscon::usb
         bool is_usb_interface_change_thread_running = false;
 
         Event g_usbEvent[MaxUsbEvents] = {};
+        Waiter g_usbWaiters[MaxUsbEvents] = {};
         size_t g_usbEventCount = 0;
 
         UsbHsInterface interfaces[MaxUsbHsInterfacesSize] = {};
@@ -49,23 +50,31 @@ namespace syscon::usb
         {
             (void)arg;
 
-            s32 total_entries = 0;
-
             do
             {
-                usbMutex.lock();
+                s32 total_entries = 0;
+                s32 idx_out = 0;
 
-                if ((total_entries = QueryAvailableInterfacesByClass(interfaces, sizeof(interfaces), USB_CLASS_HID)) > 0 ||                                     // Generic HID
-                    (total_entries = QueryAvailableInterfacesByClassSubClassProtocol(interfaces, sizeof(interfaces), USB_CLASS_VENDOR_SPEC, 0x5D, 0x81)) > 0 || // XBOX360 Wireless
-                    (total_entries = QueryAvailableInterfacesByClassSubClassProtocol(interfaces, sizeof(interfaces), USB_CLASS_VENDOR_SPEC, 0x5D, 0x01)) > 0 || // XBOX360 Wired
-                    (total_entries = QueryAvailableInterfacesByClassSubClassProtocol(interfaces, sizeof(interfaces), USB_CLASS_VENDOR_SPEC, 0x47, 0xD0)) > 0 || // XBOX ONE
-                    (total_entries = QueryAvailableInterfacesByClassSubClassProtocol(interfaces, sizeof(interfaces), 0x58, 0x42, 0x00)) > 0)                    // XBOX Original
-
+                if (R_SUCCEEDED(waitObjects(&idx_out, g_usbWaiters, g_usbEventCount, UINT64_MAX)))
                 {
-                    if (!controllers::IsAtControllerLimit())
+                    syscon::logger::LogInfo("New USB device detected, checking for controllers ...");
+
+                    std::scoped_lock usbLock(usbMutex);
+
+                    if ((total_entries = QueryAvailableInterfacesByClass(interfaces, sizeof(interfaces), USB_CLASS_HID)) > 0 ||                                     // Generic HID
+                        (total_entries = QueryAvailableInterfacesByClassSubClassProtocol(interfaces, sizeof(interfaces), USB_CLASS_VENDOR_SPEC, 0x5D, 0x81)) > 0 || // XBOX360 Wireless
+                        (total_entries = QueryAvailableInterfacesByClassSubClassProtocol(interfaces, sizeof(interfaces), USB_CLASS_VENDOR_SPEC, 0x5D, 0x01)) > 0 || // XBOX360 Wired
+                        (total_entries = QueryAvailableInterfacesByClassSubClassProtocol(interfaces, sizeof(interfaces), USB_CLASS_VENDOR_SPEC, 0x47, 0xD0)) > 0 || // XBOX ONE
+                        (total_entries = QueryAvailableInterfacesByClassSubClassProtocol(interfaces, sizeof(interfaces), 0x58, 0x42, 0x00)) > 0)                    // XBOX Original
+
                     {
+                        if (controllers::IsAtControllerLimit())
+                        {
+                            syscon::logger::LogError("Reach controller limit (%d) - Can't add anymore controller !", controllers::Get().size());
+                            continue;
+                        }
+
                         UsbHsInterface *interface = &interfaces[0];
-                        syscon::logger::LogInfo("New USB device(s) detected (%d), checking for controllers ...", total_entries);
 
                         syscon::logger::LogInfo("Trying to initialize USB device: [%04x-%04x] (Class: 0x%02X, SubClass: 0x%02X, Protocol: 0x%02X, bcd: 0x%04X)...",
                                                 interface->device_desc.idVendor,
@@ -111,13 +120,9 @@ namespace syscon::usb
                     }
                     else
                     {
-                        syscon::logger::LogError("Reach controller limit (%d) - Can't add anymore controller !", controllers::Get().size());
+                        syscon::logger::LogError("No HID or XBOX interfaces found for this USB device !");
                     }
                 }
-
-                usbMutex.unlock();
-
-                svcSleepThread(MS_TO_NS(500));
             } while (is_usb_event_thread_running);
         }
 
@@ -220,6 +225,7 @@ namespace syscon::usb
 
             syscon::logger::LogDebug("Adding event with filter: %s (%d/%d)...", name.c_str(), g_usbEventCount + 1, MaxUsbEvents);
             Result ret = usbHsCreateInterfaceAvailableEvent(&g_usbEvent[g_usbEventCount], true, g_usbEventCount, filter);
+            g_usbWaiters[g_usbEventCount] = waiterForEvent(&g_usbEvent[g_usbEventCount]);
 
             g_usbEventCount++;
             return ret;

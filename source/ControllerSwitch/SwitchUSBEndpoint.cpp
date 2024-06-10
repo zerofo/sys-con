@@ -31,7 +31,7 @@ void SwitchUSBEndpoint::Close()
     usbHsEpClose(&m_epSession);
 }
 
-ams::Result SwitchUSBEndpoint::Write(const void *inBuffer, size_t bufferSize)
+ams::Result SwitchUSBEndpoint::Write(const uint8_t *inBuffer, size_t bufferSize)
 {
     u32 transferredSize = 0;
 
@@ -40,7 +40,7 @@ ams::Result SwitchUSBEndpoint::Write(const void *inBuffer, size_t bufferSize)
     if (GetDirection() == USB_ENDPOINT_IN)
         ::syscon::logger::LogError("SwitchUSBEndpoint::Write: Trying to write on an IN endpoint!");
 
-    ::syscon::logger::LogTrace("SwitchUSBEndpoint::Write:");
+    ::syscon::logger::LogTrace("SwitchUSBEndpoint: Write %d bytes", bufferSize);
     ::syscon::logger::LogBuffer(LOG_LEVEL_TRACE, m_usb_buffer_out, bufferSize);
 
     R_TRY(usbHsEpPostBuffer(&m_epSession, m_usb_buffer_out, bufferSize, &transferredSize));
@@ -50,7 +50,7 @@ ams::Result SwitchUSBEndpoint::Write(const void *inBuffer, size_t bufferSize)
     R_SUCCEED();
 }
 
-ams::Result SwitchUSBEndpoint::Read(void *outBuffer, size_t *bufferSizeInOut, Mode mode)
+ams::Result SwitchUSBEndpoint::Read(uint8_t *outBuffer, size_t *bufferSizeInOut, Mode mode)
 {
     if (GetDirection() == USB_ENDPOINT_OUT)
         ::syscon::logger::LogError("SwitchUSBEndpoint::Read: Trying to read on an OUT endpoint!");
@@ -65,6 +65,9 @@ ams::Result SwitchUSBEndpoint::Read(void *outBuffer, size_t *bufferSizeInOut, Mo
 
         if (transferredSize == 0)
             R_RETURN(CONTROL_ERR_NO_DATA_AVAILABLE);
+
+        ::syscon::logger::LogTrace("SwitchUSBEndpoint: Read %d bytes", *bufferSizeInOut);
+        ::syscon::logger::LogBuffer(LOG_LEVEL_TRACE, outBuffer, *bufferSizeInOut);
 
         R_SUCCEED()
     }
@@ -98,6 +101,9 @@ ams::Result SwitchUSBEndpoint::Read(void *outBuffer, size_t *bufferSizeInOut, Mo
 
         if (report.transferredSize == 0)
             R_RETURN(CONTROL_ERR_NO_DATA_AVAILABLE);
+
+        ::syscon::logger::LogTrace("SwitchUSBEndpoint: Read %d bytes (Async)", *bufferSizeInOut);
+        ::syscon::logger::LogBuffer(LOG_LEVEL_TRACE, outBuffer, *bufferSizeInOut);
 
         R_RETURN(report.res);
     }

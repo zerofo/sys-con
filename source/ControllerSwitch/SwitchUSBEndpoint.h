@@ -23,10 +23,10 @@ public:
     virtual void Close() override;
 
     // buffer should point to the data array, and only the specified size will be read.
-    virtual ams::Result Write(const void *inBuffer, size_t bufferSize) override;
+    virtual ams::Result Write(const uint8_t *inBuffer, size_t bufferSize) override;
 
     // The data received will be put in the outBuffer array for the length of the specified size.
-    virtual ams::Result Read(void *outBuffer, size_t *bufferSizeInOut, Mode mode) override;
+    virtual ams::Result Read(uint8_t *outBuffer, size_t *bufferSizeInOut, Mode mode) override;
 
     // Gets the direction of this endpoint (IN or OUT)
     virtual IUSBEndpoint::Direction GetDirection() override;

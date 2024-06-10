@@ -35,10 +35,10 @@ public:
     virtual void Close() = 0;
 
     // This will read from the inBuffer pointer for the specified size and write it to the endpoint.
-    virtual ams::Result Write(const void *inBuffer, size_t bufferSize) = 0;
+    virtual ams::Result Write(const uint8_t *inBuffer, size_t bufferSize) = 0;
 
     // This will read from the endpoint and put the data in the outBuffer pointer for the specified size.
-    virtual ams::Result Read(void *outBuffer, size_t *bufferSizeInOut, Mode mode) = 0;
+    virtual ams::Result Read(uint8_t *outBuffer, size_t *bufferSizeInOut, Mode mode) = 0;
 
     // Get endpoint's direction. (IN or OUT)
     virtual IUSBEndpoint::Direction GetDirection() = 0;
