@@ -42,7 +42,7 @@ ams::Result BaseController::OpenInterfaces()
     std::vector<std::unique_ptr<IUSBInterface>> &interfaces = m_device->GetInterfaces();
     for (auto &&interface : interfaces)
     {
-        LogPrint(LogLevelDebug, "BaseController Opening interface %d ...", interfaceCount++);
+        LogPrint(LogLevelDebug, "BaseController Opening interface idx=%d ...", interfaceCount++);
 
         R_TRY(interface->Open());
 
@@ -72,7 +72,7 @@ ams::Result BaseController::OpenInterfaces()
     if (m_inPipe.empty())
         R_RETURN(CONTROL_ERR_INVALID_ENDPOINT);
 
-    LogPrint(LogLevelInfo, "BaseController successfully opened !");
+    LogPrint(LogLevelDebug, "BaseController successfully opened !");
 
     R_SUCCEED();
 }

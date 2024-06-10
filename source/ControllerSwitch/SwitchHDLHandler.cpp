@@ -42,7 +42,7 @@ ams::Result SwitchHDLHandler::Initialize()
 
     R_TRY(InitThread());
 
-    syscon::logger::LogDebug("SwitchHDLHandler Initialized !");
+    syscon::logger::LogInfo("SwitchHDLHandler Initialized !");
 
     R_SUCCEED();
 }
@@ -60,6 +60,8 @@ void SwitchHDLHandler::Exit()
     ExitThread();
     m_controller->Exit();
     UninitHdlState();
+
+    syscon::logger::LogInfo("SwitchHDLHandler Uninitialized !");
 }
 
 ams::Result SwitchHDLHandler::Attach(uint16_t input_idx)
