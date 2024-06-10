@@ -40,6 +40,9 @@ ams::Result SwitchUSBEndpoint::Write(const void *inBuffer, size_t bufferSize)
     if (GetDirection() == USB_ENDPOINT_IN)
         ::syscon::logger::LogError("SwitchUSBEndpoint::Write: Trying to write on an IN endpoint!");
 
+    ::syscon::logger::LogTrace("SwitchUSBEndpoint::Write:");
+    ::syscon::logger::LogBuffer(LOG_LEVEL_TRACE, m_usb_buffer_out, bufferSize);
+
     R_TRY(usbHsEpPostBuffer(&m_epSession, m_usb_buffer_out, bufferSize, &transferredSize));
 
     svcSleepThread(m_descriptor->bInterval * 1000000);

@@ -39,7 +39,6 @@ namespace syscon::usb
         size_t g_usbEventCount = 0;
 
         UsbHsInterface interfaces[MaxUsbHsInterfacesSize] = {};
-        UsbHsInterface interfacesTmp[MaxUsbHsInterfacesSize] = {};
 
         s32 QueryAvailableInterfacesByClass(UsbHsInterface *interfaces, size_t interfaces_maxsize, u8 iclass);
         s32 QueryAvailableInterfacesByClassSubClassProtocol(UsbHsInterface *interfaces, size_t interfaces_maxsize, u8 iclass, u8 isubclass, u8 iprotocol);
@@ -81,47 +80,33 @@ namespace syscon::usb
 
                         if (strcmp(config.driver, "dualshock3") == 0)
                         {
-                            syscon::logger::LogInfo("Initializing Dualshock 3 controller ...");
-                            controllers::Insert(std::make_unique<Dualshock3Controller>(std::make_unique<SwitchUSBDevice>(interface, 1), config, std::make_unique<syscon::logger::Logger>()));
+                            syscon::logger::LogInfo("Initializing Dualshock 3 controller (Interface count: %d) ...", total_entries);
+                            controllers::Insert(std::make_unique<Dualshock3Controller>(std::make_unique<SwitchUSBDevice>(interfaces, total_entries), config, std::make_unique<syscon::logger::Logger>()));
                         }
                         else if (strcmp(config.driver, "xbox360w") == 0)
                         {
-                            /*
-                                Special case for XBOX360 Wireless controller
-                                The original USB_CLASS_VENDOR_SPEC will only return the first interface of the device and not all of them.
-                                However, for xbox360 wireless controller, we need to get all the interfaces to be able to communicate with all players controllers (Up to 4)
-                                Otherwise, we will only be able to communicate with the first controller.
-                            */
-                            s32 total_interfaces = QueryAvailableInterfacesByClassSubClassProtocol(interfacesTmp, sizeof(interfacesTmp), USB_CLASS_VENDOR_SPEC, 0x5D, 0x81);
-                            if (total_interfaces > 0)
-                            {
-                                syscon::logger::LogInfo("Initializing Xbox 360 Wireless controller (Interface count: %d) ...", total_interfaces);
-                                controllers::Insert(std::make_unique<Xbox360Controller>(std::make_unique<SwitchUSBDevice>(interfacesTmp, total_interfaces), config, std::make_unique<syscon::logger::Logger>(), true));
-                            }
-                            else
-                            {
-                                syscon::logger::LogError("No interfaces found for XBOX 360 Wireless controller !");
-                            }
+                            syscon::logger::LogInfo("Initializing Xbox 360 Wireless controller (Interface count: %d) ...", total_entries);
+                            controllers::Insert(std::make_unique<Xbox360Controller>(std::make_unique<SwitchUSBDevice>(interfaces, total_entries), config, std::make_unique<syscon::logger::Logger>(), true));
                         }
                         else if (strcmp(config.driver, "xbox360") == 0)
                         {
-                            syscon::logger::LogInfo("Initializing Xbox 360 controller ...");
-                            controllers::Insert(std::make_unique<Xbox360Controller>(std::make_unique<SwitchUSBDevice>(interface, 1), config, std::make_unique<syscon::logger::Logger>(), false));
+                            syscon::logger::LogInfo("Initializing Xbox 360 controller (Interface count: %d) ...", total_entries);
+                            controllers::Insert(std::make_unique<Xbox360Controller>(std::make_unique<SwitchUSBDevice>(interfaces, total_entries), config, std::make_unique<syscon::logger::Logger>(), false));
                         }
                         else if (strcmp(config.driver, "xboxone") == 0)
                         {
-                            syscon::logger::LogInfo("Initializing Xbox One controller ...");
-                            controllers::Insert(std::make_unique<XboxOneController>(std::make_unique<SwitchUSBDevice>(interface, 1), config, std::make_unique<syscon::logger::Logger>()));
+                            syscon::logger::LogInfo("Initializing Xbox One controller (Interface count: %d) ...", total_entries);
+                            controllers::Insert(std::make_unique<XboxOneController>(std::make_unique<SwitchUSBDevice>(interfaces, total_entries), config, std::make_unique<syscon::logger::Logger>()));
                         }
                         else if (strcmp(config.driver, "xbox") == 0)
                         {
-                            syscon::logger::LogInfo("Initializing Xbox 1st gen ...");
-                            controllers::Insert(std::make_unique<XboxController>(std::make_unique<SwitchUSBDevice>(interface, 1), config, std::make_unique<syscon::logger::Logger>()));
+                            syscon::logger::LogInfo("Initializing Xbox 1st gen (Interface count: %d) ...", total_entries);
+                            controllers::Insert(std::make_unique<XboxController>(std::make_unique<SwitchUSBDevice>(interfaces, total_entries), config, std::make_unique<syscon::logger::Logger>()));
                         }
                         else
                         {
-                            syscon::logger::LogInfo("Initializing Generic controller ...");
-                            controllers::Insert(std::make_unique<GenericHIDController>(std::make_unique<SwitchUSBDevice>(interface, 1), config, std::make_unique<syscon::logger::Logger>()));
+                            syscon::logger::LogInfo("Initializing Generic controller (Interface count: %d) ...", total_entries);
+                            controllers::Insert(std::make_unique<GenericHIDController>(std::make_unique<SwitchUSBDevice>(interfaces, 1), config, std::make_unique<syscon::logger::Logger>()));
                         }
                     }
                     else

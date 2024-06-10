@@ -162,6 +162,7 @@ ams::Result XboxOneController::SendInitBytes(uint16_t input_idx)
         if (init_packets[i].ProductID != 0 && init_packets[i].ProductID != product)
             continue;
 
+        LogPrint(LogLevelDebug, "XboxOneController: Sending init packet (Id=%d, Length=%d)", i, init_packets[i].Length);
         R_TRY(m_outPipe[input_idx]->Write(init_packets[i].Packet, init_packets[i].Length));
     }
 
