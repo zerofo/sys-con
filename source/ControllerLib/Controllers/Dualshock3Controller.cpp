@@ -92,9 +92,11 @@ ams::Result Dualshock3Controller::ReadInput(NormalizedButtonData *normalData, ui
         normalData->buttons[ControllerButton::DPAD_RIGHT] = buttonData->dpad_right;
         normalData->buttons[ControllerButton::DPAD_DOWN] = buttonData->dpad_down;
         normalData->buttons[ControllerButton::DPAD_LEFT] = buttonData->dpad_left;
+
+        R_SUCCEED();
     }
 
-    R_SUCCEED();
+    R_RETURN(CONTROL_ERR_UNEXPECTED_DATA);
 }
 
 ams::Result Dualshock3Controller::SendCommand(Dualshock3FeatureValue feature, const void *buffer, uint16_t size)

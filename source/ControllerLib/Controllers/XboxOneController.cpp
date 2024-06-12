@@ -11,7 +11,7 @@
 #define GIP_CMD_FIRMWARE     0x0c
 #define GIP_CMD_INPUT        0x20
 
-#define GIP_SEQ0 0x00
+#define GIP_SEQ(x) (x)
 
 #define GIP_OPT_ACK      0x10
 #define GIP_OPT_INTERNAL 0x20
@@ -27,34 +27,40 @@
 #define GIP_MOTOR_LT  BIT(3)
 #define GIP_MOTOR_ALL (GIP_MOTOR_R | GIP_MOTOR_L | GIP_MOTOR_RT | GIP_MOTOR_LT)
 
-static const u8 xboxone_power_on[] = {
-    GIP_CMD_POWER, GIP_OPT_INTERNAL, GIP_SEQ0, GIP_PL_LEN(1), GIP_PWR_ON};
-
-static const u8 xboxone_s_init[] = {
-    GIP_CMD_POWER, GIP_OPT_INTERNAL, GIP_SEQ0, 0x0f, 0x06};
-
-static const u8 extra_input_packet_init[] = {
-    0x4d, 0x10, 0x01, 0x02, 0x07, 0x00};
+/*
+    Sequence seems important for some controllers
+    Linux controller hardcode the sequence to 0, however some controller like the PDP (0e6f:02de and 0e6f:0316) need to have an incremental sequence during init.
+*/
 
 static const u8 xboxone_hori_ack_id[] = {
-    GIP_CMD_ACK, GIP_OPT_INTERNAL, GIP_SEQ0, GIP_PL_LEN(9),
+    GIP_CMD_ACK, GIP_OPT_INTERNAL, GIP_SEQ(0), GIP_PL_LEN(9),
     0x00, GIP_CMD_IDENTIFY, GIP_OPT_INTERNAL, 0x3a, 0x00, 0x00, 0x00, 0x80, 0x00};
 
-static const u8 xboxone_pdp_led_on[] = {
-    GIP_CMD_LED, GIP_OPT_INTERNAL, GIP_SEQ0, GIP_PL_LEN(3), 0x00, GIP_LED_ON, 0x14};
+static const u8 xboxone_power_on[] = {
+    GIP_CMD_POWER, GIP_OPT_INTERNAL, GIP_SEQ(1), GIP_PL_LEN(1), GIP_PWR_ON};
 
-static const u8 xboxone_pdp_auth1[] = {
-    GIP_CMD_AUTHENTICATE, 0xa0, GIP_SEQ0, 0x00, 0x92, 0x02};
+static const u8 xboxone_s_init[] = {
+    GIP_CMD_POWER, GIP_OPT_INTERNAL, GIP_SEQ(2), 0x0f, 0x06};
+
+static const u8 extra_input_packet_init[] = {
+    0x4d, 0x10, 0x01 /*SEQ3?*/, 0x02, 0x07, 0x00};
+
+static const u8 xboxone_pdp_led_on[] = {
+    GIP_CMD_LED, GIP_OPT_INTERNAL, GIP_SEQ(3), GIP_PL_LEN(3), 0x00, GIP_LED_ON, 0x14};
+
+static const u8 xboxone_pdp_auth1[] = { // This one is need for 0e6f:02de and 0e6f:0316 and maybe some others ?
+    GIP_CMD_AUTHENTICATE, 0xa0, GIP_SEQ(4), 0x00, 0x92, 0x02};
 
 static const u8 xboxone_pdp_auth2[] = {
-    GIP_CMD_AUTHENTICATE, GIP_OPT_INTERNAL, GIP_SEQ0, GIP_PL_LEN(2), 0x01, 0x00};
+    GIP_CMD_AUTHENTICATE, GIP_OPT_INTERNAL, GIP_SEQ(5), GIP_PL_LEN(2), 0x01, 0x00};
 
+// Seq on rumble can be reset to 1
 static const u8 xboxone_rumblebegin_init[] = {
-    GIP_CMD_RUMBLE, 0x00, GIP_SEQ0, GIP_PL_LEN(9),
+    GIP_CMD_RUMBLE, 0x00, GIP_SEQ(1), GIP_PL_LEN(9),
     0x00, GIP_MOTOR_ALL, 0x00, 0x00, 0x1D, 0x1D, 0xFF, 0x00, 0x00};
 
 static const u8 xboxone_rumbleend_init[] = {
-    GIP_CMD_RUMBLE, 0x00, GIP_SEQ0, GIP_PL_LEN(9),
+    GIP_CMD_RUMBLE, 0x00, GIP_SEQ(2), GIP_PL_LEN(9),
     0x00, GIP_MOTOR_ALL, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
 
 struct xboxone_init_packet
@@ -81,7 +87,7 @@ static const struct xboxone_init_packet xboxone_init_packets[] = {
     XBOXONE_INIT_PKT(0x045e, 0x0b00, xboxone_s_init),
     XBOXONE_INIT_PKT(0x045e, 0x0b00, extra_input_packet_init),
     XBOXONE_INIT_PKT(0x0e6f, 0x0000, xboxone_pdp_led_on),
-    XBOXONE_INIT_PKT(0x0e6f, 0x0000, xboxone_pdp_auth1), // This one is not in the initial linux driver but it is needed for 0e6f:02de and 0e6f:0316 - We send it everytime, we will see if it break something
+    XBOXONE_INIT_PKT(0x0e6f, 0x0000, xboxone_pdp_auth1), // This one is not in the linux driver but it is needed for 0e6f:02de and 0e6f:0316 - We send it everytime, we will see if it break something
     XBOXONE_INIT_PKT(0x0e6f, 0x0000, xboxone_pdp_auth2),
     XBOXONE_INIT_PKT(0x24c6, 0x541a, xboxone_rumblebegin_init),
     XBOXONE_INIT_PKT(0x24c6, 0x542a, xboxone_rumblebegin_init),
@@ -117,6 +123,8 @@ ams::Result XboxOneController::ReadInput(NormalizedButtonData *normalData, uint1
 
     uint8_t type = input_bytes[0];
 
+    *input_idx = 0;
+
     if (type == GIP_CMD_INPUT) // Button data
     {
         XboxOneButtonData *buttonData = reinterpret_cast<XboxOneButtonData *>(input_bytes);
@@ -135,9 +143,7 @@ ams::Result XboxOneController::ReadInput(NormalizedButtonData *normalData, uint1
             buttonData->button10,
             buttonData->button11,
             buttonData->button12,
-            m_ModePressed};
-
-        *input_idx = 0;
+            m_button13};
 
         normalData->triggers[0] = Normalize(GetConfig().triggerDeadzonePercent[0], buttonData->trigger_left, 0, 1023);
         normalData->triggers[1] = Normalize(GetConfig().triggerDeadzonePercent[1], buttonData->trigger_right, 0, 1023);
@@ -173,19 +179,27 @@ ams::Result XboxOneController::ReadInput(NormalizedButtonData *normalData, uint1
         normalData->buttons[ControllerButton::DPAD_RIGHT] = buttonData->dpad_right;
         normalData->buttons[ControllerButton::DPAD_DOWN] = buttonData->dpad_down;
         normalData->buttons[ControllerButton::DPAD_LEFT] = buttonData->dpad_left;
+
+        R_SUCCEED();
     }
-    else if (type == GIP_CMD_VIRTUAL_KEY) // Guide button Result
+    else if (type == GIP_CMD_VIRTUAL_KEY) // Mode button (XBOX center button)
     {
-        m_ModePressed = input_bytes[4];
-        LogPrint(LogLevelInfo, "Mode Button Pressed %d", input_bytes[4]);
+        m_button13 = input_bytes[4];
 
         if (input_bytes[1] == (GIP_OPT_ACK | GIP_OPT_INTERNAL))
             R_TRY(WriteAckModeReport(*input_idx, input_bytes[2]));
 
-        R_RETURN(CONTROL_ERR_NOTHING_TODO);
+        for (int button = 0; button < ControllerButton::COUNT; button++)
+        {
+            if (GetConfig().buttons_pin[button] == 13)
+            {
+                normalData->buttons[button] = m_button13;
+                R_SUCCEED();
+            }
+        }
     }
 
-    R_SUCCEED();
+    R_RETURN(CONTROL_ERR_NOTHING_TODO);
 }
 
 ams::Result XboxOneController::SendInitBytes(uint16_t input_idx)
@@ -201,10 +215,9 @@ ams::Result XboxOneController::SendInitBytes(uint16_t input_idx)
 
         R_TRY(m_outPipe[input_idx]->Write(xboxone_init_packets[i].data, xboxone_init_packets[i].len));
 
-        // Do we need to flush read ?
         uint8_t buffer[256];
         size_t size = sizeof(buffer);
-        m_inPipe[0]->Read(buffer, &size, 250 * 1000); // 250ms timeout
+        m_inPipe[input_idx]->Read(buffer, &size, 1000 * 1000); // 1000ms timeout
     }
 
     R_SUCCEED();

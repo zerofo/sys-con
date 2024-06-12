@@ -34,6 +34,7 @@ class SwitchHDLHandler : public SwitchVirtualGamepadHandler
 {
 private:
     SwitchHDLHandlerData m_controllerData[CONTROLLER_MAX_INPUTS];
+    NormalizedButtonData m_buttonData = {0};
 
     ams::Result Detach(uint16_t input_idx);
     ams::Result Attach(uint16_t input_idx);

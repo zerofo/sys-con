@@ -178,9 +178,11 @@ ams::Result Xbox360Controller::ReadInput(NormalizedButtonData *normalData, uint1
         normalData->buttons[ControllerButton::DPAD_RIGHT] = buttonData->dpad_right;
         normalData->buttons[ControllerButton::DPAD_DOWN] = buttonData->dpad_down;
         normalData->buttons[ControllerButton::DPAD_LEFT] = buttonData->dpad_left;
+
+        R_SUCCEED();
     }
 
-    R_SUCCEED();
+    R_RETURN(CONTROL_ERR_UNEXPECTED_DATA);
 }
 
 bool Xbox360Controller::Support(ControllerFeature feature)

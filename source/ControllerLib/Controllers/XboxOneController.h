@@ -44,7 +44,7 @@ struct XboxOneButtonData
 class XboxOneController : public BaseController
 {
 private:
-    bool m_ModePressed = false;
+    bool m_button13 = false;
     ams::Result SendInitBytes(uint16_t input_idx);
     ams::Result WriteAckModeReport(uint16_t input_idx, uint8_t sequence);
 
