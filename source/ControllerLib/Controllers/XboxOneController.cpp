@@ -1,60 +1,94 @@
 #include "Controllers/XboxOneController.h"
 
-#define TRIGGER_MAXVALUE 1023
+// https://github.com/torvalds/linux/blob/master/drivers/input/joystick/xpad.c
+#define GIP_CMD_ACK          0x01
+#define GIP_CMD_IDENTIFY     0x04
+#define GIP_CMD_POWER        0x05
+#define GIP_CMD_AUTHENTICATE 0x06
+#define GIP_CMD_VIRTUAL_KEY  0x07
+#define GIP_CMD_RUMBLE       0x09
+#define GIP_CMD_LED          0x0a
+#define GIP_CMD_FIRMWARE     0x0c
+#define GIP_CMD_INPUT        0x20
 
-// Following input packets were referenced from https://github.com/torvalds/linux/blob/master/drivers/input/joystick/xpad.c
-//  and https://github.com/360Controller/360Controller/blob/master/360Controller/_60Controller.cpp
+#define GIP_SEQ0 0x00
 
-// Enables LED on the PowerA controller but disables input?
-static constexpr uint8_t xboxone_powerA_ledOn[] = {
-    0x04, 0x20, 0x01, 0x00};
+#define GIP_OPT_ACK      0x10
+#define GIP_OPT_INTERNAL 0x20
 
-// does something maybe
-static constexpr uint8_t xboxone_test_init1[] = {
-    0x01, 0x20, 0x01, 0x09, 0x00, 0x04, 0x20, 0x3a,
-    0x00, 0x00, 0x00, 0x98, 0x00};
+#define GIP_PL_LEN(N) (N)
 
-// required for all xbox one controllers
-static constexpr uint8_t xboxone_fw2015_init[] = {
-    0x05, 0x20, 0x00, 0x01, 0x00};
+#define GIP_PWR_ON 0x00
+#define GIP_LED_ON 0x01
 
-static constexpr uint8_t xboxone_hori_init[] = {
-    0x01, 0x20, 0x00, 0x09, 0x00, 0x04, 0x20, 0x3a,
-    0x00, 0x00, 0x00, 0x80, 0x00};
+#define GIP_MOTOR_R   BIT(0)
+#define GIP_MOTOR_L   BIT(1)
+#define GIP_MOTOR_RT  BIT(2)
+#define GIP_MOTOR_LT  BIT(3)
+#define GIP_MOTOR_ALL (GIP_MOTOR_R | GIP_MOTOR_L | GIP_MOTOR_RT | GIP_MOTOR_LT)
 
-static constexpr uint8_t xboxone_pdp_init1[] = {
-    0x0a, 0x20, 0x00, 0x03, 0x00, 0x01, 0x14};
+static const u8 xboxone_power_on[] = {
+    GIP_CMD_POWER, GIP_OPT_INTERNAL, GIP_SEQ0, GIP_PL_LEN(1), GIP_PWR_ON};
 
-static constexpr uint8_t xboxone_pdp_init2[] = {
-    0x06, 0x20, 0x00, 0x02, 0x01, 0x00};
+static const u8 xboxone_s_init[] = {
+    GIP_CMD_POWER, GIP_OPT_INTERNAL, GIP_SEQ0, 0x0f, 0x06};
 
-static constexpr uint8_t xboxone_rumblebegin_init[] = {
-    0x09, 0x00, 0x00, 0x09, 0x00, 0x0F, 0x00, 0x00,
-    0x1D, 0x1D, 0xFF, 0x00, 0x00};
+static const u8 extra_input_packet_init[] = {
+    0x4d, 0x10, 0x01, 0x02, 0x07, 0x00};
 
-static constexpr uint8_t xboxone_rumbleend_init[] = {
-    0x09, 0x00, 0x00, 0x09, 0x00, 0x0F, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00};
+static const u8 xboxone_hori_ack_id[] = {
+    GIP_CMD_ACK, GIP_OPT_INTERNAL, GIP_SEQ0, GIP_PL_LEN(9),
+    0x00, GIP_CMD_IDENTIFY, GIP_OPT_INTERNAL, 0x3a, 0x00, 0x00, 0x00, 0x80, 0x00};
 
-struct VendorProductPacket
+static const u8 xboxone_pdp_led_on[] = {
+    GIP_CMD_LED, GIP_OPT_INTERNAL, GIP_SEQ0, GIP_PL_LEN(3), 0x00, GIP_LED_ON, 0x14};
+
+static const u8 xboxone_pdp_auth1[] = {
+    GIP_CMD_AUTHENTICATE, 0xa0, GIP_SEQ0, 0x00, 0x92, 0x02};
+
+static const u8 xboxone_pdp_auth2[] = {
+    GIP_CMD_AUTHENTICATE, GIP_OPT_INTERNAL, GIP_SEQ0, GIP_PL_LEN(2), 0x01, 0x00};
+
+static const u8 xboxone_rumblebegin_init[] = {
+    GIP_CMD_RUMBLE, 0x00, GIP_SEQ0, GIP_PL_LEN(9),
+    0x00, GIP_MOTOR_ALL, 0x00, 0x00, 0x1D, 0x1D, 0xFF, 0x00, 0x00};
+
+static const u8 xboxone_rumbleend_init[] = {
+    GIP_CMD_RUMBLE, 0x00, GIP_SEQ0, GIP_PL_LEN(9),
+    0x00, GIP_MOTOR_ALL, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+
+struct xboxone_init_packet
 {
-    uint16_t VendorID;
-    uint16_t ProductID;
-    const uint8_t *Packet;
-    uint8_t Length;
+    u16 idVendor;
+    u16 idProduct;
+    const u8 *data;
+    u8 len;
 };
 
-static constexpr VendorProductPacket init_packets[]{
-    {0x0e6f, 0x0165, xboxone_hori_init, sizeof(xboxone_hori_init)},
-    {0x0f0d, 0x0067, xboxone_hori_init, sizeof(xboxone_hori_init)},
+#define XBOXONE_INIT_PKT(_vid, _pid, _data) \
+    {                                       \
+        .idVendor = (_vid),                 \
+        .idProduct = (_pid),                \
+        .data = (_data),                    \
+        .len = sizeof(_data),               \
+    }
 
-    {0x0000, 0x0000, xboxone_test_init1, sizeof(xboxone_test_init1)},
-
-    {0x0000, 0x0000, xboxone_fw2015_init, sizeof(xboxone_fw2015_init)},
-    {0x0e6f, 0x0000, xboxone_pdp_init1, sizeof(xboxone_pdp_init1)},
-    {0x0e6f, 0x0000, xboxone_pdp_init2, sizeof(xboxone_pdp_init2)},
-    {0x24c6, 0x0000, xboxone_rumblebegin_init, sizeof(xboxone_rumblebegin_init)},
-    {0x24c6, 0x0000, xboxone_rumbleend_init, sizeof(xboxone_rumbleend_init)},
+static const struct xboxone_init_packet xboxone_init_packets[] = {
+    XBOXONE_INIT_PKT(0x0e6f, 0x0165, xboxone_hori_ack_id),
+    XBOXONE_INIT_PKT(0x0f0d, 0x0067, xboxone_hori_ack_id),
+    XBOXONE_INIT_PKT(0x0000, 0x0000, xboxone_power_on),
+    XBOXONE_INIT_PKT(0x045e, 0x02ea, xboxone_s_init),
+    XBOXONE_INIT_PKT(0x045e, 0x0b00, xboxone_s_init),
+    XBOXONE_INIT_PKT(0x045e, 0x0b00, extra_input_packet_init),
+    XBOXONE_INIT_PKT(0x0e6f, 0x0000, xboxone_pdp_led_on),
+    XBOXONE_INIT_PKT(0x0e6f, 0x0000, xboxone_pdp_auth1), // This one is not in the initial linux driver but it is needed for 0e6f:02de and 0e6f:0316 - We send it everytime, we will see if it break something
+    XBOXONE_INIT_PKT(0x0e6f, 0x0000, xboxone_pdp_auth2),
+    XBOXONE_INIT_PKT(0x24c6, 0x541a, xboxone_rumblebegin_init),
+    XBOXONE_INIT_PKT(0x24c6, 0x542a, xboxone_rumblebegin_init),
+    XBOXONE_INIT_PKT(0x24c6, 0x543a, xboxone_rumblebegin_init),
+    XBOXONE_INIT_PKT(0x24c6, 0x541a, xboxone_rumbleend_init),
+    XBOXONE_INIT_PKT(0x24c6, 0x542a, xboxone_rumbleend_init),
+    XBOXONE_INIT_PKT(0x24c6, 0x543a, xboxone_rumbleend_init),
 };
 
 XboxOneController::XboxOneController(std::unique_ptr<IUSBDevice> &&device, const ControllerConfig &config, std::unique_ptr<ILogger> &&logger)
@@ -79,11 +113,11 @@ ams::Result XboxOneController::ReadInput(NormalizedButtonData *normalData, uint1
     uint8_t input_bytes[64];
     size_t size = sizeof(input_bytes);
 
-    R_TRY(m_inPipe[0]->Read(input_bytes, &size, IUSBEndpoint::USB_MODE_BLOCKING));
+    R_TRY(m_inPipe[0]->Read(input_bytes, &size, UINT64_MAX));
 
     uint8_t type = input_bytes[0];
 
-    if (type == XBONEINPUT_BUTTON) // Button data
+    if (type == GIP_CMD_INPUT) // Button data
     {
         XboxOneButtonData *buttonData = reinterpret_cast<XboxOneButtonData *>(input_bytes);
 
@@ -100,12 +134,13 @@ ams::Result XboxOneController::ReadInput(NormalizedButtonData *normalData, uint1
             buttonData->button9,
             buttonData->button10,
             buttonData->button11,
-            buttonData->button12};
+            buttonData->button12,
+            m_ModePressed};
 
         *input_idx = 0;
 
-        normalData->triggers[0] = Normalize(GetConfig().triggerDeadzonePercent[0], buttonData->trigger_left, 0, 255);
-        normalData->triggers[1] = Normalize(GetConfig().triggerDeadzonePercent[1], buttonData->trigger_right, 0, 255);
+        normalData->triggers[0] = Normalize(GetConfig().triggerDeadzonePercent[0], buttonData->trigger_left, 0, 1023);
+        normalData->triggers[1] = Normalize(GetConfig().triggerDeadzonePercent[1], buttonData->trigger_right, 0, 1023);
 
         normalData->sticks[0].axis_x = Normalize(GetConfig().stickDeadzonePercent[0], buttonData->stick_left_x, -32768, 32767);
         normalData->sticks[0].axis_y = Normalize(GetConfig().stickDeadzonePercent[0], -buttonData->stick_left_y, -32768, 32767);
@@ -139,13 +174,15 @@ ams::Result XboxOneController::ReadInput(NormalizedButtonData *normalData, uint1
         normalData->buttons[ControllerButton::DPAD_DOWN] = buttonData->dpad_down;
         normalData->buttons[ControllerButton::DPAD_LEFT] = buttonData->dpad_left;
     }
-    else if (type == XBONEINPUT_GUIDEBUTTON) // Guide button Result
+    else if (type == GIP_CMD_VIRTUAL_KEY) // Guide button Result
     {
-        m_GuidePressed = input_bytes[4];
-        if (input_bytes[1] == 0x30)
-        {
-            R_TRY(WriteAckGuideReport(*input_idx, input_bytes[2]));
-        }
+        m_ModePressed = input_bytes[4];
+        LogPrint(LogLevelInfo, "Mode Button Pressed %d", input_bytes[4]);
+
+        if (input_bytes[1] == (GIP_OPT_ACK | GIP_OPT_INTERNAL))
+            R_TRY(WriteAckModeReport(*input_idx, input_bytes[2]));
+
+        R_RETURN(CONTROL_ERR_NOTHING_TODO);
     }
 
     R_SUCCEED();
@@ -155,26 +192,31 @@ ams::Result XboxOneController::SendInitBytes(uint16_t input_idx)
 {
     uint16_t vendor = m_device->GetVendor();
     uint16_t product = m_device->GetProduct();
-    for (int i = 0; i != (sizeof(init_packets) / sizeof(VendorProductPacket)); ++i)
+    for (size_t i = 0; i < sizeof(xboxone_init_packets) / sizeof(struct xboxone_init_packet); i++)
     {
-        if (init_packets[i].VendorID != 0 && init_packets[i].VendorID != vendor)
+        if (xboxone_init_packets[i].idVendor != 0 && xboxone_init_packets[i].idVendor != vendor)
             continue;
-        if (init_packets[i].ProductID != 0 && init_packets[i].ProductID != product)
+        if (xboxone_init_packets[i].idProduct != 0 && xboxone_init_packets[i].idProduct != product)
             continue;
 
-        LogPrint(LogLevelDebug, "XboxOneController: Sending init packet (Id=%d, Length=%d)", i, init_packets[i].Length);
-        R_TRY(m_outPipe[input_idx]->Write(init_packets[i].Packet, init_packets[i].Length));
+        R_TRY(m_outPipe[input_idx]->Write(xboxone_init_packets[i].data, xboxone_init_packets[i].len));
+
+        // Do we need to flush read ?
+        uint8_t buffer[256];
+        size_t size = sizeof(buffer);
+        m_inPipe[0]->Read(buffer, &size, 250 * 1000); // 250ms timeout
     }
 
     R_SUCCEED();
 }
 
-ams::Result XboxOneController::WriteAckGuideReport(uint16_t input_idx, uint8_t sequence)
+ams::Result XboxOneController::WriteAckModeReport(uint16_t input_idx, uint8_t sequence)
 {
     uint8_t report[] = {
-        0x01, 0x20,
+        GIP_CMD_ACK, GIP_OPT_INTERNAL,
         sequence,
-        0x09, 0x00, 0x07, 0x20, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00};
+        GIP_PL_LEN(9), 0x00, GIP_CMD_VIRTUAL_KEY, GIP_OPT_INTERNAL, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00};
+
     R_RETURN(m_outPipe[input_idx]->Write(report, sizeof(report)));
 }
 

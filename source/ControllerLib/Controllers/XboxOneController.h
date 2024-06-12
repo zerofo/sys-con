@@ -12,8 +12,8 @@ struct XboxOneButtonData
     uint8_t const_0;
     uint16_t id;
 
-    bool button5 : 1;
-    bool button6 : 1;
+    bool button5 : 1; // sync
+    bool button6 : 1; // dummy - Always 0
     bool button7 : 1;
     bool button8 : 1;
 
@@ -41,20 +41,12 @@ struct XboxOneButtonData
     int16_t stick_right_y;
 };
 
-enum XboxOneInputPacketType : uint8_t
-{
-    XBONEINPUT_BUTTON = 0x20,
-    XBONEINPUT_HEARTBEAT = 0x03,
-    XBONEINPUT_GUIDEBUTTON = 0x07,
-    XBONEINPUT_WAITCONNECT = 0x02,
-};
-
 class XboxOneController : public BaseController
 {
 private:
-    bool m_GuidePressed{false};
+    bool m_ModePressed = false;
     ams::Result SendInitBytes(uint16_t input_idx);
-    ams::Result WriteAckGuideReport(uint16_t input_idx, uint8_t sequence);
+    ams::Result WriteAckModeReport(uint16_t input_idx, uint8_t sequence);
 
 public:
     XboxOneController(std::unique_ptr<IUSBDevice> &&device, const ControllerConfig &config, std::unique_ptr<ILogger> &&logger);
