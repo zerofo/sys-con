@@ -68,7 +68,7 @@ ams::Result Xbox360Controller::ReadInput(NormalizedButtonData *normalData, uint1
     uint16_t controller_idx = m_current_controller_idx;
     m_current_controller_idx = (m_current_controller_idx + 1) % GetInputCount();
 
-    R_TRY(m_inPipe[controller_idx]->Read(input_bytes, &size, IUSBEndpoint::USB_MODE_NON_BLOCKING));
+    R_TRY(m_inPipe[controller_idx]->Read(input_bytes, &size, 1 /*TimoutUs*/));
 
     Xbox360ButtonData *buttonData = reinterpret_cast<Xbox360ButtonData *>(input_bytes);
 

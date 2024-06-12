@@ -14,7 +14,7 @@ ams::Result XboxController::ReadInput(NormalizedButtonData *normalData, uint16_t
     uint8_t input_bytes[64];
     size_t size = sizeof(input_bytes);
 
-    R_TRY(m_inPipe[0]->Read(input_bytes, &size, IUSBEndpoint::USB_MODE_BLOCKING));
+    R_TRY(m_inPipe[0]->Read(input_bytes, &size, UINT64_MAX));
 
     XboxButtonData *buttonData = reinterpret_cast<XboxButtonData *>(input_bytes);
 

@@ -38,7 +38,7 @@ ams::Result SwitchUSBEndpoint::Write(const uint8_t *inBuffer, size_t bufferSize)
     memcpy(m_usb_buffer_out, inBuffer, bufferSize);
 
     if (GetDirection() == USB_ENDPOINT_IN)
-        ::syscon::logger::LogError("SwitchUSBEndpoint::Write: Trying to write on an IN endpoint!");
+        ::syscon::logger::LogError("SwitchUSBEndpoint:: Trying to write an INPUT endpoint!");
 
     ::syscon::logger::LogTrace("SwitchUSBEndpoint: Write %d bytes", bufferSize);
     ::syscon::logger::LogBuffer(LOG_LEVEL_TRACE, m_usb_buffer_out, bufferSize);
@@ -50,38 +50,53 @@ ams::Result SwitchUSBEndpoint::Write(const uint8_t *inBuffer, size_t bufferSize)
     R_SUCCEED();
 }
 
-ams::Result SwitchUSBEndpoint::Read(uint8_t *outBuffer, size_t *bufferSizeInOut, Mode mode)
+ams::Result SwitchUSBEndpoint::Read(uint8_t *outBuffer, size_t *bufferSizeInOut, u64 aTimeoutUs)
 {
     if (GetDirection() == USB_ENDPOINT_OUT)
-        ::syscon::logger::LogError("SwitchUSBEndpoint::Read: Trying to read on an OUT endpoint!");
+        ::syscon::logger::LogError("SwitchUSBEndpoint: Trying to read an OUTPUT endpoint!");
 
-    if (mode & IUSBEndpoint::USB_MODE_BLOCKING)
+    if (aTimeoutUs == UINT64_MAX)
     {
         u32 transferredSize;
-        R_TRY(usbHsEpPostBuffer(&m_epSession, m_usb_buffer_in, *bufferSizeInOut, &transferredSize));
+
+        ams::Result rc = usbHsEpPostBuffer(&m_epSession, m_usb_buffer_in, *bufferSizeInOut, &transferredSize);
+        if (R_FAILED(rc))
+        {
+            ::syscon::logger::LogError("SwitchUSBEndpoint: Read failed: %08X", rc);
+            R_RETURN(rc);
+        }
 
         memcpy(outBuffer, m_usb_buffer_in, transferredSize);
         *bufferSizeInOut = transferredSize;
 
         if (transferredSize == 0)
+        {
+            ::syscon::logger::LogError("SwitchUSBEndpoint: Read returned no data !");
             R_RETURN(CONTROL_ERR_NO_DATA_AVAILABLE);
+        }
 
         ::syscon::logger::LogTrace("SwitchUSBEndpoint: Read %d bytes", *bufferSizeInOut);
         ::syscon::logger::LogBuffer(LOG_LEVEL_TRACE, outBuffer, *bufferSizeInOut);
 
         R_SUCCEED()
     }
-
-    if (mode & IUSBEndpoint::USB_MODE_NON_BLOCKING)
+    else
     {
         u32 count = 0;
         UsbHsXferReport report;
         u32 tmpXcferId = 0;
 
         if (m_xferIdRead == 0)
-            R_TRY(usbHsEpPostBufferAsync(&m_epSession, m_usb_buffer_in, *bufferSizeInOut, 0, &m_xferIdRead))
+        {
+            ams::Result rc = usbHsEpPostBufferAsync(&m_epSession, m_usb_buffer_in, *bufferSizeInOut, 0, &m_xferIdRead);
+            if (R_FAILED(rc))
+            {
+                ::syscon::logger::LogError("SwitchUSBEndpoint: ReadAsync failed: %08X", rc);
+                R_RETURN(rc);
+            }
+        }
 
-        R_TRY(eventWait(usbHsEpGetXferEvent(&m_epSession), 1000)); // Wait 1uS (Indeed it's a blocking call, but it's the only way to get the data asynchronously.)
+        R_TRY(eventWait(usbHsEpGetXferEvent(&m_epSession), aTimeoutUs * 1000));
         eventClear(usbHsEpGetXferEvent(&m_epSession));
 
         tmpXcferId = m_xferIdRead;
@@ -92,7 +107,7 @@ ams::Result SwitchUSBEndpoint::Read(uint8_t *outBuffer, size_t *bufferSizeInOut,
 
         if ((count <= 0) || (tmpXcferId != report.xferId))
         {
-            ::syscon::logger::LogError("SwitchUSBEndpoint::Read failed (Invalid XFerId or NoData returned - Count: %d, xferId %d/%d)", count, tmpXcferId, report.xferId);
+            ::syscon::logger::LogError("SwitchUSBEndpoint: ReadAsync failed (Invalid XFerId or NoData returned - Count: %d, xferId %d/%d)", count, tmpXcferId, report.xferId);
             R_RETURN(CONTROL_ERR_NO_DATA_AVAILABLE);
         }
 
@@ -102,13 +117,11 @@ ams::Result SwitchUSBEndpoint::Read(uint8_t *outBuffer, size_t *bufferSizeInOut,
         if (report.transferredSize == 0)
             R_RETURN(CONTROL_ERR_NO_DATA_AVAILABLE);
 
-        ::syscon::logger::LogTrace("SwitchUSBEndpoint: Read %d bytes (Async)", *bufferSizeInOut);
+        ::syscon::logger::LogTrace("SwitchUSBEndpoint: ReadAsync %d bytes", *bufferSizeInOut);
         ::syscon::logger::LogBuffer(LOG_LEVEL_TRACE, outBuffer, *bufferSizeInOut);
 
         R_RETURN(report.res);
     }
-
-    ::syscon::logger::LogError("SwitchUSBEndpoint::Read: Invalid mode provided: 0x%02X", mode);
     R_RETURN(CONTROL_ERR_INVALID_ARGUMENT);
 }
 
