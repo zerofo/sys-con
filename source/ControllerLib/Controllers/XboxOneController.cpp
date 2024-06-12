@@ -214,6 +214,13 @@ ams::Result XboxOneController::SendInitBytes(uint16_t input_idx)
             continue;
 
         R_TRY(m_outPipe[input_idx]->Write(xboxone_init_packets[i].data, xboxone_init_packets[i].len));
+
+        /*
+        // Keep this part of the code, it seems not needed to read while sending init bytes however it can be useful for debugging
+        uint8_t buffer[256];
+        size_t size = sizeof(buffer);
+        m_inPipe[input_idx]->Read(buffer, &size, 1000 * 1000); // 1000ms timeout
+        */
     }
 
     R_SUCCEED();
