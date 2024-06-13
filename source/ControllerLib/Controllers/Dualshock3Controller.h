@@ -49,18 +49,18 @@ struct Dualshock3ButtonData
     bool button4 : 1; // square
 
     // byte4
-    bool guide : 1;
+    bool button13 : 1;
     uint8_t pad1 : 7;
     // byte5
     uint8_t pad2;
 
     // byte6-7
-    uint8_t stick_left_x;
-    uint8_t stick_left_y;
+    uint8_t X;
+    uint8_t Y;
 
     // byte8-9
-    uint8_t stick_right_x;
-    uint8_t stick_right_y;
+    uint8_t Z;
+    uint8_t Rz;
 
     // byte10-13
     uint8_t pad3[4];
@@ -72,8 +72,8 @@ struct Dualshock3ButtonData
     uint8_t dpad_left_pressure;
 
     // byte18-19
-    uint8_t trigger_left_pressure;
-    uint8_t trigger_right_pressure;
+    uint8_t Rx;
+    uint8_t Ry;
 
     // byte20-21
     uint8_t bumper_left_pressure;
@@ -121,5 +121,5 @@ public:
     virtual ams::Result Initialize() override;
     virtual ams::Result OpenInterfaces() override;
 
-    ams::Result ReadInput(NormalizedButtonData *normalData, uint16_t *input_idx);
+    ams::Result ReadInput(RawInputData *rawData, uint16_t *input_idx);
 };

@@ -13,9 +13,9 @@ struct XboxOneButtonData
     uint16_t id;
 
     bool button5 : 1; // sync
-    bool button6 : 1; // dummy - Always 0
+    bool dummy : 1;   // dummy - Always 0
+    bool button6 : 1;
     bool button7 : 1;
-    bool button8 : 1;
 
     bool button1 : 1;
     bool button2 : 1;
@@ -27,10 +27,10 @@ struct XboxOneButtonData
     bool dpad_left : 1;
     bool dpad_right : 1;
 
+    bool button8 : 1;
     bool button9 : 1;
     bool button10 : 1;
     bool button11 : 1;
-    bool button12 : 1;
 
     uint16_t trigger_left;
     uint16_t trigger_right;
@@ -44,7 +44,7 @@ struct XboxOneButtonData
 class XboxOneController : public BaseController
 {
 private:
-    bool m_button13 = false;
+    RawInputData m_rawInput;
     ams::Result SendInitBytes(uint16_t input_idx);
     ams::Result WriteAckModeReport(uint16_t input_idx, uint8_t sequence);
 
@@ -54,7 +54,7 @@ public:
 
     virtual ams::Result Initialize() override;
 
-    virtual ams::Result ReadInput(NormalizedButtonData *normalData, uint16_t *input_idx) override;
+    virtual ams::Result ReadInput(RawInputData *rawData, uint16_t *input_idx) override;
 
     bool Support(ControllerFeature feature) override;
 

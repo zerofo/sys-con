@@ -3,6 +3,29 @@
 #include "IController.h"
 #include <vector>
 
+class RawInputData
+{
+public:
+    RawInputData()
+    {
+        memset(buttons, 0, sizeof(buttons));
+    }
+
+    bool buttons[MAX_CONTROLLER_BUTTONS];
+
+    float Rx = 0;
+    float Ry = 0;
+    float X = 0;
+    float Y = 0;
+    float Z = 0;
+    float Rz = 0;
+
+    bool dpad_up = false;
+    bool dpad_right = false;
+    bool dpad_down = false;
+    bool dpad_left = false;
+};
+
 class BaseController : public IController
 {
 protected:
@@ -24,10 +47,13 @@ public:
 
     virtual uint16_t GetInputCount() override;
 
-    virtual ams::Result ReadInput(NormalizedButtonData *normalData, uint16_t *input_idx) = 0;
+    ams::Result ReadInput(NormalizedButtonData *normalData, uint16_t *input_idx) override;
+
+    virtual ams::Result ReadInput(RawInputData *rawData, uint16_t *input_idx) = 0;
 
     ams::Result SetRumble(uint16_t input_idx, float amp_high, float amp_low) override;
 
     // Helper functions
-    float Normalize(uint8_t deadzonePercent, int32_t value, int32_t min, int32_t max);
+    float Normalize(int32_t value, int32_t min, int32_t max);
+    float ApplyDeadzone(uint8_t deadzonePercent, float value);
 };

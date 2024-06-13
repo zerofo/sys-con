@@ -60,7 +60,7 @@ void Xbox360Controller::CloseInterfaces()
     BaseController::CloseInterfaces();
 }
 
-ams::Result Xbox360Controller::ReadInput(NormalizedButtonData *normalData, uint16_t *input_idx)
+ams::Result Xbox360Controller::ReadInput(RawInputData *rawData, uint16_t *input_idx)
 {
     uint8_t input_bytes[64];
     size_t size = sizeof(input_bytes);
@@ -117,67 +117,31 @@ ams::Result Xbox360Controller::ReadInput(NormalizedButtonData *normalData, uint1
 
     if (buttonData->type == XBOX360INPUT_BUTTON) // Button data
     {
-        bool buttons_mapping[MAX_CONTROLLER_BUTTONS]{
-            false,
-            buttonData->button1,
-            buttonData->button2,
-            buttonData->button3,
-            buttonData->button4,
-            buttonData->button5,
-            buttonData->button6,
-            buttonData->button7,
-            buttonData->button8,
-            buttonData->button9,
-            buttonData->button10,
-            buttonData->button11};
 
-        LogPrint(LogLevelDebug, "Xbox360Controller DATA: X=%d, Y=%d, Z=%d, Rz=%d, B1=%d, B2=%d, B3=%d, B4=%d, B5=%d, B6=%d, B7=%d, B8=%d, B9=%d, B10=%d",
-                 buttonData->X, buttonData->Y, buttonData->Z, buttonData->Rz,
-                 buttons_mapping[1],
-                 buttons_mapping[2] ? 1 : 0,
-                 buttons_mapping[3] ? 1 : 0,
-                 buttons_mapping[4] ? 1 : 0,
-                 buttons_mapping[5] ? 1 : 0,
-                 buttons_mapping[6] ? 1 : 0,
-                 buttons_mapping[7] ? 1 : 0,
-                 buttons_mapping[8] ? 1 : 0,
-                 buttons_mapping[9] ? 1 : 0,
-                 buttons_mapping[10] ? 1 : 0);
+        rawData->buttons[1] = buttonData->button1;
+        rawData->buttons[2] = buttonData->button2;
+        rawData->buttons[3] = buttonData->button3;
+        rawData->buttons[4] = buttonData->button4;
+        rawData->buttons[5] = buttonData->button5;
+        rawData->buttons[6] = buttonData->button6;
+        rawData->buttons[7] = buttonData->button7;
+        rawData->buttons[8] = buttonData->button8;
+        rawData->buttons[9] = buttonData->button9;
+        rawData->buttons[10] = buttonData->button10;
+        rawData->buttons[11] = buttonData->button11;
 
-        normalData->triggers[0] = Normalize(GetConfig().triggerDeadzonePercent[0], buttonData->Z, 0, 255);
-        normalData->triggers[1] = Normalize(GetConfig().triggerDeadzonePercent[1], buttonData->Rz, 0, 255);
+        rawData->Rx = Normalize(buttonData->Rx, 0, 255);
+        rawData->Ry = Normalize(buttonData->Ry, 0, 255);
 
-        normalData->sticks[0].axis_x = Normalize(GetConfig().stickDeadzonePercent[0], buttonData->X, -32768, 32767);
-        normalData->sticks[0].axis_y = Normalize(GetConfig().stickDeadzonePercent[0], -buttonData->Y, -32768, 32767);
-        normalData->sticks[1].axis_x = Normalize(GetConfig().stickDeadzonePercent[1], buttonData->Rx, -32768, 32767);
-        normalData->sticks[1].axis_y = Normalize(GetConfig().stickDeadzonePercent[1], -buttonData->Ry, -32768, 32767);
+        rawData->X = Normalize(buttonData->X, -32768, 32767);
+        rawData->Y = Normalize(-buttonData->Y, -32768, 32767);
+        rawData->Z = Normalize(buttonData->Z, -32768, 32767);
+        rawData->Rz = Normalize(-buttonData->Rz, -32768, 32767);
 
-        normalData->buttons[ControllerButton::X] = buttons_mapping[GetConfig().buttons_pin[ControllerButton::X]] ? true : false;
-        normalData->buttons[ControllerButton::A] = buttons_mapping[GetConfig().buttons_pin[ControllerButton::A]] ? true : false;
-        normalData->buttons[ControllerButton::B] = buttons_mapping[GetConfig().buttons_pin[ControllerButton::B]] ? true : false;
-        normalData->buttons[ControllerButton::Y] = buttons_mapping[GetConfig().buttons_pin[ControllerButton::Y]] ? true : false;
-        normalData->buttons[ControllerButton::LSTICK_CLICK] = buttons_mapping[GetConfig().buttons_pin[ControllerButton::LSTICK_CLICK]] ? true : false;
-        normalData->buttons[ControllerButton::RSTICK_CLICK] = buttons_mapping[GetConfig().buttons_pin[ControllerButton::RSTICK_CLICK]] ? true : false;
-        normalData->buttons[ControllerButton::L] = buttons_mapping[GetConfig().buttons_pin[ControllerButton::L]] ? true : false;
-        normalData->buttons[ControllerButton::R] = buttons_mapping[GetConfig().buttons_pin[ControllerButton::R]] ? true : false;
-
-        normalData->buttons[ControllerButton::ZL] = buttons_mapping[GetConfig().buttons_pin[ControllerButton::ZL]] ? true : false;
-        normalData->buttons[ControllerButton::ZR] = buttons_mapping[GetConfig().buttons_pin[ControllerButton::ZR]] ? true : false;
-
-        if (GetConfig().buttons_pin[ControllerButton::ZL] == 0)
-            normalData->buttons[ControllerButton::ZL] = normalData->triggers[0] > 0;
-        if (GetConfig().buttons_pin[ControllerButton::ZR] == 0)
-            normalData->buttons[ControllerButton::ZR] = normalData->triggers[1] > 0;
-
-        normalData->buttons[ControllerButton::MINUS] = buttons_mapping[GetConfig().buttons_pin[ControllerButton::MINUS]] ? true : false;
-        normalData->buttons[ControllerButton::PLUS] = buttons_mapping[GetConfig().buttons_pin[ControllerButton::PLUS]] ? true : false;
-        normalData->buttons[ControllerButton::CAPTURE] = buttons_mapping[GetConfig().buttons_pin[ControllerButton::CAPTURE]] ? true : false;
-        normalData->buttons[ControllerButton::HOME] = buttons_mapping[GetConfig().buttons_pin[ControllerButton::HOME]] ? true : false;
-
-        normalData->buttons[ControllerButton::DPAD_UP] = buttonData->dpad_up;
-        normalData->buttons[ControllerButton::DPAD_RIGHT] = buttonData->dpad_right;
-        normalData->buttons[ControllerButton::DPAD_DOWN] = buttonData->dpad_down;
-        normalData->buttons[ControllerButton::DPAD_LEFT] = buttonData->dpad_left;
+        rawData->dpad_up = buttonData->dpad_up;
+        rawData->dpad_right = buttonData->dpad_right;
+        rawData->dpad_down = buttonData->dpad_down;
+        rawData->dpad_left = buttonData->dpad_left;
 
         R_SUCCEED();
     }

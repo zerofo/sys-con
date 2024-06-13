@@ -100,7 +100,80 @@ ams::Result BaseController::SetRumble(uint16_t input_idx, float amp_high, float 
     return 9;
 }
 
-float BaseController::Normalize(uint8_t deadzonePercent, int32_t value, int32_t min, int32_t max)
+ams::Result BaseController::ReadInput(NormalizedButtonData *normalData, uint16_t *input_idx)
+{
+    RawInputData rawData;
+
+    R_TRY(ReadInput(&rawData, input_idx));
+
+    LogPrint(LogLevelDebug, "BaseController DATA: X=%d, Y=%d, Z=%d, Rz=%d, B1=%d, B2=%d, B3=%d, B4=%d, B5=%d, B6=%d, B7=%d, B8=%d, B9=%d, B10=%d",
+             rawData.X, rawData.Y, rawData.Z, rawData.Rz,
+             rawData.buttons[1],
+             rawData.buttons[2] ? 1 : 0,
+             rawData.buttons[3] ? 1 : 0,
+             rawData.buttons[4] ? 1 : 0,
+             rawData.buttons[5] ? 1 : 0,
+             rawData.buttons[6] ? 1 : 0,
+             rawData.buttons[7] ? 1 : 0,
+             rawData.buttons[8] ? 1 : 0,
+             rawData.buttons[9] ? 1 : 0,
+             rawData.buttons[10] ? 1 : 0);
+
+    normalData->triggers[0] = ApplyDeadzone(GetConfig().triggerDeadzonePercent[0], rawData.Rx);
+    normalData->triggers[1] = ApplyDeadzone(GetConfig().triggerDeadzonePercent[1], rawData.Ry);
+
+    normalData->sticks[0].axis_x = ApplyDeadzone(GetConfig().stickDeadzonePercent[0], rawData.X);
+    normalData->sticks[0].axis_y = ApplyDeadzone(GetConfig().stickDeadzonePercent[0], rawData.Y);
+    normalData->sticks[1].axis_x = ApplyDeadzone(GetConfig().stickDeadzonePercent[1], rawData.Z);
+    normalData->sticks[1].axis_y = ApplyDeadzone(GetConfig().stickDeadzonePercent[1], rawData.Rz);
+
+    normalData->buttons[ControllerButton::X] = rawData.buttons[GetConfig().buttons_pin[ControllerButton::X]] ? true : false;
+    normalData->buttons[ControllerButton::A] = rawData.buttons[GetConfig().buttons_pin[ControllerButton::A]] ? true : false;
+    normalData->buttons[ControllerButton::B] = rawData.buttons[GetConfig().buttons_pin[ControllerButton::B]] ? true : false;
+    normalData->buttons[ControllerButton::Y] = rawData.buttons[GetConfig().buttons_pin[ControllerButton::Y]] ? true : false;
+    normalData->buttons[ControllerButton::LSTICK_CLICK] = rawData.buttons[GetConfig().buttons_pin[ControllerButton::LSTICK_CLICK]] ? true : false;
+    normalData->buttons[ControllerButton::RSTICK_CLICK] = rawData.buttons[GetConfig().buttons_pin[ControllerButton::RSTICK_CLICK]] ? true : false;
+    normalData->buttons[ControllerButton::L] = rawData.buttons[GetConfig().buttons_pin[ControllerButton::L]] ? true : false;
+    normalData->buttons[ControllerButton::R] = rawData.buttons[GetConfig().buttons_pin[ControllerButton::R]] ? true : false;
+
+    normalData->buttons[ControllerButton::ZL] = rawData.buttons[GetConfig().buttons_pin[ControllerButton::ZL]] ? true : false;
+    normalData->buttons[ControllerButton::ZR] = rawData.buttons[GetConfig().buttons_pin[ControllerButton::ZR]] ? true : false;
+
+    if (GetConfig().buttons_pin[ControllerButton::ZL] == 0)
+        normalData->buttons[ControllerButton::ZL] = normalData->triggers[0] > 0;
+
+    if (GetConfig().buttons_pin[ControllerButton::ZR] == 0)
+        normalData->buttons[ControllerButton::ZR] = normalData->triggers[1] > 0;
+
+    normalData->buttons[ControllerButton::MINUS] = rawData.buttons[GetConfig().buttons_pin[ControllerButton::MINUS]] ? true : false;
+    normalData->buttons[ControllerButton::PLUS] = rawData.buttons[GetConfig().buttons_pin[ControllerButton::PLUS]] ? true : false;
+    normalData->buttons[ControllerButton::CAPTURE] = rawData.buttons[GetConfig().buttons_pin[ControllerButton::CAPTURE]] ? true : false;
+    normalData->buttons[ControllerButton::HOME] = rawData.buttons[GetConfig().buttons_pin[ControllerButton::HOME]] ? true : false;
+
+    normalData->buttons[ControllerButton::DPAD_UP] = rawData.dpad_up;
+    normalData->buttons[ControllerButton::DPAD_DOWN] = rawData.dpad_down;
+    normalData->buttons[ControllerButton::DPAD_RIGHT] = rawData.dpad_right;
+    normalData->buttons[ControllerButton::DPAD_LEFT] = rawData.dpad_left;
+
+    R_SUCCEED();
+}
+
+float BaseController::ApplyDeadzone(uint8_t deadzonePercent, float value)
+{
+    float deadzone = 1.0 * deadzonePercent / 100;
+
+    if (std::abs(value) < deadzone)
+        return 0.0f;
+
+    if (value > 0)
+        value = (value - deadzone) / (1.0 - deadzone);
+    else
+        value = (value + deadzone) / (1.0 - deadzone);
+
+    return value;
+}
+
+float BaseController::Normalize(int32_t value, int32_t min, int32_t max)
 {
     float range = (max - min) / 2;
     float offset = range;
@@ -108,13 +181,7 @@ float BaseController::Normalize(uint8_t deadzonePercent, int32_t value, int32_t 
     if (range == max)
         offset = 0;
 
-    float deadzone = range * deadzonePercent / 100;
-
-    int32_t value_tmp = value - offset;
-    if (std::abs(value_tmp) < deadzone)
-        return 0.0f;
-
-    float ret = value_tmp / range;
+    float ret = (value - offset) / range;
 
     if (ret > 1.0f)
         ret = 1.0f;

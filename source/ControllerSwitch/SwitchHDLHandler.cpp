@@ -224,8 +224,9 @@ ams::Result SwitchHDLHandler::UpdateHdlState(const NormalizedButtonData &data, u
 void SwitchHDLHandler::UpdateInput()
 {
     uint16_t input_idx = 0;
+    NormalizedButtonData buttonData = {0};
 
-    ams::Result read_rc = m_controller->ReadInput(&m_buttonData, &input_idx);
+    ams::Result read_rc = m_controller->ReadInput(&buttonData, &input_idx);
 
     /*
         Note: We must not return here if readInput fail, because it might have change the ControllerConnected state.
@@ -245,7 +246,7 @@ void SwitchHDLHandler::UpdateInput()
     Attach(input_idx);
 
     // We get the button inputs from the input packet and update the state of our controller
-    UpdateHdlState(m_buttonData, input_idx);
+    UpdateHdlState(buttonData, input_idx);
 }
 
 void SwitchHDLHandler::UpdateOutput()

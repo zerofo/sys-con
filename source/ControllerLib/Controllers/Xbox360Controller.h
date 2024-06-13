@@ -34,13 +34,13 @@ struct Xbox360ButtonData
     bool button3 : 1;
     bool button4 : 1;
 
-    uint8_t Z;
-    uint8_t Rz;
+    uint8_t Rx;
+    uint8_t Ry;
 
     int16_t X;
     int16_t Y;
-    int16_t Rx;
-    int16_t Ry;
+    int16_t Z;
+    int16_t Rz;
 };
 
 enum Xbox360InputPacketType : uint8_t
@@ -91,7 +91,7 @@ public:
     ams::Result OpenInterfaces() override;
     void CloseInterfaces() override;
 
-    ams::Result ReadInput(NormalizedButtonData *normalData, uint16_t *input_idx) override;
+    ams::Result ReadInput(RawInputData *rawData, uint16_t *input_idx) override;
 
     bool Support(ControllerFeature feature) override;
 

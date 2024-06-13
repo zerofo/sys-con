@@ -114,7 +114,7 @@ ams::Result XboxOneController::Initialize()
     R_SUCCEED();
 }
 
-ams::Result XboxOneController::ReadInput(NormalizedButtonData *normalData, uint16_t *input_idx)
+ams::Result XboxOneController::ReadInput(RawInputData *rawData, uint16_t *input_idx)
 {
     uint8_t input_bytes[64];
     size_t size = sizeof(input_bytes);
@@ -129,74 +129,45 @@ ams::Result XboxOneController::ReadInput(NormalizedButtonData *normalData, uint1
     {
         XboxOneButtonData *buttonData = reinterpret_cast<XboxOneButtonData *>(input_bytes);
 
-        bool buttons_mapping[MAX_CONTROLLER_BUTTONS]{
-            false,
-            buttonData->button1,
-            buttonData->button2,
-            buttonData->button3,
-            buttonData->button4,
-            buttonData->button5,
-            buttonData->button6,
-            buttonData->button7,
-            buttonData->button8,
-            buttonData->button9,
-            buttonData->button10,
-            buttonData->button11,
-            buttonData->button12,
-            m_button13};
+        m_rawInput.buttons[1] = buttonData->button1;
+        m_rawInput.buttons[2] = buttonData->button2;
+        m_rawInput.buttons[3] = buttonData->button3;
+        m_rawInput.buttons[4] = buttonData->button4;
+        m_rawInput.buttons[5] = buttonData->button5;
+        m_rawInput.buttons[6] = buttonData->button6;
+        m_rawInput.buttons[7] = buttonData->button7;
+        m_rawInput.buttons[8] = buttonData->button8;
+        m_rawInput.buttons[9] = buttonData->button9;
+        m_rawInput.buttons[10] = buttonData->button10;
+        m_rawInput.buttons[11] = buttonData->button11;
 
-        normalData->triggers[0] = Normalize(GetConfig().triggerDeadzonePercent[0], buttonData->trigger_left, 0, 1023);
-        normalData->triggers[1] = Normalize(GetConfig().triggerDeadzonePercent[1], buttonData->trigger_right, 0, 1023);
+        m_rawInput.Rx = Normalize(buttonData->trigger_left, 0, 1023);
+        m_rawInput.Ry = Normalize(buttonData->trigger_right, 0, 1023);
 
-        normalData->sticks[0].axis_x = Normalize(GetConfig().stickDeadzonePercent[0], buttonData->stick_left_x, -32768, 32767);
-        normalData->sticks[0].axis_y = Normalize(GetConfig().stickDeadzonePercent[0], -buttonData->stick_left_y, -32768, 32767);
-        normalData->sticks[1].axis_x = Normalize(GetConfig().stickDeadzonePercent[1], buttonData->stick_right_x, -32768, 32767);
-        normalData->sticks[1].axis_y = Normalize(GetConfig().stickDeadzonePercent[1], -buttonData->stick_right_y, -32768, 32767);
+        m_rawInput.X = Normalize(buttonData->stick_left_x, -32768, 32767);
+        m_rawInput.Y = Normalize(-buttonData->stick_left_y, -32768, 32767);
+        m_rawInput.Z = Normalize(buttonData->stick_right_x, -32768, 32767);
+        m_rawInput.Rz = Normalize(-buttonData->stick_right_y, -32768, 32767);
 
-        normalData->buttons[ControllerButton::X] = buttons_mapping[GetConfig().buttons_pin[ControllerButton::X]] ? true : false;
-        normalData->buttons[ControllerButton::A] = buttons_mapping[GetConfig().buttons_pin[ControllerButton::A]] ? true : false;
-        normalData->buttons[ControllerButton::B] = buttons_mapping[GetConfig().buttons_pin[ControllerButton::B]] ? true : false;
-        normalData->buttons[ControllerButton::Y] = buttons_mapping[GetConfig().buttons_pin[ControllerButton::Y]] ? true : false;
-        normalData->buttons[ControllerButton::LSTICK_CLICK] = buttons_mapping[GetConfig().buttons_pin[ControllerButton::LSTICK_CLICK]] ? true : false;
-        normalData->buttons[ControllerButton::RSTICK_CLICK] = buttons_mapping[GetConfig().buttons_pin[ControllerButton::RSTICK_CLICK]] ? true : false;
-        normalData->buttons[ControllerButton::L] = buttons_mapping[GetConfig().buttons_pin[ControllerButton::L]] ? true : false;
-        normalData->buttons[ControllerButton::R] = buttons_mapping[GetConfig().buttons_pin[ControllerButton::R]] ? true : false;
+        m_rawInput.dpad_up = buttonData->dpad_up;
+        m_rawInput.dpad_right = buttonData->dpad_right;
+        m_rawInput.dpad_down = buttonData->dpad_down;
+        m_rawInput.dpad_left = buttonData->dpad_left;
 
-        normalData->buttons[ControllerButton::ZL] = buttons_mapping[GetConfig().buttons_pin[ControllerButton::ZL]] ? true : false;
-        normalData->buttons[ControllerButton::ZR] = buttons_mapping[GetConfig().buttons_pin[ControllerButton::ZR]] ? true : false;
-
-        if (GetConfig().buttons_pin[ControllerButton::ZL] == 0)
-            normalData->buttons[ControllerButton::ZL] = normalData->triggers[0] > 0;
-        if (GetConfig().buttons_pin[ControllerButton::ZR] == 0)
-            normalData->buttons[ControllerButton::ZR] = normalData->triggers[1] > 0;
-
-        normalData->buttons[ControllerButton::MINUS] = buttons_mapping[GetConfig().buttons_pin[ControllerButton::MINUS]] ? true : false;
-        normalData->buttons[ControllerButton::PLUS] = buttons_mapping[GetConfig().buttons_pin[ControllerButton::PLUS]] ? true : false;
-        normalData->buttons[ControllerButton::CAPTURE] = buttons_mapping[GetConfig().buttons_pin[ControllerButton::CAPTURE]] ? true : false;
-        normalData->buttons[ControllerButton::HOME] = buttons_mapping[GetConfig().buttons_pin[ControllerButton::HOME]] ? true : false;
-
-        normalData->buttons[ControllerButton::DPAD_UP] = buttonData->dpad_up;
-        normalData->buttons[ControllerButton::DPAD_RIGHT] = buttonData->dpad_right;
-        normalData->buttons[ControllerButton::DPAD_DOWN] = buttonData->dpad_down;
-        normalData->buttons[ControllerButton::DPAD_LEFT] = buttonData->dpad_left;
+        *rawData = m_rawInput;
 
         R_SUCCEED();
     }
     else if (type == GIP_CMD_VIRTUAL_KEY) // Mode button (XBOX center button)
     {
-        m_button13 = input_bytes[4];
+        m_rawInput.buttons[12] = input_bytes[4];
 
         if (input_bytes[1] == (GIP_OPT_ACK | GIP_OPT_INTERNAL))
             R_TRY(WriteAckModeReport(*input_idx, input_bytes[2]));
 
-        for (int button = 0; button < ControllerButton::COUNT; button++)
-        {
-            if (GetConfig().buttons_pin[button] == 13)
-            {
-                normalData->buttons[button] = m_button13;
-                R_SUCCEED();
-            }
-        }
+        *rawData = m_rawInput;
+
+        R_SUCCEED();
     }
 
     R_RETURN(CONTROL_ERR_NOTHING_TODO);
