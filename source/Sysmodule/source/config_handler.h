@@ -33,9 +33,9 @@ namespace syscon::config
         operator std::string() const
         {
             std::stringstream ss;
-            ss << std::uppercase << std::setfill('0') << std::setw(4) << std::hex << vid;
+            ss << std::setfill('0') << std::setw(4) << std::hex << vid;
             ss << "-";
-            ss << std::uppercase << std::setfill('0') << std::setw(4) << std::hex << pid;
+            ss << std::setfill('0') << std::setw(4) << std::hex << pid;
             return ss.str();
         }
 

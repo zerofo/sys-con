@@ -81,17 +81,19 @@ namespace syscon::config
         int ParseGlobalConfigLine(void *data, const char *section, const char *name, const char *value)
         {
             ConfigINIData *ini_data = static_cast<ConfigINIData *>(data);
+            std::string sectionStr = convertToLowercase(section);
+            std::string nameStr = convertToLowercase(name);
 
-            if (ini_data->ini_section != section)
+            if (ini_data->ini_section != sectionStr)
                 return 1; // Not the section we are looking for (return success to continue parsing)
 
-            if (strcmp(name, "polling_frequency_ms") == 0)
+            if (nameStr == "polling_frequency_ms")
                 ini_data->global_config->polling_frequency_ms = atoi(value);
-            else if (strcmp(name, "log_level") == 0)
+            else if (nameStr == "log_level")
                 ini_data->global_config->log_level = atoi(value);
-            else if (strcmp(name, "discovery_mode") == 0)
+            else if (nameStr == "discovery_mode")
                 ini_data->global_config->discovery_mode = static_cast<DiscoveryMode>(atoi(value));
-            else if (strcmp(name, "discovery_vidpid") == 0)
+            else if (nameStr == "discovery_vidpid")
             {
                 char *tok = strtok(const_cast<char *>(value), ",");
 
@@ -113,81 +115,83 @@ namespace syscon::config
         int ParseControllerConfigLine(void *data, const char *section, const char *name, const char *value)
         {
             ConfigINIData *ini_data = static_cast<ConfigINIData *>(data);
+            std::string sectionStr = convertToLowercase(section);
+            std::string nameStr = convertToLowercase(name);
 
             // syscon::logger::LogTrace("Parsing controller config line: %s, %s, %s (expect: %s)", section, name, value, ini_data->ini_section.c_str());
 
-            if (ini_data->ini_section != section)
+            if (ini_data->ini_section != sectionStr)
                 return 1; // Not the section we are looking for (return success to continue parsing)
 
-            if (strcmp(name, "driver") == 0)
-                ini_data->config->driver = value;
-            else if (strcmp(name, "profile") == 0)
-                ini_data->config->profile = value;
-            else if (strcmp(name, "B") == 0)
+            if (nameStr == "driver")
+                ini_data->config->driver = convertToLowercase(value);
+            else if (nameStr == "profile")
+                ini_data->config->profile = convertToLowercase(value);
+            else if (nameStr == "b")
                 ini_data->config->buttons_pin[ControllerButton::B] = atoi(value);
-            else if (strcmp(name, "A") == 0)
+            else if (nameStr == "a")
                 ini_data->config->buttons_pin[ControllerButton::A] = atoi(value);
-            else if (strcmp(name, "X") == 0)
+            else if (nameStr == "x")
                 ini_data->config->buttons_pin[ControllerButton::X] = atoi(value);
-            else if (strcmp(name, "Y") == 0)
+            else if (nameStr == "y")
                 ini_data->config->buttons_pin[ControllerButton::Y] = atoi(value);
-            else if (strcmp(name, "lstick_click") == 0)
+            else if (nameStr == "lstick_click")
                 ini_data->config->buttons_pin[ControllerButton::LSTICK_CLICK] = atoi(value);
-            else if (strcmp(name, "rstick_click") == 0)
+            else if (nameStr == "rstick_click")
                 ini_data->config->buttons_pin[ControllerButton::RSTICK_CLICK] = atoi(value);
-            else if (strcmp(name, "L") == 0)
+            else if (nameStr == "l")
                 ini_data->config->buttons_pin[ControllerButton::L] = atoi(value);
-            else if (strcmp(name, "R") == 0)
+            else if (nameStr == "r")
                 ini_data->config->buttons_pin[ControllerButton::R] = atoi(value);
-            else if (strcmp(name, "ZL") == 0)
+            else if (nameStr == "zl")
                 ini_data->config->buttons_pin[ControllerButton::ZL] = atoi(value);
-            else if (strcmp(name, "ZR") == 0)
+            else if (nameStr == "zr")
                 ini_data->config->buttons_pin[ControllerButton::ZR] = atoi(value);
-            else if (strcmp(name, "minus") == 0)
+            else if (nameStr == "minus")
                 ini_data->config->buttons_pin[ControllerButton::MINUS] = atoi(value);
-            else if (strcmp(name, "plus") == 0)
+            else if (nameStr == "plus")
                 ini_data->config->buttons_pin[ControllerButton::PLUS] = atoi(value);
-            else if (strcmp(name, "dpad_up") == 0)
+            else if (nameStr == "dpad_up")
                 ini_data->config->buttons_pin[ControllerButton::DPAD_UP] = atoi(value);
-            else if (strcmp(name, "dpad_right") == 0)
+            else if (nameStr == "dpad_right")
                 ini_data->config->buttons_pin[ControllerButton::DPAD_RIGHT] = atoi(value);
-            else if (strcmp(name, "dpad_down") == 0)
+            else if (nameStr == "dpad_down")
                 ini_data->config->buttons_pin[ControllerButton::DPAD_DOWN] = atoi(value);
-            else if (strcmp(name, "dpad_left") == 0)
+            else if (nameStr == "dpad_left")
                 ini_data->config->buttons_pin[ControllerButton::DPAD_LEFT] = atoi(value);
-            else if (strcmp(name, "capture") == 0)
+            else if (nameStr == "capture")
                 ini_data->config->buttons_pin[ControllerButton::CAPTURE] = atoi(value);
-            else if (strcmp(name, "home") == 0)
+            else if (nameStr == "home")
                 ini_data->config->buttons_pin[ControllerButton::HOME] = atoi(value);
-            else if (strcmp(name, "simulate_home_from_plus_minus") == 0)
+            else if (nameStr == "simulate_home_from_plus_minus")
                 ini_data->config->simulateHomeFromPlusMinus = atoi(value) == 0 ? false : true;
-            else if (strcmp(name, "left_stick_x") == 0)
+            else if (nameStr == "left_stick_x")
                 ini_data->config->stickConfig[0].X = DecodeAnalogConfig(value);
-            else if (strcmp(name, "left_stick_y") == 0)
+            else if (nameStr == "left_stick_y")
                 ini_data->config->stickConfig[0].Y = DecodeAnalogConfig(value);
-            else if (strcmp(name, "right_stick_x") == 0)
+            else if (nameStr == "right_stick_x")
                 ini_data->config->stickConfig[1].X = DecodeAnalogConfig(value);
-            else if (strcmp(name, "right_stick_y") == 0)
+            else if (nameStr == "right_stick_y")
                 ini_data->config->stickConfig[1].Y = DecodeAnalogConfig(value);
-            else if (strcmp(name, "left_trigger") == 0)
+            else if (nameStr == "left_trigger")
                 ini_data->config->triggerConfig[0] = DecodeAnalogConfig(value);
-            else if (strcmp(name, "right_trigger") == 0)
+            else if (nameStr == "right_trigger")
                 ini_data->config->triggerConfig[1] = DecodeAnalogConfig(value);
-            else if (strcmp(name, "left_stick_deadzone") == 0)
+            else if (nameStr == "left_stick_deadzone")
                 ini_data->config->stickDeadzonePercent[0] = atoi(value);
-            else if (strcmp(name, "right_stick_deadzone") == 0)
+            else if (nameStr == "right_stick_deadzone")
                 ini_data->config->stickDeadzonePercent[1] = atoi(value);
-            else if (strcmp(name, "left_trigger_deadzone") == 0)
+            else if (nameStr == "left_trigger_deadzone")
                 ini_data->config->triggerDeadzonePercent[0] = atoi(value);
-            else if (strcmp(name, "right_trigger_deadzone") == 0)
+            else if (nameStr == "right_trigger_deadzone")
                 ini_data->config->triggerDeadzonePercent[1] = atoi(value);
-            else if (strcmp(name, "color_body") == 0)
+            else if (nameStr == "color_body")
                 ini_data->config->bodyColor = DecodeColorValue(value);
-            else if (strcmp(name, "color_buttons") == 0)
+            else if (nameStr == "color_buttons")
                 ini_data->config->buttonsColor = DecodeColorValue(value);
-            else if (strcmp(name, "color_leftGrip") == 0)
+            else if (nameStr == "color_leftgrip")
                 ini_data->config->leftGripColor = DecodeColorValue(value);
-            else if (strcmp(name, "color_rightGrip") == 0)
+            else if (nameStr == "color_rightgrip")
                 ini_data->config->rightGripColor = DecodeColorValue(value);
             else
             {
@@ -229,7 +233,7 @@ namespace syscon::config
 
         syscon::logger::LogDebug("Loading global config: '%s' ...", CONFIG_FULLPATH);
 
-        cfg.ini_section = "global";
+        cfg.ini_section = convertToLowercase("global");
         R_TRY(ReadFromConfig(CONFIG_FULLPATH, ParseGlobalConfigLine, &cfg));
 
         R_SUCCEED();
@@ -243,7 +247,7 @@ namespace syscon::config
 
         syscon::logger::LogDebug("Loading controller config: '%s' [default] ...", CONFIG_FULLPATH);
 
-        cfg.ini_section = "default";
+        cfg.ini_section = convertToLowercase("default");
         R_TRY(ReadFromConfig(CONFIG_FULLPATH, ParseControllerConfigLine, &cfg));
 
         // Override with vendor specific config
@@ -256,7 +260,7 @@ namespace syscon::config
         if (config->profile.length() > 0)
         {
             syscon::logger::LogDebug("Loading controller config: '%s' (Profile: [%s]) ... ", CONFIG_FULLPATH, config->profile);
-            cfg.ini_section = config->profile;
+            cfg.ini_section = convertToLowercase(config->profile);
             R_TRY(ReadFromConfig(CONFIG_FULLPATH, ParseControllerConfigLine, &cfg));
 
             // Re-Override with vendor specific config
