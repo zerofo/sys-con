@@ -1,8 +1,8 @@
 # sys-con
 
-#### A Nintendo Switch custom sysmodule for third-party controller support. No man-in-the-middle required, No specific hardware required !
+#### A Nintendo Switch custom sysmodule for third-party controller support. 
 
-###### \[Switch FW 7.0.0+\] [Atmosphère only]
+#### No man-in-the-middle required, No specific hardware required !
 
 ## Description
 This sysmodule aims to provide complete functionality for any joystick or gamepad not supported natively by Nintendo Switch.
@@ -58,9 +58,10 @@ These log levels (Trace and Debug) cannot be used to play a game, they are only 
 - [ ] Rumble
 
 ## Supported controller
-- [x] Any Standard HID Controller (PC Compatible without driver)
+- [x] All PC Controllers
 - [x] Dualshock 4
 - [x] Dualshock 3
+- [x] Xbox Original
 - [x] Xbox 360 Controller
 - [x] Xbox 360 Wireless adapter (Up to 4 controller can be connected)
 - [x] Xbox One X/S Controller
@@ -75,11 +76,9 @@ These log levels (Trace and Debug) cannot be used to play a game, they are only 
 - [x] Logitech Driving Force GT (Wheel)
 - [x] Trustmaster T150 Pro (Wheel)
 - [x] BSP-D9 Mobile Phone Stretch Game Controller 
-
-## Not Tested
-- [ ] Dualshock 3
-- [ ] Xbox One X/S Controller
-- [ ] Many other HID controller
+- [x] Phantom White PDP Xbox One
+- [x] Wave Afterglow PDP Xbox Series
+- [x] Activbb X6-34U
 
 ## How to add a new controller ?
 When you plug in a new controller, most of the time only the arrow and the joystick will work, the buttons won't work by default.

@@ -20,7 +20,7 @@ driver=xboxone
 ```
 
 ## My official Switch controller don't works when sys-con is enabled
-Edit the config.ini and change `discovery_mode=` from 0 to 1 or 2. 
+Edit the config.ini and change `discovery_mode=1`
 
 Then, update discovery_vidpid= in order to add the controllers you want to discover (Other than the official switch ones). 
 
