@@ -114,7 +114,7 @@ namespace syscon::config
         {
             ConfigINIData *ini_data = static_cast<ConfigINIData *>(data);
 
-            // syscon::logger::LogTrace("Parsing controller config line: %s, %s, %s (expect: %s)", section, name, value, config->ini_section);
+            // syscon::logger::LogTrace("Parsing controller config line: %s, %s, %s (expect: %s)", section, name, value, ini_data->ini_section.c_str());
 
             if (ini_data->ini_section != section)
                 return 1; // Not the section we are looking for (return success to continue parsing)
@@ -249,7 +249,7 @@ namespace syscon::config
         // Override with vendor specific config
         syscon::logger::LogDebug("Loading controller config: '%s' [%s] ...", CONFIG_FULLPATH, std::string(controllerVidPid).c_str());
 
-        cfg.ini_section = std::string(controllerVidPid);
+        cfg.ini_section = convertToLowercase(controllerVidPid);
         R_TRY(ReadFromConfig(CONFIG_FULLPATH, ParseControllerConfigLine, &cfg));
 
         // Check if have a "profile"
@@ -262,7 +262,7 @@ namespace syscon::config
             // Re-Override with vendor specific config
             // We are doing this to allow the profile to be overrided by the vendor specific config
             // In other words we would like to have [default] overrided by [profile] overrided by [vid-pid]
-            cfg.ini_section = std::string(controllerVidPid);
+            cfg.ini_section = convertToLowercase(controllerVidPid);
             R_TRY(ReadFromConfig(CONFIG_FULLPATH, ParseControllerConfigLine, &cfg));
         }
 
@@ -290,7 +290,7 @@ namespace syscon::config
             config->triggerConfig[1].bind = ControllerAnalogBinding_RY;
 
         if (config->buttons_pin[ControllerButton::B] == 0 && config->buttons_pin[ControllerButton::A] == 0 && config->buttons_pin[ControllerButton::Y] == 0 && config->buttons_pin[ControllerButton::X] == 0)
-            syscon::logger::LogError("No buttons configured for this controller [%04x-%04x] - Stick might works but buttons will not !", vendor_id, product_id);
+            syscon::logger::LogError("No buttons configured for this controller [%04x-%04x] - Stick might works but buttons will not work (https://github.com/o0Zz/sys-con/blob/master/doc/Troubleshooting.md)", vendor_id, product_id);
         else
             syscon::logger::LogInfo("Controller successfully loaded (B=%d, A=%d, Y=%d, X=%d, ...) !", config->buttons_pin[ControllerButton::B], config->buttons_pin[ControllerButton::A], config->buttons_pin[ControllerButton::Y], config->buttons_pin[ControllerButton::X]);
 

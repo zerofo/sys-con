@@ -95,12 +95,12 @@ namespace syscon::usb
                         else if (config.driver == "xbox360w")
                         {
                             syscon::logger::LogInfo("Initializing Xbox 360 Wireless controller (Interface count: %d) ...", total_entries);
-                            controllers::Insert(std::make_unique<Xbox360Controller>(std::make_unique<SwitchUSBDevice>(interfaces, total_entries), config, std::make_unique<syscon::logger::Logger>(), true));
+                            controllers::Insert(std::make_unique<Xbox360WirelessController>(std::make_unique<SwitchUSBDevice>(interfaces, total_entries), config, std::make_unique<syscon::logger::Logger>()));
                         }
                         else if (config.driver == "xbox360")
                         {
                             syscon::logger::LogInfo("Initializing Xbox 360 controller (Interface count: %d) ...", total_entries);
-                            controllers::Insert(std::make_unique<Xbox360Controller>(std::make_unique<SwitchUSBDevice>(interfaces, total_entries), config, std::make_unique<syscon::logger::Logger>(), false));
+                            controllers::Insert(std::make_unique<Xbox360Controller>(std::make_unique<SwitchUSBDevice>(interfaces, total_entries), config, std::make_unique<syscon::logger::Logger>()));
                         }
                         else if (config.driver == "xboxone")
                         {
