@@ -34,19 +34,20 @@ In other words, the loading order is: [Default] [Profile] [VID-PID].
 If you want to override a setting for only 1 controller, it is better to write down your configuration in [VID-PID].
 
 ## Logs
-In case of issue, you can look at the logs in `/config/sys-con/log.log`
-For more verbose logs, edit config.ini and set :
+In case of issue, you can look at the logs in `/config/sys-con/log.log` (On your SDCard).
+The logs are automatically created with a log level equal to Info.
+For more verbose logs, edit `/config/sys-con/config.ini` and set:
 
 ```
 [global]
-;log_level Trace=0, Debug=1, Info=2, Warning=3, Error=4
 log_level=0
 ```
+
 Reboot the Nintendo Switch.
 
-**Important note**: If you enable Trace or Debug log, the driver will automatically switch the polling frequency to 100ms (For debug) or 500ms (For trace). 
-This will make the controller unresponsive or at least with a very high latency. 
-Typically, if you want to press a key, you will have to hold it down for 1s.
+**Important note**: If you enable "Trace" or "Debug" log level, the sys-module will automatically increase the polling frequency to 100ms (For debug) and 500ms (For trace). 
+This will add lot of latency to your controller (That's not an issue and that's expected)
+Thus, if you want to press a button, you will have to hold it down for 1s.
 These log levels (Trace and Debug) cannot be used to play a game, they are only here for debugging purposes.
 
 ## Features

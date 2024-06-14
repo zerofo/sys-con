@@ -20,11 +20,11 @@ Where right_stick_x and right_stick_y might be: Z, -Z, Rz, -Rz, Rx, -Rx, Ry, -Ry
 ## My controller don't works at all
 It probably means your controller is not present in the config.ini file with the correct driver. 
 You need to determine the VID/PID and create a new section in the ini file, then select the correct driver to use:
-    - generic (Default mode if nothing is set)
-    - xbox360
-    - xbox
-    - xboxone
-    - dualshock4
+ - generic (Default mode if nothing is set)
+ - xbox360
+ - xbox
+ - xboxone
+ - dualshock4
 
 Typically, if you know your controller is a xboxone controller just add:
 ```
@@ -75,3 +75,12 @@ A typically working flow will look like:
 ```
 
 Search for logs starting with `|E|`, If you find one, this is an error and it might give you a hint about the issue.
+
+## How to attach a logs to a ticket
+- Edit `/config/sys-con/config.ini`
+- change `log_level=2` to `log_level=0`
+- Reboot your console
+- Wait for the console to boot
+- Plug your Controllers
+- Wait for the issue
+- Download the logs from `/config/sys-con/log.log`
