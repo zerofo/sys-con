@@ -81,7 +81,7 @@ These log levels (Trace and Debug) cannot be used to play a game, they are only 
 - [x] Activbb X6-34U
 
 ## How to add a new controller ?
-When you plug in a new controller, most of the time only the arrow and the joystick will work, the buttons won't work by default.
+When you plug in a new controller, most of the time only the arrow and the joystick will work, the buttons won't work by default (And right stick might be reversed).
 You will have to do the key mapping yourself, follow the method below to do it.
 
 ### Method 1 (From a windows PC)
@@ -92,7 +92,7 @@ You will have to do the key mapping yourself, follow the method below to do it.
 4. Go to the "Details" tab and select "Hardware IDs" to view its PID and VID. The PID/VID should look like "HID\VID_0810&PID_0001&...", that will become: `[0810-0001]`
 5. Open "joy.cpl" (Either from Win+R or directly in Start Menu)
 6. Select your controller and click "Properties"
-7. Here you should see a panel with button ID (1, 2, 3 ...), press the button and take a note (Which button is associated to which ID).
+7. Here you should see a panel with button ID (1, 2, 3 ...), press the button and note them (Which button is associated to which ID).
 8. Now Edit /config/sys-con/config.ini on your switch sdcard and add:
 ```
 [0810-0001]
@@ -106,6 +106,10 @@ ZL=5
 ZR=6
 minus=9
 plus=10
+home=11
+capture=12
+right_stick_x=Z
+right_stick_y=Rz
 ```
 Where 1, 2, 3, 4, ... is the key ID noted in step 7.
 
@@ -114,7 +118,7 @@ Note: Depending to the controller, this windows procedure might not works. If th
 ### Method 2 (Directly from the switch logs)
 
 1. Connect your controller to your switch and unplug it
-2. Open /config/sys-con/logs.txt and look for a line like: `Trying to find configuration for USB device: [0810-0001]`
+2. Open /config/sys-con/logs.txt and look for a line like: `Trying to initialize USB device: [0810-0001] ...`
 3. Now Edit /config/sys-con/config.ini on your switch sdcard and add:
 ```
 [0810-0001]
@@ -128,6 +132,10 @@ ZL=7
 ZR=8
 minus=9
 plus=10
+home=11
+capture=12
+right_stick_x=Z
+right_stick_y=Rz
 ``` 
 Where 1, 2, 3, 4, ... are randomly set.
 
@@ -139,8 +147,7 @@ Where 1, 2, 3, 4, ... are randomly set.
 For common issues a troubleshooting guide is available: https://github.com/o0Zz/sys-con/blob/master/doc/Troubleshooting.md
 
 ## Contribution
-All contributions are welcome, you can be a simple user or developer, if you did some mapping work in the config.ini or if you have any feedback or proposal, feel free to send your pull request.
-I'm currently looking for testers or peoples with lot of 3rd party controllers - My owns are very limited (I have only 5 differents) - Thus if you have many controller I'm interrested to know if they works and feel free to share the mapping you did, it might help others gamers !
+All contributions are welcome, you can be a simple user or developer, if you did some mapping work in the config.ini or if you have any feedback or want a new feature, feel free to send your pull request.
 
 ## Building (For developers)
 
