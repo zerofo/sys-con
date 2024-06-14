@@ -84,30 +84,30 @@ namespace syscon::usb
                                                 interface->device_desc.bDeviceProtocol,
                                                 interface->device_desc.bcdDevice);
 
-                        ControllerConfig config = {0};
+                        ControllerConfig config;
                         ::syscon::config::LoadControllerConfig(&config, interface->device_desc.idVendor, interface->device_desc.idProduct);
 
-                        if (strcmp(config.driver, "dualshock3") == 0)
+                        if (config.driver == "dualshock3")
                         {
                             syscon::logger::LogInfo("Initializing Dualshock 3 controller (Interface count: %d) ...", total_entries);
                             controllers::Insert(std::make_unique<Dualshock3Controller>(std::make_unique<SwitchUSBDevice>(interfaces, total_entries), config, std::make_unique<syscon::logger::Logger>()));
                         }
-                        else if (strcmp(config.driver, "xbox360w") == 0)
+                        else if (config.driver == "xbox360w")
                         {
                             syscon::logger::LogInfo("Initializing Xbox 360 Wireless controller (Interface count: %d) ...", total_entries);
                             controllers::Insert(std::make_unique<Xbox360Controller>(std::make_unique<SwitchUSBDevice>(interfaces, total_entries), config, std::make_unique<syscon::logger::Logger>(), true));
                         }
-                        else if (strcmp(config.driver, "xbox360") == 0)
+                        else if (config.driver == "xbox360")
                         {
                             syscon::logger::LogInfo("Initializing Xbox 360 controller (Interface count: %d) ...", total_entries);
                             controllers::Insert(std::make_unique<Xbox360Controller>(std::make_unique<SwitchUSBDevice>(interfaces, total_entries), config, std::make_unique<syscon::logger::Logger>(), false));
                         }
-                        else if (strcmp(config.driver, "xboxone") == 0)
+                        else if (config.driver == "xboxone")
                         {
                             syscon::logger::LogInfo("Initializing Xbox One controller (Interface count: %d) ...", total_entries);
                             controllers::Insert(std::make_unique<XboxOneController>(std::make_unique<SwitchUSBDevice>(interfaces, total_entries), config, std::make_unique<syscon::logger::Logger>()));
                         }
-                        else if (strcmp(config.driver, "xbox") == 0)
+                        else if (config.driver == "xbox")
                         {
                             syscon::logger::LogInfo("Initializing Xbox 1st gen (Interface count: %d) ...", total_entries);
                             controllers::Insert(std::make_unique<XboxController>(std::make_unique<SwitchUSBDevice>(interfaces, total_entries), config, std::make_unique<syscon::logger::Logger>()));

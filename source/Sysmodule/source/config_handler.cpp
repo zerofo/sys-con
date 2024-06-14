@@ -15,10 +15,19 @@ namespace syscon::config
         class ConfigINIData
         {
         public:
-            char ini_section[32] = {0};
-            struct ControllerConfig *config;
-            struct GlobalConfig *global_config;
+            std::string ini_section;
+            ControllerConfig *config;
+            GlobalConfig *global_config;
         };
+
+        // Utils function
+        std::string convertToLowercase(const std::string &str)
+        {
+            std::string result = "";
+            for (char ch : str)
+                result += tolower(ch);
+            return result;
+        }
 
         RGBAColor DecodeColorValue(const char *value)
         {
@@ -42,33 +51,60 @@ namespace syscon::config
             return color;
         }
 
+        ControllerAnalogConfig DecodeAnalogConfig(const std::string &cfg)
+        {
+            ControllerAnalogConfig analogCfg;
+            std::string stickcfg = convertToLowercase(cfg);
+
+            analogCfg.bind = ControllerAnalogBinding::ControllerAnalogBinding_Unknown;
+            analogCfg.sign = stickcfg[0] == '-' ? -1.0 : 1.0;
+
+            if (stickcfg[0] == '-' || stickcfg[0] == '+')
+                stickcfg = stickcfg.substr(1);
+
+            if (stickcfg == "x")
+                analogCfg.bind = ControllerAnalogBinding::ControllerAnalogBinding_X;
+            else if (stickcfg == "y")
+                analogCfg.bind = ControllerAnalogBinding::ControllerAnalogBinding_Y;
+            else if (stickcfg == "z")
+                analogCfg.bind = ControllerAnalogBinding::ControllerAnalogBinding_Z;
+            else if (stickcfg == "rz")
+                analogCfg.bind = ControllerAnalogBinding::ControllerAnalogBinding_RZ;
+            else if (stickcfg == "rx")
+                analogCfg.bind = ControllerAnalogBinding::ControllerAnalogBinding_RX;
+            else if (stickcfg == "ry")
+                analogCfg.bind = ControllerAnalogBinding::ControllerAnalogBinding_RY;
+
+            return analogCfg;
+        }
+
         int ParseGlobalConfigLine(void *data, const char *section, const char *name, const char *value)
         {
             ConfigINIData *ini_data = static_cast<ConfigINIData *>(data);
 
-            if (strcmp(section, ini_data->ini_section) == 0)
-            {
-                if (strcmp(name, "polling_frequency_ms") == 0)
-                    ini_data->global_config->polling_frequency_ms = atoi(value);
-                else if (strcmp(name, "log_level") == 0)
-                    ini_data->global_config->log_level = atoi(value);
-                else if (strcmp(name, "discovery_mode") == 0)
-                    ini_data->global_config->discovery_mode = static_cast<DiscoveryMode>(atoi(value));
-                else if (strcmp(name, "discovery_vidpid") == 0)
-                {
-                    char *tok = strtok(const_cast<char *>(value), ",");
+            if (ini_data->ini_section != section)
+                return 1; // Not the section we are looking for (return success to continue parsing)
 
-                    while (tok != NULL)
-                    {
-                        ini_data->global_config->discovery_vidpid.push_back(ControllerVidPid(tok));
-                        tok = strtok(NULL, ",");
-                    }
-                }
-                else
+            if (strcmp(name, "polling_frequency_ms") == 0)
+                ini_data->global_config->polling_frequency_ms = atoi(value);
+            else if (strcmp(name, "log_level") == 0)
+                ini_data->global_config->log_level = atoi(value);
+            else if (strcmp(name, "discovery_mode") == 0)
+                ini_data->global_config->discovery_mode = static_cast<DiscoveryMode>(atoi(value));
+            else if (strcmp(name, "discovery_vidpid") == 0)
+            {
+                char *tok = strtok(const_cast<char *>(value), ",");
+
+                while (tok != NULL)
                 {
-                    syscon::logger::LogError("Unknown key: %s", name);
-                    return 0; // Unknown key, return error
+                    ini_data->global_config->discovery_vidpid.push_back(ControllerVidPid(tok));
+                    tok = strtok(NULL, ",");
                 }
+            }
+            else
+            {
+                syscon::logger::LogError("Unknown key: %s", name);
+                return 0; // Unknown key, return error
             }
 
             return 1; // Success
@@ -80,13 +116,13 @@ namespace syscon::config
 
             // syscon::logger::LogTrace("Parsing controller config line: %s, %s, %s (expect: %s)", section, name, value, config->ini_section);
 
-            if (strcmp(section, ini_data->ini_section) != 0)
+            if (ini_data->ini_section != section)
                 return 1; // Not the section we are looking for (return success to continue parsing)
 
             if (strcmp(name, "driver") == 0)
-                strncpy(ini_data->config->driver, value, sizeof(ini_data->config->driver));
+                ini_data->config->driver = value;
             else if (strcmp(name, "profile") == 0)
-                strncpy(ini_data->config->profile, value, sizeof(ini_data->config->profile));
+                ini_data->config->profile = value;
             else if (strcmp(name, "B") == 0)
                 ini_data->config->buttons_pin[ControllerButton::B] = atoi(value);
             else if (strcmp(name, "A") == 0)
@@ -123,6 +159,20 @@ namespace syscon::config
                 ini_data->config->buttons_pin[ControllerButton::CAPTURE] = atoi(value);
             else if (strcmp(name, "home") == 0)
                 ini_data->config->buttons_pin[ControllerButton::HOME] = atoi(value);
+            else if (strcmp(name, "simulate_home_from_plus_minus") == 0)
+                ini_data->config->simulateHomeFromPlusMinus = atoi(value) == 0 ? false : true;
+            else if (strcmp(name, "left_stick_x") == 0)
+                ini_data->config->stickConfig[0].X = DecodeAnalogConfig(value);
+            else if (strcmp(name, "left_stick_y") == 0)
+                ini_data->config->stickConfig[0].Y = DecodeAnalogConfig(value);
+            else if (strcmp(name, "right_stick_x") == 0)
+                ini_data->config->stickConfig[1].X = DecodeAnalogConfig(value);
+            else if (strcmp(name, "right_stick_y") == 0)
+                ini_data->config->stickConfig[1].Y = DecodeAnalogConfig(value);
+            else if (strcmp(name, "left_trigger") == 0)
+                ini_data->config->triggerConfig[0] = DecodeAnalogConfig(value);
+            else if (strcmp(name, "right_trigger") == 0)
+                ini_data->config->triggerConfig[1] = DecodeAnalogConfig(value);
             else if (strcmp(name, "left_stick_deadzone") == 0)
                 ini_data->config->stickDeadzonePercent[0] = atoi(value);
             else if (strcmp(name, "right_stick_deadzone") == 0)
@@ -176,10 +226,10 @@ namespace syscon::config
     {
         ConfigINIData cfg;
         cfg.global_config = config;
-        snprintf(cfg.ini_section, sizeof(cfg.ini_section), "global");
 
         syscon::logger::LogDebug("Loading global config: '%s' ...", CONFIG_FULLPATH);
 
+        cfg.ini_section = "global";
         R_TRY(ReadFromConfig(CONFIG_FULLPATH, ParseGlobalConfigLine, &cfg));
 
         R_SUCCEED();
@@ -187,30 +237,32 @@ namespace syscon::config
 
     ams::Result LoadControllerConfig(ControllerConfig *config, uint16_t vendor_id, uint16_t product_id)
     {
+        ControllerVidPid controllerVidPid(vendor_id, product_id);
         ConfigINIData cfg;
         cfg.config = config;
 
         syscon::logger::LogDebug("Loading controller config: '%s' [default] ...", CONFIG_FULLPATH);
 
-        snprintf(cfg.ini_section, sizeof(cfg.ini_section), "default");
+        cfg.ini_section = "default";
         R_TRY(ReadFromConfig(CONFIG_FULLPATH, ParseControllerConfigLine, &cfg));
 
         // Override with vendor specific config
-        syscon::logger::LogDebug("Loading controller config: '%s' [%04x-%04x] ...", CONFIG_FULLPATH, vendor_id, product_id);
-        snprintf(cfg.ini_section, sizeof(cfg.ini_section), "%04x-%04x", vendor_id, product_id);
+        syscon::logger::LogDebug("Loading controller config: '%s' [%s] ...", CONFIG_FULLPATH, std::string(controllerVidPid).c_str());
+
+        cfg.ini_section = std::string(controllerVidPid);
         R_TRY(ReadFromConfig(CONFIG_FULLPATH, ParseControllerConfigLine, &cfg));
 
         // Check if have a "profile"
-        if (strlen(config->profile) != 0)
+        if (config->profile.length() > 0)
         {
-            syscon::logger::LogDebug("Loading controller config: '%s' (Profile: %s) ... ", CONFIG_FULLPATH, config->profile);
-            snprintf(cfg.ini_section, sizeof(cfg.ini_section), "%s", config->profile);
+            syscon::logger::LogDebug("Loading controller config: '%s' (Profile: [%s]) ... ", CONFIG_FULLPATH, config->profile);
+            cfg.ini_section = config->profile;
             R_TRY(ReadFromConfig(CONFIG_FULLPATH, ParseControllerConfigLine, &cfg));
 
             // Re-Override with vendor specific config
             // We are doing this to allow the profile to be overrided by the vendor specific config
-            // In other words we will like to have default overrided by profile overrided by vendor specific
-            snprintf(cfg.ini_section, sizeof(cfg.ini_section), "%04x-%04x", vendor_id, product_id);
+            // In other words we would like to have [default] overrided by [profile] overrided by [vid-pid]
+            cfg.ini_section = std::string(controllerVidPid);
             R_TRY(ReadFromConfig(CONFIG_FULLPATH, ParseControllerConfigLine, &cfg));
         }
 
@@ -222,6 +274,20 @@ namespace syscon::config
                 return 1;
             }
         }
+
+        if (config->stickConfig[0].X.bind == ControllerAnalogBinding_Unknown)
+            config->stickConfig[0].X.bind = ControllerAnalogBinding_X;
+        if (config->stickConfig[0].Y.bind == ControllerAnalogBinding_Unknown)
+            config->stickConfig[0].Y.bind = ControllerAnalogBinding_Y;
+        if (config->stickConfig[1].X.bind == ControllerAnalogBinding_Unknown)
+            config->stickConfig[1].X.bind = ControllerAnalogBinding_RZ;
+        if (config->stickConfig[1].Y.bind == ControllerAnalogBinding_Unknown)
+            config->stickConfig[1].Y.bind = ControllerAnalogBinding_Z;
+
+        if (config->triggerConfig[0].bind == ControllerAnalogBinding_Unknown)
+            config->triggerConfig[0].bind = ControllerAnalogBinding_RX;
+        if (config->triggerConfig[1].bind == ControllerAnalogBinding_Unknown)
+            config->triggerConfig[1].bind = ControllerAnalogBinding_RY;
 
         if (config->buttons_pin[ControllerButton::B] == 0 && config->buttons_pin[ControllerButton::A] == 0 && config->buttons_pin[ControllerButton::Y] == 0 && config->buttons_pin[ControllerButton::X] == 0)
             syscon::logger::LogError("No buttons configured for this controller [%04x-%04x] - Stick might works but buttons will not !", vendor_id, product_id);

@@ -37,7 +37,12 @@ ams::Result BaseController::OpenInterfaces()
     int interfaceCount = 0;
     LogPrint(LogLevelDebug, "BaseController Opening interfaces ...");
 
-    R_TRY(m_device->Open());
+    ams::Result rc = m_device->Open();
+    if (R_FAILED(rc))
+    {
+        LogPrint(LogLevelError, "BaseController Failed to open device !");
+        R_RETURN(rc);
+    }
 
     std::vector<std::unique_ptr<IUSBInterface>> &interfaces = m_device->GetInterfaces();
     for (auto &&interface : interfaces)
@@ -52,7 +57,13 @@ ams::Result BaseController::OpenInterfaces()
             if (inEndpoint == NULL)
                 continue;
 
-            R_TRY(inEndpoint->Open());
+            rc = inEndpoint->Open();
+            if (R_FAILED(rc))
+            {
+                LogPrint(LogLevelError, "BaseController Failed to open input endpoint %d !", idx);
+                R_RETURN(rc);
+            }
+
             m_inPipe.push_back(inEndpoint);
         }
 
@@ -62,7 +73,13 @@ ams::Result BaseController::OpenInterfaces()
             if (outEndpoint == NULL)
                 continue;
 
-            R_TRY(outEndpoint->Open());
+            rc = outEndpoint->Open();
+            if (R_FAILED(rc))
+            {
+                LogPrint(LogLevelError, "BaseController Failed to open output  endpoint %d !", idx);
+                R_RETURN(rc);
+            }
+
             m_outPipe.push_back(outEndpoint);
         }
 
@@ -70,10 +87,12 @@ ams::Result BaseController::OpenInterfaces()
     }
 
     if (m_inPipe.empty())
+    {
+        LogPrint(LogLevelError, "BaseController Not input endpoint found !");
         R_RETURN(CONTROL_ERR_INVALID_ENDPOINT);
+    }
 
     LogPrint(LogLevelDebug, "BaseController successfully opened !");
-
     R_SUCCEED();
 }
 
@@ -106,9 +125,9 @@ ams::Result BaseController::ReadInput(NormalizedButtonData *normalData, uint16_t
 
     R_TRY(ReadInput(&rawData, input_idx));
 
-    LogPrint(LogLevelDebug, "BaseController DATA: X=%d, Y=%d, Z=%d, Rz=%d, B1=%d, B2=%d, B3=%d, B4=%d, B5=%d, B6=%d, B7=%d, B8=%d, B9=%d, B10=%d",
-             rawData.X, rawData.Y, rawData.Z, rawData.Rz,
-             rawData.buttons[1],
+    LogPrint(LogLevelDebug, "BaseController DATA: X=%d%%, Y=%d%%, Z=%d%%, Rz=%d%%, B1=%d, B2=%d, B3=%d, B4=%d, B5=%d, B6=%d, B7=%d, B8=%d, B9=%d, B10=%d",
+             (int)(rawData.X * 100.0), (int)(rawData.Y * 100.0), (int)(rawData.Z * 100.0), (int)(rawData.Rz * 100.0),
+             rawData.buttons[1] ? 1 : 0,
              rawData.buttons[2] ? 1 : 0,
              rawData.buttons[3] ? 1 : 0,
              rawData.buttons[4] ? 1 : 0,
@@ -119,13 +138,22 @@ ams::Result BaseController::ReadInput(NormalizedButtonData *normalData, uint16_t
              rawData.buttons[9] ? 1 : 0,
              rawData.buttons[10] ? 1 : 0);
 
-    normalData->triggers[0] = ApplyDeadzone(GetConfig().triggerDeadzonePercent[0], rawData.Rx);
-    normalData->triggers[1] = ApplyDeadzone(GetConfig().triggerDeadzonePercent[1], rawData.Ry);
+    float bindAnalog[ControllerAnalogBinding_Count] = {
+        0.0,
+        rawData.X,
+        rawData.Y,
+        rawData.Z,
+        rawData.Rz,
+        rawData.Rx,
+        rawData.Ry};
 
-    normalData->sticks[0].axis_x = ApplyDeadzone(GetConfig().stickDeadzonePercent[0], rawData.X);
-    normalData->sticks[0].axis_y = ApplyDeadzone(GetConfig().stickDeadzonePercent[0], rawData.Y);
-    normalData->sticks[1].axis_x = ApplyDeadzone(GetConfig().stickDeadzonePercent[1], rawData.Z);
-    normalData->sticks[1].axis_y = ApplyDeadzone(GetConfig().stickDeadzonePercent[1], rawData.Rz);
+    normalData->triggers[0] = GetConfig().triggerConfig[0].sign * ApplyDeadzone(GetConfig().triggerDeadzonePercent[0], bindAnalog[GetConfig().triggerConfig[0].bind]);
+    normalData->triggers[1] = GetConfig().triggerConfig[1].sign * ApplyDeadzone(GetConfig().triggerDeadzonePercent[1], bindAnalog[GetConfig().triggerConfig[1].bind]);
+
+    normalData->sticks[0].axis_x = GetConfig().stickConfig[0].X.sign * ApplyDeadzone(GetConfig().stickDeadzonePercent[0], bindAnalog[GetConfig().stickConfig[0].X.bind]);
+    normalData->sticks[0].axis_y = GetConfig().stickConfig[0].Y.sign * ApplyDeadzone(GetConfig().stickDeadzonePercent[0], bindAnalog[GetConfig().stickConfig[0].Y.bind]);
+    normalData->sticks[1].axis_x = GetConfig().stickConfig[1].X.sign * ApplyDeadzone(GetConfig().stickDeadzonePercent[1], bindAnalog[GetConfig().stickConfig[1].X.bind]);
+    normalData->sticks[1].axis_y = GetConfig().stickConfig[1].Y.sign * ApplyDeadzone(GetConfig().stickDeadzonePercent[1], bindAnalog[GetConfig().stickConfig[1].Y.bind]);
 
     normalData->buttons[ControllerButton::X] = rawData.buttons[GetConfig().buttons_pin[ControllerButton::X]] ? true : false;
     normalData->buttons[ControllerButton::A] = rawData.buttons[GetConfig().buttons_pin[ControllerButton::A]] ? true : false;
@@ -154,6 +182,16 @@ ams::Result BaseController::ReadInput(NormalizedButtonData *normalData, uint16_t
     normalData->buttons[ControllerButton::DPAD_DOWN] = rawData.dpad_down;
     normalData->buttons[ControllerButton::DPAD_RIGHT] = rawData.dpad_right;
     normalData->buttons[ControllerButton::DPAD_LEFT] = rawData.dpad_left;
+
+    if (GetConfig().simulateHomeFromPlusMinus)
+    {
+        if (normalData->buttons[ControllerButton::PLUS] && normalData->buttons[ControllerButton::MINUS])
+        {
+            normalData->buttons[ControllerButton::HOME] = true;
+            normalData->buttons[ControllerButton::PLUS] = false;
+            normalData->buttons[ControllerButton::MINUS] = false;
+        }
+    }
 
     R_SUCCEED();
 }

@@ -4,6 +4,12 @@
 #include "ControllerTypes.h"
 #include "ControllerConfig.h"
 
+struct NormalizedStick
+{
+    float axis_x;
+    float axis_y;
+};
+
 struct NormalizedButtonData
 {
     bool buttons[MAX_CONTROLLER_BUTTONS];
@@ -55,7 +61,7 @@ public:
         return true;
     }
 
-    virtual const ControllerConfig &GetConfig() const { return m_config; }
+    inline const ControllerConfig &GetConfig() const { return m_config; }
 
     inline IUSBDevice *GetDevice() { return m_device.get(); }
 };

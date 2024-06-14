@@ -15,6 +15,8 @@ namespace syscon::config
     class ControllerVidPid
     {
     public:
+        ControllerVidPid(uint16_t vid, uint16_t pid) : vid(vid), pid(pid) {}
+
         ControllerVidPid(const std::string &vidpid) : vid(0), pid(0)
         {
             std::size_t delimIdx = vidpid.find('-');
@@ -53,11 +55,12 @@ namespace syscon::config
         VIDPID = 2,
     } DiscoveryMode;
 
-    struct GlobalConfig
+    class GlobalConfig
     {
-        uint16_t polling_frequency_ms;
-        int log_level;
-        DiscoveryMode discovery_mode;
+    public:
+        uint16_t polling_frequency_ms{0};
+        int log_level{LOG_LEVEL_INFO};
+        DiscoveryMode discovery_mode{DiscoveryMode::HID_AND_XBOX};
         std::vector<ControllerVidPid> discovery_vidpid;
     };
 

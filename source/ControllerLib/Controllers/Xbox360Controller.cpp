@@ -62,7 +62,7 @@ void Xbox360Controller::CloseInterfaces()
 
 ams::Result Xbox360Controller::ReadInput(RawInputData *rawData, uint16_t *input_idx)
 {
-    uint8_t input_bytes[64];
+    uint8_t input_bytes[CONTROLLER_INPUT_BUFFER_SIZE];
     size_t size = sizeof(input_bytes);
 
     uint16_t controller_idx = m_current_controller_idx;

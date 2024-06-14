@@ -8,7 +8,8 @@ class RawInputData
 public:
     RawInputData()
     {
-        memset(buttons, 0, sizeof(buttons));
+        for (int i = 0; i < MAX_CONTROLLER_BUTTONS; i++)
+            buttons[i] = false;
     }
 
     bool buttons[MAX_CONTROLLER_BUTTONS];

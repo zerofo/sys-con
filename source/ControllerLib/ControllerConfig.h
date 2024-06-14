@@ -1,5 +1,6 @@
 #pragma once
 #include <cstdint>
+#include <string>
 
 #define MAX_JOYSTICKS          2
 #define MAX_TRIGGERS           2
@@ -29,12 +30,6 @@ enum ControllerButton
     COUNT
 };
 
-struct NormalizedStick
-{
-    float axis_x;
-    float axis_y;
-};
-
 union RGBAColor
 {
     struct
@@ -48,15 +43,46 @@ union RGBAColor
     uint32_t rgbaValue;
 };
 
-struct ControllerConfig
+enum ControllerAnalogBinding
 {
-    char driver[255]{0};
-    char profile[255]{0};
+    ControllerAnalogBinding_Unknown = 0,
+    ControllerAnalogBinding_X,
+    ControllerAnalogBinding_Y,
+    ControllerAnalogBinding_Z,
+    ControllerAnalogBinding_RZ,
+    ControllerAnalogBinding_RX,
+    ControllerAnalogBinding_RY,
+
+    ControllerAnalogBinding_Count
+};
+
+struct ControllerAnalogConfig
+{
+    float sign{1.0};
+    ControllerAnalogBinding bind{ControllerAnalogBinding::ControllerAnalogBinding_Unknown};
+};
+
+struct ControllerStickConfig
+{
+    ControllerAnalogConfig X;
+    ControllerAnalogConfig Y;
+};
+
+class ControllerConfig
+{
+public:
+    std::string driver;
+    std::string profile;
+
     uint8_t stickDeadzonePercent[MAX_JOYSTICKS]{0};
     uint8_t triggerDeadzonePercent[MAX_TRIGGERS]{0};
     uint8_t buttons_pin[MAX_CONTROLLER_BUTTONS]{0};
-    float triggers[MAX_TRIGGERS]{};
-    NormalizedStick sticks[MAX_JOYSTICKS]{};
+
+    ControllerStickConfig stickConfig[MAX_JOYSTICKS];
+    ControllerAnalogConfig triggerConfig[MAX_TRIGGERS];
+
+    bool simulateHomeFromPlusMinus{false};
+
     RGBAColor bodyColor{0, 0, 0, 255};
     RGBAColor buttonsColor{0, 0, 0, 255};
     RGBAColor leftGripColor{0, 0, 0, 255};
