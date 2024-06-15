@@ -5,19 +5,16 @@
 #### No man-in-the-middle required, No specific hardware required !
 
 ## Description
-This sysmodule aims to provide complete functionality for any joystick or gamepad not supported natively by Nintendo Switch.
-Only USB connection is supported - For bluetooth connection you can use ndeadly's [MissionControl](https://github.com/ndeadly/MissionControl)
+This sys-module adds support for any joystick or gamepad to the Nintendo Switch.
+Only USB connection is supported - For Bluetooth connection you can use ndeadly's [MissionControl] (https://github.com/ndeadly/MissionControl)
 
 ## What is new in this fork
-This fork add support to **any** HID game controllers. Meaning, any USB controller PC compatible should work with your Nintendo Switch.
-While the original sys-con only support for Xbox/PS controllers, this one add support to all others PC controller without any limit.
+This fork adds support for all HID game controllers. This means that any PC-compatible USB controller should work with your Nintendo Switch. While the original sys-con only supports Xbox/PS controllers, this one adds support for all other PC controllers.
 
-**Important note:** This fork has not been integrated to the original one because it is far away from the original source code.
-Most of the code has been rewritten and the configuration has been completely rethought. 
-This means that if you already have a configuration from the original sys-con, you will have to drop it and redo it on this new fork, but it should be fairly straightforward ;).
+**Important note**: This fork has not been integrated with the original, as it is far from the original source code. Most of the code has been rewritten and the configuration has been completely rethought. This means that if you already have a configuration from the original sys-con, you will have to drop it and redo it on this new fork, but it should be fairly straightforward ;).
 
 ## Installation
-Grab the latest zip from the [releases page](https://github.com/o0zz/sys-con/releases). Extract it in your SD card and boot/reboot your switch.
+Download the latest zip from the [releases page](https://github.com/o0zz/sys-con/releases). Extract it to your SD card and boot/reboot your switch.
 
 ## Configuration
 sys-con comes with a config folder located at `/config/sys-con/`. It contains options for adjusting the stick/trigger deadzone and input remapping. 
@@ -45,10 +42,10 @@ log_level=0
 
 Reboot the Nintendo Switch.
 
-**Important note**: If you enable "Trace" or "Debug" log level, the sys-module will automatically increase the polling frequency to 100ms (For debug) and 500ms (For trace). 
-This will add lot of latency to your controller (That's not an issue and that's expected)
-Thus, if you want to press a button, you will have to hold it down for 1s.
-These log levels (Trace and Debug) cannot be used to play a game, they are only here for debugging purposes.
+**Important note**: If you enable the trace or debug log level, the sys-module will automatically increase the polling frequency to 100ms (for debug) and 500ms (for trace). 
+This will add a lot of latency to your controller (this isn't a problem and is expected).
+So if you want to press a button, you have to hold it down for 1 second.
+These log levels (trace and debug) cannot be used to play a game, they are for debugging purposes only.
 
 ## Features
 - [x] HID joystick/gamepad supported (PC Controller compatible)
@@ -148,7 +145,7 @@ Where 1, 2, 3, 4, ... are randomly set.
 For common issues a troubleshooting guide is available: https://github.com/o0Zz/sys-con/blob/master/doc/Troubleshooting.md
 
 ## Contribution
-All contributions are welcome, you can be a simple user or developer, if you did some mapping work in the config.ini or if you have any feedback or want a new feature, feel free to send your pull request.
+All contributions are welcome, you can be a simple user or developer, if you did some mapping work in the config.ini or if you have any feedback or want a new feature, feel free to share it in [Discussions](https://github.com/o0Zz/sys-con/discussions) or submit a [Pull request](https://github.com/o0Zz/sys-con/pulls)
 
 ## Building (For developers)
 

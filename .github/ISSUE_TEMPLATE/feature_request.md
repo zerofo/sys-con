@@ -1,6 +1,6 @@
 ---
 name: Feature request
-about: Request for a new feature, new controller support, ...
+about: Request for a new feature.
 title: ''
 labels: enhancement
 assignees: ''
