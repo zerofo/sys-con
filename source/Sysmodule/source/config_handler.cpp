@@ -105,8 +105,7 @@ namespace syscon::config
             }
             else
             {
-                syscon::logger::LogError("Unknown key: %s", name);
-                return 0; // Unknown key, return error
+                syscon::logger::LogError("Unknown key: %s, continue anyway ...", name);
             }
 
             return 1; // Success
@@ -195,8 +194,7 @@ namespace syscon::config
                 ini_data->config->rightGripColor = DecodeColorValue(value);
             else
             {
-                syscon::logger::LogError("Unknown key: %s", name);
-                return 0; // Unknown key, return error
+                syscon::logger::LogError("Unknown key: %s, continue anyway ...", name);
             }
 
             return 1; // Success
@@ -259,7 +257,7 @@ namespace syscon::config
         // Check if have a "profile"
         if (config->profile.length() > 0)
         {
-            syscon::logger::LogDebug("Loading controller config: '%s' (Profile: [%s]) ... ", CONFIG_FULLPATH, config->profile);
+            syscon::logger::LogDebug("Loading controller config: '%s' (Profile: [%s]) ... ", CONFIG_FULLPATH, config->profile.c_str());
             cfg.ini_section = convertToLowercase(config->profile);
             R_TRY(ReadFromConfig(CONFIG_FULLPATH, ParseControllerConfigLine, &cfg));
 
