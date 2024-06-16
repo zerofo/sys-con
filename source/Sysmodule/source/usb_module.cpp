@@ -59,7 +59,8 @@ namespace syscon::usb
                     So, we need to use the timeout=1ms to avoid being stuck in this function the first call, and then we can use the UINT64_MAX
                 */
                 s32 idx_out = 0;
-                if (R_SUCCEEDED(waitObjects(&idx_out, g_usbWaiters, g_usbEventCount, timeoutNs)))
+                Result rc = waitObjects(&idx_out, g_usbWaiters, g_usbEventCount, timeoutNs);
+                if (R_SUCCEEDED(rc) || R_VALUE(rc) == KERNELRESULT(TimedOut))
                 {
                     SwitchUSBLock usbLock;
 
