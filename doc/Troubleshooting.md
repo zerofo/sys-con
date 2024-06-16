@@ -12,10 +12,21 @@ Visit the [README](https://github.com/o0Zz/sys-con?tab=readme-ov-file#how-to-add
 
 And in particular these 2 values:
 ```
+[vid-pid]
 right_stick_x=Z
 right_stick_y=Rz
 ```
 Where right_stick_x and right_stick_y might be: Z, -Z, Rz, -Rz, Rx, -Rx, Ry, -Ry (Try all combinaisons until find the correct one)
+
+## My controller don't have Home button, how to simulate home button ?
+In the configuration file, edit your controller and add:
+
+```
+[vid-pid]
+simulate_home_from_plus_minus=1
+```
+
+This will allow you to simulate a home button from plus + minus touch (Most of the time bind on Select+Start)
 
 ## My controller don't works at all
 It probably means your controller is not present in the config.ini file with the correct driver. 
