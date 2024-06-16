@@ -49,7 +49,7 @@ ams::Result Xbox360WirelessController::ReadInput(RawInputData *rawData, uint16_t
     uint16_t controller_idx = m_current_controller_idx;
     m_current_controller_idx = (m_current_controller_idx + 1) % XBOX360_MAX_INPUTS;
 
-    R_TRY(m_inPipe[controller_idx]->Read(input_bytes, &size, 1 /*TimoutUs*/));
+    R_TRY(m_inPipe[controller_idx]->Read(input_bytes, &size, 100 /*TimoutUs*/));
 
     Xbox360ButtonData *buttonData = reinterpret_cast<Xbox360ButtonData *>(input_bytes);
 

@@ -119,7 +119,7 @@ ams::Result XboxOneController::ReadInput(RawInputData *rawData, uint16_t *input_
     uint8_t input_bytes[CONTROLLER_INPUT_BUFFER_SIZE];
     size_t size = sizeof(input_bytes);
 
-    R_TRY(m_inPipe[0]->Read(input_bytes, &size, UINT64_MAX));
+    R_TRY(m_inPipe[0]->Read(input_bytes, &size, 100 /*TimoutUs*/));
 
     uint8_t type = input_bytes[0];
 

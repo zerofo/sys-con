@@ -1,6 +1,7 @@
 #include "switch.h"
 #include "controller_handler.h"
 #include "SwitchHDLHandler.h"
+#include "SwitchUSBInterface.h"
 #include <algorithm>
 #include <functional>
 
@@ -29,25 +30,46 @@ namespace syscon::controllers
         ams::Result rc = switchHandler->Initialize();
         if (R_SUCCEEDED(rc))
         {
+            syscon::logger::LogInfo("Controller[%04x-%04x] plugged !", switchHandler->GetController()->GetDevice()->GetVendor(), switchHandler->GetController()->GetDevice()->GetProduct());
+
             std::scoped_lock scoped_lock(controllerMutex);
             controllerHandlers.push_back(std::move(switchHandler));
         }
         else
         {
-            syscon::logger::LogError("Failed to initialize controller: Error: 0x%X (Module: 0x%X, Desc: 0x%X)", rc.GetValue(), R_MODULE(rc.GetValue()), R_DESCRIPTION(rc.GetValue()));
+            syscon::logger::LogError("Controller[%04x-%04x] Failed to initialize controller: Error: 0x%X (Module: 0x%X, Desc: 0x%X)", switchHandler->GetController()->GetDevice()->GetVendor(), switchHandler->GetController()->GetDevice()->GetProduct(), rc.GetValue(), R_MODULE(rc.GetValue()), R_DESCRIPTION(rc.GetValue()));
         }
 
         return rc;
     }
 
-    std::vector<std::unique_ptr<SwitchVirtualGamepadHandler>> &Get()
+    void RemoveIfNotPlugged(std::vector<s32> interfaceIDsPlugged)
     {
-        return controllerHandlers;
-    }
+        std::scoped_lock scoped_lock(controllerMutex);
+        for (auto it = controllerHandlers.begin(); it != controllerHandlers.end(); it++)
+        {
+            bool found = false;
 
-    ams::os::Mutex &GetScopedLock()
-    {
-        return controllerMutex;
+            for (auto &&ptr : (*it)->GetController()->GetDevice()->GetInterfaces())
+            {
+                for (auto &&interfaceID : interfaceIDsPlugged)
+                {
+                    if (static_cast<SwitchUSBInterface *>(ptr.get())->GetID() == interfaceID)
+                    {
+                        found = true;
+                        break;
+                    }
+                }
+            }
+
+            // We check if a device was removed by comparing the controller's interfaces and the currently acquired interfaces
+            // If we didn't find a single matching interface ID, we consider a controller removed
+            if (!found)
+            {
+                syscon::logger::LogInfo("Controller[%04x-%04x] unplugged !", (*it)->GetController()->GetDevice()->GetVendor(), (*it)->GetController()->GetDevice()->GetProduct());
+                controllerHandlers.erase(it--);
+            }
+        }
     }
 
     void SetPollingFrequency(int _polling_frequency_ms)
@@ -62,6 +84,7 @@ namespace syscon::controllers
 
     void Reset()
     {
+        syscon::logger::LogInfo("Controllers Reset !");
         std::scoped_lock scoped_lock(controllerMutex);
         controllerHandlers.clear();
     }

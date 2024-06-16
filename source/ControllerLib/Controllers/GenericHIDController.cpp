@@ -8,7 +8,7 @@
 GenericHIDController::GenericHIDController(std::unique_ptr<IUSBDevice> &&device, const ControllerConfig &config, std::unique_ptr<ILogger> &&logger)
     : BaseController(std::move(device), config, std::move(logger))
 {
-    LogPrint(LogLevelDebug, "GenericHIDController Created for %04x-%04x", m_device->GetVendor(), m_device->GetProduct());
+    LogPrint(LogLevelDebug, "GenericHIDController[%04x-%04x] Created !", m_device->GetVendor(), m_device->GetProduct());
 }
 
 GenericHIDController::~GenericHIDController()
@@ -17,34 +17,33 @@ GenericHIDController::~GenericHIDController()
 
 ams::Result GenericHIDController::Initialize()
 {
-    LogPrint(LogLevelDebug, "GenericHIDController Initializing ...");
-
     R_TRY(BaseController::Initialize());
 
     uint8_t buffer[CONTROLLER_HID_REPORT_BUFFER_SIZE];
     uint16_t size = sizeof(buffer);
     // https://www.usb.org/sites/default/files/hid1_11.pdf
 
+    LogPrint(LogLevelDebug, "GenericHIDController[%04x-%04x] Reading report descriptor ...", m_device->GetVendor(), m_device->GetProduct());
     // Get HID report descriptor
     R_TRY(m_interfaces[0]->ControlTransferInput((uint8_t)USB_ENDPOINT_IN | (uint8_t)USB_RECIPIENT_INTERFACE, USB_REQUEST_GET_DESCRIPTOR, (USB_DT_REPORT << 8) | m_interfaces[0]->GetDescriptor()->bInterfaceNumber, 0, buffer, &size));
 
-    LogPrint(LogLevelTrace, "GenericHIDController Got descriptor for interface %d", m_interfaces[0]->GetDescriptor()->bInterfaceNumber);
+    LogPrint(LogLevelTrace, "GenericHIDController[%04x-%04x] Got descriptor for interface %d", m_device->GetVendor(), m_device->GetProduct(), m_interfaces[0]->GetDescriptor()->bInterfaceNumber);
     LogBuffer(LogLevelTrace, buffer, size);
 
-    LogPrint(LogLevelDebug, "GenericHIDController Parsing descriptor ...");
+    LogPrint(LogLevelDebug, "GenericHIDController[%04x-%04x] Parsing descriptor ...", m_device->GetVendor(), m_device->GetProduct());
     std::shared_ptr<HIDReportDescriptor> descriptor = std::make_shared<HIDReportDescriptor>(buffer, size);
 
-    LogPrint(LogLevelDebug, "GenericHIDController Looking for joystick/gamepad profile ...");
+    LogPrint(LogLevelDebug, "GenericHIDController[%04x-%04x] Looking for joystick/gamepad profile ...", m_device->GetVendor(), m_device->GetProduct());
     m_joystick = std::make_shared<HIDJoystick>(descriptor);
     m_joystick_count = m_joystick->getCount();
 
     if (m_joystick_count == 0)
     {
-        LogPrint(LogLevelError, "GenericHIDController HID report descriptor don't contain joystick");
+        LogPrint(LogLevelError, "GenericHIDController[%04x-%04x] HID report descriptor don't contains joystick/gamepad", m_device->GetVendor(), m_device->GetProduct());
         R_RETURN(CONTROL_ERR_HID_IS_NOT_JOYSTICK);
     }
 
-    LogPrint(LogLevelInfo, "GenericHIDController USB joystick successfully opened (%d inputs detected) !", GetInputCount());
+    LogPrint(LogLevelInfo, "GenericHIDController[%04x-%04x] USB joystick successfully opened (%d inputs detected) !", m_device->GetVendor(), m_device->GetProduct(), GetInputCount());
 
     R_SUCCEED();
 }
@@ -60,11 +59,11 @@ ams::Result GenericHIDController::ReadInput(RawInputData *rawData, uint16_t *inp
     uint8_t input_bytes[CONTROLLER_INPUT_BUFFER_SIZE];
     size_t size = sizeof(input_bytes); // TO test, what's happenning if we ask the exact size (from descriptor->MaxInputReportSize)
 
-    R_TRY(m_inPipe[0]->Read(input_bytes, &size, UINT64_MAX));
+    R_TRY(m_inPipe[0]->Read(input_bytes, &size, 100 /*TimoutUs*/));
 
     if (!m_joystick->parseData(input_bytes, size, &joystick_data))
     {
-        LogPrint(LogLevelError, "GenericHIDController Failed to parse input data");
+        LogPrint(LogLevelError, "GenericHIDController[%04x-%04x] Failed to parse input data (size=%d)", m_device->GetVendor(), m_device->GetProduct(), GetInputCount(), size);
         R_RETURN(CONTROL_ERR_UNEXPECTED_DATA);
     }
 

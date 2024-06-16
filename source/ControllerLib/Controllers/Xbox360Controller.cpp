@@ -25,7 +25,7 @@ ams::Result Xbox360Controller::ReadInput(RawInputData *rawData, uint16_t *input_
     uint8_t input_bytes[CONTROLLER_INPUT_BUFFER_SIZE];
     size_t size = sizeof(input_bytes);
 
-    R_TRY(m_inPipe[0]->Read(input_bytes, &size, UINT64_MAX));
+    R_TRY(m_inPipe[0]->Read(input_bytes, &size, 100 /*TimoutUs*/));
 
     Xbox360ButtonData *buttonData = reinterpret_cast<Xbox360ButtonData *>(input_bytes);
 
@@ -75,7 +75,6 @@ bool Xbox360Controller::Support(ControllerFeature feature)
 
 ams::Result Xbox360Controller::SetRumble(uint16_t input_idx, float amp_high, float amp_low)
 {
-
     uint8_t rumbleData[]{0x00, 0x08, 0x00, (uint8_t)(amp_high * 255), (uint8_t)(amp_low * 255), 0x00, 0x00, 0x00};
     R_RETURN(m_outPipe[input_idx]->Write(rumbleData, sizeof(rumbleData)));
 }

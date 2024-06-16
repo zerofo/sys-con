@@ -5,10 +5,11 @@
 #include <stratosphere.hpp>
 
 #include "SwitchUSBDevice.h"
+#include "SwitchUSBLock.h"
 #include "logger.h"
 #include <string.h>
 
-#define MS_TO_NS(x) (x * 1000000)
+#define MS_TO_NS(x) (x * 1000000ul)
 
 namespace syscon::usb
 {
@@ -18,8 +19,6 @@ namespace syscon::usb
 
         // MaxUsbEvents is limited by usbHsCreateInterfaceAvailableEvent, we can have only up to 3 events
         constexpr size_t MaxUsbEvents = 3;
-
-        ams::os::Mutex usbMutex(false);
 
         // Thread that waits on generic usb event
         void UsbEventThreadFunc(void *arg);
@@ -48,18 +47,23 @@ namespace syscon::usb
 
         void UsbEventThreadFunc(void *arg)
         {
+            u64 timeoutNs = MS_TO_NS(1);
             (void)arg;
 
             do
             {
                 s32 total_entries = 0;
+
+                /*
+                    Weird issue with this function, This function will never return in some cases (XBOX Serie for example #14)
+                    So, we need to use the timeout=1ms to avoid being stuck in this function the first call, and then we can use the UINT64_MAX
+                */
                 s32 idx_out = 0;
-
-                if (R_SUCCEEDED(waitObjects(&idx_out, g_usbWaiters, g_usbEventCount, UINT64_MAX)))
+                if (R_SUCCEEDED(waitObjects(&idx_out, g_usbWaiters, g_usbEventCount, timeoutNs)))
                 {
-                    syscon::logger::LogInfo("New USB device detected, checking for controllers ...");
+                    SwitchUSBLock usbLock;
 
-                    std::scoped_lock usbLock(usbMutex);
+                    syscon::logger::LogDebug("New USB device detected (Or polling timeout), checking for controllers ...");
 
                     if ((total_entries = QueryAvailableInterfacesByClass(interfaces, sizeof(interfaces), USB_CLASS_HID)) > 0 ||                                     // Generic HID
                         (total_entries = QueryAvailableInterfacesByClassSubClassProtocol(interfaces, sizeof(interfaces), USB_CLASS_VENDOR_SPEC, 0x5D, 0x81)) > 0 || // XBOX360 Wireless
@@ -68,9 +72,11 @@ namespace syscon::usb
                         (total_entries = QueryAvailableInterfacesByClassSubClassProtocol(interfaces, sizeof(interfaces), 0x58, 0x42, 0x00)) > 0)                    // XBOX Original
 
                     {
+                        timeoutNs = MS_TO_NS(1); // Everytime we find a controller we reset the timeout to loop again on next controllers
+
                         if (controllers::IsAtControllerLimit())
                         {
-                            syscon::logger::LogError("Reach controller limit (%d) - Can't add anymore controller !", controllers::Get().size());
+                            syscon::logger::LogError("Reach controller limit - Can't add anymore controller !");
                             continue;
                         }
 
@@ -120,7 +126,8 @@ namespace syscon::usb
                     }
                     else
                     {
-                        syscon::logger::LogError("No HID or XBOX interfaces found for this USB device !");
+                        syscon::logger::LogDebug("No HID or XBOX interfaces found !");
+                        timeoutNs = UINT64_MAX; // As soon as no controller is found, we wait for the next event
                     }
                 }
             } while (is_usb_event_thread_running);
@@ -136,43 +143,21 @@ namespace syscon::usb
                     s32 total_entries;
                     syscon::logger::LogInfo("USBInterface state was changed !");
 
-                    std::scoped_lock usbLock(usbMutex);
-                    std::scoped_lock controllersLock(controllers::GetScopedLock());
+                    SwitchUSBLock usbLock;
 
                     eventClear(usbHsGetInterfaceStateChangeEvent());
                     memset(interfaces, 0, sizeof(interfaces));
                     if (R_SUCCEEDED(usbHsQueryAcquiredInterfaces(interfaces, sizeof(interfaces), &total_entries)))
                     {
-                        syscon::logger::LogTrace("USBInterface %d interfaces acquired !", total_entries);
+                        std::vector<s32> interfaceIDsPlugged;
+                        syscon::logger::LogDebug("USBInterface %d interfaces acquired !", total_entries);
                         for (int i = 0; i < total_entries; i++)
-                            syscon::logger::LogTrace("USBInterface Acquired: ID=0x%08X", interfaces[i].inf.ID);
-
-                        for (auto it = controllers::Get().begin(); it != controllers::Get().end(); ++it)
                         {
-                            bool found_flag = false;
-
-                            for (auto &&ptr : (*it)->GetController()->GetDevice()->GetInterfaces())
-                            {
-                                syscon::logger::LogTrace("USBInterface Controller interface ID=0x%08X", static_cast<SwitchUSBInterface *>(ptr.get())->GetID());
-
-                                // We check if a device was removed by comparing the controller's interfaces and the currently acquired interfaces
-                                // If we didn't find a single matching interface ID, we consider a controller removed
-                                for (int i = 0; i < total_entries; i++)
-                                {
-                                    if (interfaces[i].inf.ID == static_cast<SwitchUSBInterface *>(ptr.get())->GetID())
-                                    {
-                                        found_flag = true;
-                                        break;
-                                    }
-                                }
-                            }
-
-                            if (!found_flag)
-                            {
-                                syscon::logger::LogInfo("Controller unplugged: %04x-%04x", (*it)->GetController()->GetDevice()->GetVendor(), (*it)->GetController()->GetDevice()->GetProduct());
-                                controllers::Get().erase(it--);
-                            }
+                            syscon::logger::LogDebug("USBInterface Trying to find ID=0x%08X...", interfaces[i].inf.ID);
+                            interfaceIDsPlugged.push_back(interfaces[i].inf.ID);
                         }
+
+                        controllers::RemoveIfNotPlugged(interfaceIDsPlugged);
                     }
                 }
 
@@ -181,6 +166,8 @@ namespace syscon::usb
 
         s32 QueryAvailableInterfacesByClassSubClassProtocol(UsbHsInterface *interfaces, size_t interfaces_maxsize, u8 iclass, u8 isubclass, u8 iprotocol)
         {
+            SwitchUSBLock usbLock;
+
             UsbHsInterfaceFilter filter{
                 .Flags = UsbHsInterfaceFilterFlags_bInterfaceClass | UsbHsInterfaceFilterFlags_bInterfaceSubClass | UsbHsInterfaceFilterFlags_bInterfaceProtocol,
                 .bInterfaceClass = iclass,
@@ -198,6 +185,8 @@ namespace syscon::usb
 
         s32 QueryAvailableInterfacesByClass(UsbHsInterface *interfaces, size_t interfaces_maxsize, u8 iclass)
         {
+            SwitchUSBLock usbLock;
+
             UsbHsInterfaceFilter filter{
                 .Flags = UsbHsInterfaceFilterFlags_bInterfaceClass,
                 .bInterfaceClass = iclass};
@@ -212,6 +201,8 @@ namespace syscon::usb
 
         inline Result AddEvent(UsbHsInterfaceFilter *filter, const std::string &name)
         {
+            SwitchUSBLock usbLock;
+
             if (g_usbEventCount >= MaxUsbEvents)
             {
                 static bool isMaxEventLogged = false;
@@ -235,10 +226,6 @@ namespace syscon::usb
 
     void Initialize(syscon::config::DiscoveryMode discovery_mode, std::vector<syscon::config::ControllerVidPid> &discovery_vidpid)
     {
-        is_usb_event_thread_running = true;
-        R_ABORT_UNLESS(threadCreate(&g_usb_event_thread, &UsbEventThreadFunc, nullptr, usb_event_thread_stack, sizeof(usb_event_thread_stack), 0x3A, -2));
-        R_ABORT_UNLESS(threadStart(&g_usb_event_thread));
-
         syscon::logger::LogInfo("Discovery mode: %d", discovery_mode);
 
         if (discovery_mode == syscon::config::DiscoveryMode::HID_AND_XBOX || discovery_mode == syscon::config::DiscoveryMode::VIDPID_AND_XBOX)
@@ -283,6 +270,10 @@ namespace syscon::usb
             }
         }
 
+        is_usb_event_thread_running = true;
+        R_ABORT_UNLESS(threadCreate(&g_usb_event_thread, &UsbEventThreadFunc, nullptr, usb_event_thread_stack, sizeof(usb_event_thread_stack), 0x3A, -2));
+        R_ABORT_UNLESS(threadStart(&g_usb_event_thread));
+
         is_usb_interface_change_thread_running = true;
         R_ABORT_UNLESS(threadCreate(&g_usb_interface_change_thread, &UsbInterfaceChangeThreadFunc, nullptr, usb_interface_change_thread_stack, sizeof(usb_interface_change_thread_stack), 0x2C, -2));
         R_ABORT_UNLESS(threadStart(&g_usb_interface_change_thread));
@@ -302,7 +293,10 @@ namespace syscon::usb
         threadClose(&g_usb_interface_change_thread);
 
         for (size_t i = 0; i < g_usbEventCount; i++)
+        {
+            SwitchUSBLock usbLock;
             usbHsDestroyInterfaceAvailableEvent(&g_usbEvent[i], i);
+        }
 
         controllers::Reset();
     }

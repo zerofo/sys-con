@@ -8,8 +8,7 @@ namespace syscon::controllers
     bool IsAtControllerLimit();
 
     ams::Result Insert(std::unique_ptr<IController> &&controllerPtr);
-    std::vector<std::unique_ptr<SwitchVirtualGamepadHandler>> &Get();
-    ams::os::Mutex &GetScopedLock();
+    void RemoveIfNotPlugged(std::vector<s32> interfaceIDsPlugged);
 
     void SetPollingFrequency(int polling_frequency_ms);
 

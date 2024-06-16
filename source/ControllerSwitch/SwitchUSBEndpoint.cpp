@@ -1,4 +1,5 @@
 #include "SwitchUSBEndpoint.h"
+#include "SwitchUSBLock.h"
 #include "SwitchLogger.h"
 #include <cstring>
 #include <malloc.h>
@@ -15,6 +16,8 @@ SwitchUSBEndpoint::~SwitchUSBEndpoint()
 
 ams::Result SwitchUSBEndpoint::Open(int maxPacketSize)
 {
+    SwitchUSBLock usbLock;
+
     maxPacketSize = maxPacketSize != 0 ? maxPacketSize : m_descriptor->wMaxPacketSize;
 
     ::syscon::logger::LogDebug("SwitchUSBEndpoint Opening 0x%x (Pkt size: %d)...", m_descriptor->bEndpointAddress, maxPacketSize);
@@ -28,12 +31,16 @@ ams::Result SwitchUSBEndpoint::Open(int maxPacketSize)
 
 void SwitchUSBEndpoint::Close()
 {
+    SwitchUSBLock usbLock;
+
     usbHsEpClose(&m_epSession);
 }
 
 ams::Result SwitchUSBEndpoint::Write(const uint8_t *inBuffer, size_t bufferSize)
 {
     u32 transferredSize = 0;
+
+    SwitchUSBLock usbLock;
 
     memcpy(m_usb_buffer_out, inBuffer, bufferSize);
 
@@ -52,6 +59,8 @@ ams::Result SwitchUSBEndpoint::Write(const uint8_t *inBuffer, size_t bufferSize)
 
 ams::Result SwitchUSBEndpoint::Read(uint8_t *outBuffer, size_t *bufferSizeInOut, u64 aTimeoutUs)
 {
+    SwitchUSBLock usbLock;
+
     if (GetDirection() == USB_ENDPOINT_OUT)
         ::syscon::logger::LogError("SwitchUSBEndpoint: Trying to read an OUTPUT endpoint!");
 
