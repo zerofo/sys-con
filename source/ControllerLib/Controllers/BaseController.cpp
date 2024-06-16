@@ -6,7 +6,7 @@
 BaseController::BaseController(std::unique_ptr<IUSBDevice> &&device, const ControllerConfig &config, std::unique_ptr<ILogger> &&logger)
     : IController(std::move(device), config, std::move(logger))
 {
-    LogPrint(LogLevelDebug, "BaseController Created for %04x-%04x", m_device->GetVendor(), m_device->GetProduct());
+    LogPrint(LogLevelDebug, "Controller[%04x-%04x] Created !", m_device->GetVendor(), m_device->GetProduct());
 }
 
 BaseController::~BaseController()
@@ -15,7 +15,7 @@ BaseController::~BaseController()
 
 ams::Result BaseController::Initialize()
 {
-    LogPrint(LogLevelDebug, "BaseController Initializing ...");
+    LogPrint(LogLevelDebug, "Controller[%04x-%04x] Initializing ...", m_device->GetVendor(), m_device->GetProduct());
 
     R_TRY(OpenInterfaces());
 
@@ -35,19 +35,19 @@ uint16_t BaseController::GetInputCount()
 ams::Result BaseController::OpenInterfaces()
 {
     int interfaceCount = 0;
-    LogPrint(LogLevelDebug, "BaseController Opening interfaces ...");
+    LogPrint(LogLevelDebug, "Controller[%04x-%04x] Opening interfaces ...", m_device->GetVendor(), m_device->GetProduct());
 
     ams::Result rc = m_device->Open();
     if (R_FAILED(rc))
     {
-        LogPrint(LogLevelError, "BaseController Failed to open device !");
+        LogPrint(LogLevelError, "Controller[%04x-%04x] Failed to open device !", m_device->GetVendor(), m_device->GetProduct());
         R_RETURN(rc);
     }
 
     std::vector<std::unique_ptr<IUSBInterface>> &interfaces = m_device->GetInterfaces();
     for (auto &&interface : interfaces)
     {
-        LogPrint(LogLevelDebug, "BaseController Opening interface idx=%d ...", interfaceCount++);
+        LogPrint(LogLevelDebug, "Controller[%04x-%04x] Opening interface idx=%d ...", m_device->GetVendor(), m_device->GetProduct(), interfaceCount++);
 
         R_TRY(interface->Open());
 
@@ -60,7 +60,7 @@ ams::Result BaseController::OpenInterfaces()
             rc = inEndpoint->Open();
             if (R_FAILED(rc))
             {
-                LogPrint(LogLevelError, "BaseController Failed to open input endpoint %d !", idx);
+                LogPrint(LogLevelError, "Controller[%04x-%04x] Failed to open input endpoint %d !", m_device->GetVendor(), m_device->GetProduct(), idx);
                 R_RETURN(rc);
             }
 
@@ -76,7 +76,7 @@ ams::Result BaseController::OpenInterfaces()
             rc = outEndpoint->Open();
             if (R_FAILED(rc))
             {
-                LogPrint(LogLevelError, "BaseController Failed to open output  endpoint %d !", idx);
+                LogPrint(LogLevelError, "Controller[%04x-%04x] Failed to open output  endpoint %d !", m_device->GetVendor(), m_device->GetProduct(), idx);
                 R_RETURN(rc);
             }
 
@@ -88,11 +88,11 @@ ams::Result BaseController::OpenInterfaces()
 
     if (m_inPipe.empty())
     {
-        LogPrint(LogLevelError, "BaseController Not input endpoint found !");
+        LogPrint(LogLevelError, "Controller[%04x-%04x] Not input endpoint found !", m_device->GetVendor(), m_device->GetProduct());
         R_RETURN(CONTROL_ERR_INVALID_ENDPOINT);
     }
 
-    LogPrint(LogLevelDebug, "BaseController successfully opened !");
+    LogPrint(LogLevelDebug, "Controller[%04x-%04x] successfully opened !", m_device->GetVendor(), m_device->GetProduct());
     R_SUCCEED();
 }
 
@@ -125,7 +125,8 @@ ams::Result BaseController::ReadInput(NormalizedButtonData *normalData, uint16_t
 
     R_TRY(ReadInput(&rawData, input_idx));
 
-    LogPrint(LogLevelDebug, "BaseController DATA: X=%d%%, Y=%d%%, Z=%d%%, Rz=%d%%, B1=%d, B2=%d, B3=%d, B4=%d, B5=%d, B6=%d, B7=%d, B8=%d, B9=%d, B10=%d",
+    LogPrint(LogLevelDebug, "Controller[%04x-%04x] DATA: X=%d%%, Y=%d%%, Z=%d%%, Rz=%d%%, B1=%d, B2=%d, B3=%d, B4=%d, B5=%d, B6=%d, B7=%d, B8=%d, B9=%d, B10=%d",
+             m_device->GetVendor(), m_device->GetProduct(),
              (int)(rawData.X * 100.0), (int)(rawData.Y * 100.0), (int)(rawData.Z * 100.0), (int)(rawData.Rz * 100.0),
              rawData.buttons[1] ? 1 : 0,
              rawData.buttons[2] ? 1 : 0,

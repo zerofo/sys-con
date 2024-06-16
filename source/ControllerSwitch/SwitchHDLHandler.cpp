@@ -31,25 +31,29 @@ SwitchHDLHandler::~SwitchHDLHandler()
 
 ams::Result SwitchHDLHandler::Initialize()
 {
-    syscon::logger::LogDebug("SwitchHDLHandler Initializing ...");
+    syscon::logger::LogDebug("SwitchHDLHandler[%04x-%04x] Initializing ...", m_controller->GetDevice()->GetVendor(), m_controller->GetDevice()->GetProduct());
 
     R_TRY(m_controller->Initialize());
 
+    syscon::logger::LogTrace("SwitchHDLHandler[%04x-%04x] support ?", m_controller->GetDevice()->GetVendor(), m_controller->GetDevice()->GetProduct());
+
     if (GetController()->Support(SUPPORTS_NOTHING))
         R_SUCCEED();
+
+    syscon::logger::LogTrace("SwitchHDLHandler[%04x-%04x] init ...", m_controller->GetDevice()->GetVendor(), m_controller->GetDevice()->GetProduct());
 
     R_TRY(InitHdlState());
 
     R_TRY(InitThread());
 
-    syscon::logger::LogInfo("SwitchHDLHandler Initialized !");
+    syscon::logger::LogInfo("SwitchHDLHandler[%04x-%04x] Initialized !", m_controller->GetDevice()->GetVendor(), m_controller->GetDevice()->GetProduct());
 
     R_SUCCEED();
 }
 
 void SwitchHDLHandler::Exit()
 {
-    syscon::logger::LogDebug("SwitchHDLHandler Exiting ...");
+    syscon::logger::LogDebug("SwitchHDLHandler[%04x-%04x] Exiting ...", m_controller->GetDevice()->GetVendor(), m_controller->GetDevice()->GetProduct());
 
     if (GetController()->Support(SUPPORTS_NOTHING))
     {
@@ -61,7 +65,7 @@ void SwitchHDLHandler::Exit()
     m_controller->Exit();
     UninitHdlState();
 
-    syscon::logger::LogInfo("SwitchHDLHandler Uninitialized !");
+    syscon::logger::LogInfo("SwitchHDLHandler[%04x-%04x] Uninitialized !", m_controller->GetDevice()->GetVendor(), m_controller->GetDevice()->GetProduct());
 }
 
 ams::Result SwitchHDLHandler::Attach(uint16_t input_idx)
@@ -69,12 +73,12 @@ ams::Result SwitchHDLHandler::Attach(uint16_t input_idx)
     if (IsVirtualDeviceAttached(input_idx))
         R_SUCCEED();
 
-    syscon::logger::LogDebug("SwitchHDLHandler Attaching device for input: %d ...", input_idx);
+    syscon::logger::LogDebug("SwitchHDLHandler[%04x-%04x] Attaching device for input: %d ...", m_controller->GetDevice()->GetVendor(), m_controller->GetDevice()->GetProduct(), input_idx);
 
     uint32_t HidNpadBefore = GetHidNpadMask();
     R_TRY(hiddbgAttachHdlsVirtualDevice(&m_controllerData[input_idx].m_hdlHandle, &m_controllerData[input_idx].m_deviceInfo));
 
-    syscon::logger::LogTrace("SwitchHDLHandler Searching for NpadId ...");
+    syscon::logger::LogTrace("SwitchHDLHandler[%04x-%04x] Searching for NpadId ...", m_controller->GetDevice()->GetVendor(), m_controller->GetDevice()->GetProduct());
     // Wait until the controller is attached to a HidNpadIdType_xxx
     uint32_t HidNpadDiff = 0;
     for (int i = 0; i < 1000; i++) // Timeout after 1 second
@@ -96,8 +100,8 @@ ams::Result SwitchHDLHandler::Attach(uint16_t input_idx)
         }
     }
 
-    syscon::logger::LogDebug("SwitchHDLHandler Attach - Idx: %d [NpadId: %d]", input_idx, m_controllerData[input_idx].m_npadId);
-    R_TRY(hidInitializeVibrationDevices(&m_controllerData[input_idx].m_vibrationDeviceHandle, 1, m_controllerData[input_idx].m_npadId, HidNpadStyleTag_NpadFullKey));
+    syscon::logger::LogDebug("SwitchHDLHandler[%04x-%04x] Attach - Idx: %d [NpadId: %d]", m_controller->GetDevice()->GetVendor(), m_controller->GetDevice()->GetProduct(), input_idx, m_controllerData[input_idx].m_npadId);
+    // R_TRY(hidInitializeVibrationDevices(&m_controllerData[input_idx].m_vibrationDeviceHandle, 1, m_controllerData[input_idx].m_npadId, HidNpadStyleTag_NpadFullKey));
 
     R_SUCCEED();
 }
@@ -107,7 +111,7 @@ ams::Result SwitchHDLHandler::Detach(uint16_t input_idx)
     if (!IsVirtualDeviceAttached(input_idx))
         R_SUCCEED();
 
-    syscon::logger::LogDebug("SwitchHDLHandler Detaching device for input: %d ...", input_idx);
+    syscon::logger::LogDebug("SwitchHDLHandler[%04x-%04x] Detaching device for input: %d ...", m_controller->GetDevice()->GetVendor(), m_controller->GetDevice()->GetProduct(), input_idx);
 
     hiddbgDetachHdlsVirtualDevice(m_controllerData[input_idx].m_hdlHandle);
     m_controllerData[input_idx].m_hdlHandle.handle = 0;
@@ -117,13 +121,13 @@ ams::Result SwitchHDLHandler::Detach(uint16_t input_idx)
 
 ams::Result SwitchHDLHandler::InitHdlState()
 {
-    syscon::logger::LogDebug("SwitchHDLHandler Initializing HDL state ...");
+    syscon::logger::LogDebug("SwitchHDLHandler[%04x-%04x] Initializing HDL state ...", m_controller->GetDevice()->GetVendor(), m_controller->GetDevice()->GetProduct());
 
     for (int i = 0; i < m_controller->GetInputCount(); i++)
     {
         m_controllerData[i].reset();
 
-        syscon::logger::LogDebug("SwitchHDLHandler Initializing HDL device idx: %d ...", i);
+        syscon::logger::LogDebug("SwitchHDLHandler[%04x-%04x] Initializing HDL device idx: %d ...", m_controller->GetDevice()->GetVendor(), m_controller->GetDevice()->GetProduct(), i);
 
         // Set the controller type to Pro-Controller, and set the npadInterfaceType.
         m_controllerData[i].m_deviceInfo.deviceType = HidDeviceType_FullKey15;
@@ -142,13 +146,13 @@ ams::Result SwitchHDLHandler::InitHdlState()
         m_controllerData[i].m_hdlState.analog_stick_r.y = -0x5678;
     }
 
-    syscon::logger::LogDebug("SwitchHDLHandler HDL state successfully initialized !");
+    syscon::logger::LogDebug("SwitchHDLHandler[%04x-%04x] HDL state successfully initialized !", m_controller->GetDevice()->GetVendor(), m_controller->GetDevice()->GetProduct());
     R_SUCCEED();
 }
 
 ams::Result SwitchHDLHandler::UninitHdlState()
 {
-    syscon::logger::LogDebug("SwitchHDLHandler UninitHdlState .. !");
+    syscon::logger::LogDebug("SwitchHDLHandler[%04x-%04x] UninitHdlState .. !", m_controller->GetDevice()->GetVendor(), m_controller->GetDevice()->GetProduct());
 
     for (int i = 0; i < m_controller->GetInputCount(); i++)
         Detach(i);
@@ -209,7 +213,7 @@ ams::Result SwitchHDLHandler::UpdateHdlState(const NormalizedButtonData &data, u
     ConvertAxisToSwitchAxis(data.sticks[0].axis_x, data.sticks[0].axis_y, 0, &hdlState->analog_stick_l.x, &hdlState->analog_stick_l.y);
     ConvertAxisToSwitchAxis(data.sticks[1].axis_x, data.sticks[1].axis_y, 0, &hdlState->analog_stick_r.x, &hdlState->analog_stick_r.y);
 
-    syscon::logger::LogDebug("SwitchHDLHandler UpdateHdlState - Idx: %d [Button: 0x%016X LeftX: %d LeftY: %d RightX: %d RightY: %d]", input_idx, hdlState->buttons, hdlState->analog_stick_l.x, hdlState->analog_stick_l.y, hdlState->analog_stick_r.x, hdlState->analog_stick_r.y);
+    syscon::logger::LogDebug("SwitchHDLHandler[%04x-%04x] UpdateHdlState - Idx: %d [Button: 0x%016X LeftX: %d LeftY: %d RightX: %d RightY: %d]", m_controller->GetDevice()->GetVendor(), m_controller->GetDevice()->GetProduct(), input_idx, hdlState->buttons, hdlState->analog_stick_l.x, hdlState->analog_stick_l.y, hdlState->analog_stick_r.x, hdlState->analog_stick_r.y);
 
     Result rc = hiddbgSetHdlsState(m_controllerData[input_idx].m_hdlHandle, hdlState);
     if (R_FAILED(rc))
@@ -252,7 +256,7 @@ void SwitchHDLHandler::UpdateInput()
 void SwitchHDLHandler::UpdateOutput()
 {
     // Process rumble values if supported
-    if (GetController()->Support(SUPPORTS_RUMBLE))
+    /*if (GetController()->Support(SUPPORTS_RUMBLE))
     {
         HidVibrationValue value;
 
@@ -263,19 +267,19 @@ void SwitchHDLHandler::UpdateOutput()
 
             if (R_FAILED(hidGetActualVibrationValue(m_controllerData[input_idx].m_vibrationDeviceHandle, &value)))
             {
-                syscon::logger::LogError("SwitchHDLHandler UpdateOutput - Failed to get vibration value for idx: %d", input_idx);
+                syscon::logger::LogError("SwitchHDLHandler[%04x-%04x] UpdateOutput - Failed to get vibration value for idx: %d", m_controller->GetDevice()->GetVendor(), m_controller->GetDevice()->GetProduct(), input_idx);
                 continue;
             }
 
             if (value.amp_high == m_controllerData[input_idx].m_vibrationLastValue.amp_high && value.amp_low == m_controllerData[input_idx].m_vibrationLastValue.amp_low)
                 continue; // Do nothing if the values are the same
 
-            syscon::logger::LogDebug("SwitchHDLHandler UpdateOutput - Idx: %d [AmpHigh: %d%% AmpLow: %d%%]", input_idx, (uint8_t)(value.amp_high * 100), (uint8_t)(value.amp_low * 100));
+            syscon::logger::LogDebug("SwitchHDLHandler[%04x-%04x] UpdateOutput - Idx: %d [AmpHigh: %d%% AmpLow: %d%%]", m_controller->GetDevice()->GetVendor(), m_controller->GetDevice()->GetProduct(), input_idx, (uint8_t)(value.amp_high * 100), (uint8_t)(value.amp_low * 100));
             m_controller->SetRumble(input_idx, value.amp_high, value.amp_low);
 
             m_controllerData[input_idx].m_vibrationLastValue = value;
         }
-    }
+    }*/
 }
 
 HiddbgHdlsSessionId &SwitchHDLHandler::GetHdlsSessionId()
