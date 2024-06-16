@@ -6,11 +6,11 @@ ifeq ($(GIT_TAG_COMMIT_COUNT),+0)
 	GIT_TAG_COMMIT_COUNT := 
 endif
 
-ATMOSPHERE_VERSION	?=1.7.0
-SOURCE_DIR			:=	source
-OUT_DIR				:=	out
-DIST_DIR			:=	dist
-OUT_ZIP				:=	sys-con-$(GIT_TAG)$(GIT_TAG_COMMIT_COUNT)-ATMOSPHERE-$(ATMOSPHERE_VERSION).zip
+ATMOSPHERE_VERSION	?= 1.7.x
+SOURCE_DIR			:= source
+OUT_DIR				:= out
+DIST_DIR			:= dist
+OUT_ZIP				:= sys-con-$(GIT_TAG)$(GIT_TAG_COMMIT_COUNT)-ATMOSPHERE-$(ATMOSPHERE_VERSION).zip
 
 all: build
 	rm -rf $(OUT_DIR)
@@ -39,10 +39,10 @@ mrproper: clean
 dist: clean all
 	cd $(OUT_DIR)/ && zip -r ../$(OUT_ZIP) .
 
-atmosphere_1.6.2:
+atmosphere_1.6.x:
 	cd lib/Atmosphere-libs && git reset --hard && git checkout a55e74aec3ff24112c981e8e2f677113df045b4c
 	
-atmosphere_1.7.0:
+atmosphere_1.7.x:
 	cd lib/Atmosphere-libs && git reset --hard && git checkout fadec2981727636ec7ba81d6c83995b7b9782190
 	
 distclean: mrproper atmosphere_$(ATMOSPHERE_VERSION) all
