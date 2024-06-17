@@ -47,8 +47,8 @@ atmosphere_1.6.x:
 atmosphere_1.7.x:
 	cd lib/Atmosphere-libs && \
 	git reset --hard && \
-	git checkout fadec2981727636ec7ba81d6c83995b7b9782190 && \
-	git revert 087f682571631d5d8734dd994b6caa3e96b8e07c
+	git checkout bb767869105d0eb5c38425f54bf20614639a078d && \
+	git revert --no-edit 087f682571631d5d8734dd994b6caa3e96b8e07c
 	
 distclean: mrproper atmosphere_$(ATMOSPHERE_VERSION) all
 	cd $(OUT_DIR)/ && zip -r ../$(OUT_ZIP) .
