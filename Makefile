@@ -24,7 +24,7 @@ all: build
 	@echo [DONE] sys-con compiled successfully. All files have been placed in $(OUT_DIR)/
 
 build:
-	$(MAKE) -C $(SOURCE_DIR)
+	$(MAKE) -C $(SOURCE_DIR) ATMOSPHERE_VERSION=$(ATMOSPHERE_VERSION)
 
 clean:
 	$(MAKE) -C $(SOURCE_DIR) clean
@@ -40,10 +40,15 @@ dist: clean all
 	cd $(OUT_DIR)/ && zip -r ../$(OUT_ZIP) .
 
 atmosphere_1.6.x:
-	cd lib/Atmosphere-libs && git reset --hard && git checkout a55e74aec3ff24112c981e8e2f677113df045b4c
+	cd lib/Atmosphere-libs && \
+	git reset --hard && \
+	git checkout a55e74aec3ff24112c981e8e2f677113df045b4c
 	
 atmosphere_1.7.x:
-	cd lib/Atmosphere-libs && git reset --hard && git checkout fadec2981727636ec7ba81d6c83995b7b9782190
+	cd lib/Atmosphere-libs && \
+	git reset --hard && \
+	git checkout fadec2981727636ec7ba81d6c83995b7b9782190 && \
+	git revert 087f682571631d5d8734dd994b6caa3e96b8e07c
 	
 distclean: mrproper atmosphere_$(ATMOSPHERE_VERSION) all
 	cd $(OUT_DIR)/ && zip -r ../$(OUT_ZIP) .

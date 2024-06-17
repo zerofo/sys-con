@@ -111,11 +111,10 @@ namespace ams
         ::syscon::logger::Initialize(CONFIG_PATH "log.log");
 
         u32 version = hosversionGet();
-        bool isAtmosphere = hosversionIsAtmosphere();
 
         ::syscon::logger::LogInfo("-----------------------------------------------------");
         ::syscon::logger::LogInfo("SYS-CON started %s+%d-%s (Build date: %s %s)", ::syscon::version::syscon_tag, ::syscon::version::syscon_commit_count, ::syscon::version::syscon_git_hash, __DATE__, __TIME__);
-        ::syscon::logger::LogInfo("OS version: %d.%d.%d (%s)", HOSVER_MAJOR(version), HOSVER_MINOR(version), HOSVER_MICRO(version), isAtmosphere ? "Atmosphere" : "Unknown");
+        ::syscon::logger::LogInfo("OS version: %d.%d.%d (%s)", HOSVER_MAJOR(version), HOSVER_MINOR(version), HOSVER_MICRO(version), ::syscon::version::atmosphere_version);
 
         ::syscon::logger::LogDebug("Initializing configuration ...");
 
