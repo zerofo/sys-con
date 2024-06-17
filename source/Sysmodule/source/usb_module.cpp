@@ -38,8 +38,7 @@ namespace syscon::usb
         Waiter g_usbWaiters[MaxUsbEvents] = {};
         size_t g_usbEventCount = 0;
 
-        UsbHsInterface interfaces[MaxUsbHsInterfacesSize] = {};
-
+        s32 QueryAcquiredInterfaces(UsbHsInterface *interfaces, size_t interfaces_maxsize);
         s32 QueryAvailableInterfacesByClass(UsbHsInterface *interfaces, size_t interfaces_maxsize, u8 iclass);
         s32 QueryAvailableInterfacesByClassSubClassProtocol(UsbHsInterface *interfaces, size_t interfaces_maxsize, u8 iclass, u8 isubclass, u8 iprotocol);
 
@@ -47,6 +46,7 @@ namespace syscon::usb
 
         void UsbEventThreadFunc(void *arg)
         {
+            UsbHsInterface interfaces[MaxUsbHsInterfacesSize] = {};
             u64 timeoutNs = MS_TO_NS(1);
             (void)arg;
 
@@ -62,9 +62,15 @@ namespace syscon::usb
                 Result rc = waitObjects(&idx_out, g_usbWaiters, g_usbEventCount, timeoutNs);
                 if (R_SUCCEEDED(rc) || R_VALUE(rc) == KERNELRESULT(TimedOut))
                 {
-                    SwitchUSBLock usbLock;
-
                     syscon::logger::LogDebug("New USB device detected (Or polling timeout), checking for controllers ...");
+
+                    /*
+                        For unknown reason we have to keep this lock in order to lock all usb stacks during the controller initialization
+                        If we don't do that, we will have some issue with the USB stack when we have multiple controllers connected at boot time
+                        (Example: Not being able to setLed to the device - On XBOX360 wired controller)
+                    */
+
+                    SwitchUSBLock usbLock;
 
                     if ((total_entries = QueryAvailableInterfacesByClass(interfaces, sizeof(interfaces), USB_CLASS_HID)) > 0 ||                                     // Generic HID
                         (total_entries = QueryAvailableInterfacesByClassSubClassProtocol(interfaces, sizeof(interfaces), USB_CLASS_VENDOR_SPEC, 0x5D, 0x81)) > 0 || // XBOX360 Wireless
@@ -137,18 +143,18 @@ namespace syscon::usb
         void UsbInterfaceChangeThreadFunc(void *arg)
         {
             (void)arg;
+            UsbHsInterface interfaces[MaxUsbHsInterfacesSize] = {};
+
             do
             {
                 if (R_SUCCEEDED(eventWait(usbHsGetInterfaceStateChangeEvent(), UINT64_MAX)))
                 {
-                    s32 total_entries;
+                    eventClear(usbHsGetInterfaceStateChangeEvent());
+
                     syscon::logger::LogInfo("USBInterface state was changed !");
 
-                    SwitchUSBLock usbLock;
-
-                    eventClear(usbHsGetInterfaceStateChangeEvent());
-                    memset(interfaces, 0, sizeof(interfaces));
-                    if (R_SUCCEEDED(usbHsQueryAcquiredInterfaces(interfaces, sizeof(interfaces), &total_entries)))
+                    s32 total_entries = QueryAcquiredInterfaces(interfaces, sizeof(interfaces));
+                    if (total_entries > 0)
                     {
                         std::vector<s32> interfaceIDsPlugged;
                         syscon::logger::LogDebug("USBInterface %d interfaces acquired !", total_entries);
@@ -165,6 +171,17 @@ namespace syscon::usb
             } while (is_usb_interface_change_thread_running);
         }
 
+        s32 QueryAcquiredInterfaces(UsbHsInterface *interfaces, size_t interfaces_maxsize)
+        {
+            SwitchUSBLock usbLock;
+            s32 out_entries = 0;
+
+            if (R_SUCCEEDED(usbHsQueryAcquiredInterfaces(interfaces, interfaces_maxsize, &out_entries)))
+                return out_entries;
+
+            return 0;
+        }
+
         s32 QueryAvailableInterfacesByClassSubClassProtocol(UsbHsInterface *interfaces, size_t interfaces_maxsize, u8 iclass, u8 isubclass, u8 iprotocol)
         {
             SwitchUSBLock usbLock;
@@ -179,9 +196,10 @@ namespace syscon::usb
             s32 out_entries = 0;
             memset(interfaces, 0, interfaces_maxsize);
 
-            usbHsQueryAvailableInterfaces(&filter, interfaces, interfaces_maxsize, &out_entries);
+            if (R_SUCCEEDED(usbHsQueryAvailableInterfaces(&filter, interfaces, interfaces_maxsize, &out_entries)))
+                return out_entries;
 
-            return out_entries;
+            return 0;
         }
 
         s32 QueryAvailableInterfacesByClass(UsbHsInterface *interfaces, size_t interfaces_maxsize, u8 iclass)
@@ -195,9 +213,10 @@ namespace syscon::usb
             s32 out_entries = 0;
             memset(interfaces, 0, interfaces_maxsize);
 
-            usbHsQueryAvailableInterfaces(&filter, interfaces, interfaces_maxsize, &out_entries);
+            if (R_SUCCEEDED(usbHsQueryAvailableInterfaces(&filter, interfaces, interfaces_maxsize, &out_entries)))
+                return out_entries;
 
-            return out_entries;
+            return 0;
         }
 
         inline Result AddEvent(UsbHsInterfaceFilter *filter, const std::string &name)

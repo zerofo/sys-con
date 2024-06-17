@@ -84,7 +84,7 @@ namespace syscon::controllers
 
     void Reset()
     {
-        syscon::logger::LogInfo("Controllers Reset !");
+        syscon::logger::LogDebug("Controllers Reset !");
         std::scoped_lock scoped_lock(controllerMutex);
         controllerHandlers.clear();
     }
