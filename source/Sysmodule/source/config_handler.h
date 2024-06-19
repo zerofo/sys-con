@@ -62,10 +62,11 @@ namespace syscon::config
         int log_level{LOG_LEVEL_INFO};
         DiscoveryMode discovery_mode{DiscoveryMode::HID_AND_XBOX};
         std::vector<ControllerVidPid> discovery_vidpid;
+        bool auto_add_controller{true};
     };
 
     ams::Result LoadGlobalConfig(GlobalConfig *config);
 
-    ams::Result LoadControllerConfig(ControllerConfig *config, uint16_t vendor_id, uint16_t product_id);
+    ams::Result LoadControllerConfig(ControllerConfig *config, uint16_t vendor_id, uint16_t product_id, bool auto_add_controller, const std::string &default_profile);
 
 }; // namespace syscon::config

@@ -89,6 +89,8 @@ namespace ams
             // R_ABORT_UNLESS(hidSetSupportedNpadIdType(NpadIdTypes, NumNpadIdTypes));
             // R_ABORT_UNLESS(hidSetSupportedNpadStyleSet(HidNpadStyleSet_NpadStandard | HidNpadStyleTag_NpadSystemExt));
 
+            ams::time::Initialize();
+
             R_ABORT_UNLESS(fs::MountSdCard("sdmc"));
         }
 
@@ -137,7 +139,7 @@ namespace ams
         ::syscon::controllers::SetPollingFrequency(globalConfig.polling_frequency_ms);
 
         ::syscon::logger::LogDebug("Initializing USB stack ...");
-        ::syscon::usb::Initialize(globalConfig.discovery_mode, globalConfig.discovery_vidpid);
+        ::syscon::usb::Initialize(globalConfig.discovery_mode, globalConfig.discovery_vidpid, globalConfig.auto_add_controller);
 
         ::syscon::logger::LogDebug("Initializing power supply managment ...");
         ::syscon::psc::Initialize();

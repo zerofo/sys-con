@@ -12,14 +12,6 @@ namespace syscon::config
 {
     namespace
     {
-        class ConfigINIData
-        {
-        public:
-            std::string ini_section;
-            ControllerConfig *config;
-            GlobalConfig *global_config;
-        };
-
         // Utils function
         std::string convertToLowercase(const std::string &str)
         {
@@ -28,6 +20,29 @@ namespace syscon::config
                 result += tolower(ch);
             return result;
         }
+
+        class ConfigINIData
+        {
+        public:
+            std::string ini_section;
+            ControllerConfig *controller_config;
+            GlobalConfig *global_config;
+            bool ini_section_found;
+
+            ConfigINIData(const std::string &ini_section_str, ControllerConfig *config) : ini_section(convertToLowercase(ini_section_str)),
+                                                                                          controller_config(config),
+                                                                                          global_config(NULL),
+                                                                                          ini_section_found(false)
+            {
+            }
+
+            ConfigINIData(const std::string &ini_section_str, GlobalConfig *config) : ini_section(convertToLowercase(ini_section_str)),
+                                                                                      controller_config(NULL),
+                                                                                      global_config(config),
+                                                                                      ini_section_found(false)
+            {
+            }
+        };
 
         RGBAColor DecodeColorValue(const char *value)
         {
@@ -87,12 +102,16 @@ namespace syscon::config
             if (ini_data->ini_section != sectionStr)
                 return 1; // Not the section we are looking for (return success to continue parsing)
 
+            ini_data->ini_section_found = true;
+
             if (nameStr == "polling_frequency_ms")
                 ini_data->global_config->polling_frequency_ms = atoi(value);
             else if (nameStr == "log_level")
                 ini_data->global_config->log_level = atoi(value);
             else if (nameStr == "discovery_mode")
                 ini_data->global_config->discovery_mode = static_cast<DiscoveryMode>(atoi(value));
+            else if (nameStr == "auto_add_controller")
+                ini_data->global_config->auto_add_controller = (atoi(value) == 0) ? false : true;
             else if (nameStr == "discovery_vidpid")
             {
                 char *tok = strtok(const_cast<char *>(value), ",");
@@ -122,76 +141,78 @@ namespace syscon::config
             if (ini_data->ini_section != sectionStr)
                 return 1; // Not the section we are looking for (return success to continue parsing)
 
+            ini_data->ini_section_found = true;
+
             if (nameStr == "driver")
-                ini_data->config->driver = convertToLowercase(value);
+                ini_data->controller_config->driver = convertToLowercase(value);
             else if (nameStr == "profile")
-                ini_data->config->profile = convertToLowercase(value);
+                ini_data->controller_config->profile = convertToLowercase(value);
             else if (nameStr == "b")
-                ini_data->config->buttons_pin[ControllerButton::B] = atoi(value);
+                ini_data->controller_config->buttons_pin[ControllerButton::B] = atoi(value);
             else if (nameStr == "a")
-                ini_data->config->buttons_pin[ControllerButton::A] = atoi(value);
+                ini_data->controller_config->buttons_pin[ControllerButton::A] = atoi(value);
             else if (nameStr == "x")
-                ini_data->config->buttons_pin[ControllerButton::X] = atoi(value);
+                ini_data->controller_config->buttons_pin[ControllerButton::X] = atoi(value);
             else if (nameStr == "y")
-                ini_data->config->buttons_pin[ControllerButton::Y] = atoi(value);
+                ini_data->controller_config->buttons_pin[ControllerButton::Y] = atoi(value);
             else if (nameStr == "lstick_click")
-                ini_data->config->buttons_pin[ControllerButton::LSTICK_CLICK] = atoi(value);
+                ini_data->controller_config->buttons_pin[ControllerButton::LSTICK_CLICK] = atoi(value);
             else if (nameStr == "rstick_click")
-                ini_data->config->buttons_pin[ControllerButton::RSTICK_CLICK] = atoi(value);
+                ini_data->controller_config->buttons_pin[ControllerButton::RSTICK_CLICK] = atoi(value);
             else if (nameStr == "l")
-                ini_data->config->buttons_pin[ControllerButton::L] = atoi(value);
+                ini_data->controller_config->buttons_pin[ControllerButton::L] = atoi(value);
             else if (nameStr == "r")
-                ini_data->config->buttons_pin[ControllerButton::R] = atoi(value);
+                ini_data->controller_config->buttons_pin[ControllerButton::R] = atoi(value);
             else if (nameStr == "zl")
-                ini_data->config->buttons_pin[ControllerButton::ZL] = atoi(value);
+                ini_data->controller_config->buttons_pin[ControllerButton::ZL] = atoi(value);
             else if (nameStr == "zr")
-                ini_data->config->buttons_pin[ControllerButton::ZR] = atoi(value);
+                ini_data->controller_config->buttons_pin[ControllerButton::ZR] = atoi(value);
             else if (nameStr == "minus")
-                ini_data->config->buttons_pin[ControllerButton::MINUS] = atoi(value);
+                ini_data->controller_config->buttons_pin[ControllerButton::MINUS] = atoi(value);
             else if (nameStr == "plus")
-                ini_data->config->buttons_pin[ControllerButton::PLUS] = atoi(value);
+                ini_data->controller_config->buttons_pin[ControllerButton::PLUS] = atoi(value);
             else if (nameStr == "dpad_up")
-                ini_data->config->buttons_pin[ControllerButton::DPAD_UP] = atoi(value);
+                ini_data->controller_config->buttons_pin[ControllerButton::DPAD_UP] = atoi(value);
             else if (nameStr == "dpad_right")
-                ini_data->config->buttons_pin[ControllerButton::DPAD_RIGHT] = atoi(value);
+                ini_data->controller_config->buttons_pin[ControllerButton::DPAD_RIGHT] = atoi(value);
             else if (nameStr == "dpad_down")
-                ini_data->config->buttons_pin[ControllerButton::DPAD_DOWN] = atoi(value);
+                ini_data->controller_config->buttons_pin[ControllerButton::DPAD_DOWN] = atoi(value);
             else if (nameStr == "dpad_left")
-                ini_data->config->buttons_pin[ControllerButton::DPAD_LEFT] = atoi(value);
+                ini_data->controller_config->buttons_pin[ControllerButton::DPAD_LEFT] = atoi(value);
             else if (nameStr == "capture")
-                ini_data->config->buttons_pin[ControllerButton::CAPTURE] = atoi(value);
+                ini_data->controller_config->buttons_pin[ControllerButton::CAPTURE] = atoi(value);
             else if (nameStr == "home")
-                ini_data->config->buttons_pin[ControllerButton::HOME] = atoi(value);
+                ini_data->controller_config->buttons_pin[ControllerButton::HOME] = atoi(value);
             else if (nameStr == "simulate_home_from_plus_minus")
-                ini_data->config->simulateHomeFromPlusMinus = atoi(value) == 0 ? false : true;
+                ini_data->controller_config->simulateHomeFromPlusMinus = atoi(value) == 0 ? false : true;
             else if (nameStr == "left_stick_x")
-                ini_data->config->stickConfig[0].X = DecodeAnalogConfig(value);
+                ini_data->controller_config->stickConfig[0].X = DecodeAnalogConfig(value);
             else if (nameStr == "left_stick_y")
-                ini_data->config->stickConfig[0].Y = DecodeAnalogConfig(value);
+                ini_data->controller_config->stickConfig[0].Y = DecodeAnalogConfig(value);
             else if (nameStr == "right_stick_x")
-                ini_data->config->stickConfig[1].X = DecodeAnalogConfig(value);
+                ini_data->controller_config->stickConfig[1].X = DecodeAnalogConfig(value);
             else if (nameStr == "right_stick_y")
-                ini_data->config->stickConfig[1].Y = DecodeAnalogConfig(value);
+                ini_data->controller_config->stickConfig[1].Y = DecodeAnalogConfig(value);
             else if (nameStr == "left_trigger")
-                ini_data->config->triggerConfig[0] = DecodeAnalogConfig(value);
+                ini_data->controller_config->triggerConfig[0] = DecodeAnalogConfig(value);
             else if (nameStr == "right_trigger")
-                ini_data->config->triggerConfig[1] = DecodeAnalogConfig(value);
+                ini_data->controller_config->triggerConfig[1] = DecodeAnalogConfig(value);
             else if (nameStr == "left_stick_deadzone")
-                ini_data->config->stickDeadzonePercent[0] = atoi(value);
+                ini_data->controller_config->stickDeadzonePercent[0] = atoi(value);
             else if (nameStr == "right_stick_deadzone")
-                ini_data->config->stickDeadzonePercent[1] = atoi(value);
+                ini_data->controller_config->stickDeadzonePercent[1] = atoi(value);
             else if (nameStr == "left_trigger_deadzone")
-                ini_data->config->triggerDeadzonePercent[0] = atoi(value);
+                ini_data->controller_config->triggerDeadzonePercent[0] = atoi(value);
             else if (nameStr == "right_trigger_deadzone")
-                ini_data->config->triggerDeadzonePercent[1] = atoi(value);
+                ini_data->controller_config->triggerDeadzonePercent[1] = atoi(value);
             else if (nameStr == "color_body")
-                ini_data->config->bodyColor = DecodeColorValue(value);
+                ini_data->controller_config->bodyColor = DecodeColorValue(value);
             else if (nameStr == "color_buttons")
-                ini_data->config->buttonsColor = DecodeColorValue(value);
+                ini_data->controller_config->buttonsColor = DecodeColorValue(value);
             else if (nameStr == "color_leftgrip")
-                ini_data->config->leftGripColor = DecodeColorValue(value);
+                ini_data->controller_config->leftGripColor = DecodeColorValue(value);
             else if (nameStr == "color_rightgrip")
-                ini_data->config->rightGripColor = DecodeColorValue(value);
+                ini_data->controller_config->rightGripColor = DecodeColorValue(value);
             else
             {
                 syscon::logger::LogError("Unknown key: %s, continue anyway ...", name);
@@ -203,12 +224,11 @@ namespace syscon::config
         ams::Result ReadFromConfig(const char *path, ams::util::ini::Handler h, void *config)
         {
             ams::fs::FileHandle file;
+
+            if (R_FAILED(ams::fs::OpenFile(std::addressof(file), path, ams::fs::OpenMode_Read)))
             {
-                if (R_FAILED(ams::fs::OpenFile(std::addressof(file), path, ams::fs::OpenMode_Read)))
-                {
-                    syscon::logger::LogError("Unable to open configuration file: '%s' !", path);
-                    return 1;
-                }
+                syscon::logger::LogError("Unable to open configuration file: '%s' !", path);
+                return 1;
             }
             ON_SCOPE_EXIT { ams::fs::CloseFile(file); };
 
@@ -226,46 +246,105 @@ namespace syscon::config
 
     ams::Result LoadGlobalConfig(GlobalConfig *config)
     {
-        ConfigINIData cfg;
-        cfg.global_config = config;
+        ConfigINIData cfg("global", config);
 
         syscon::logger::LogDebug("Loading global config: '%s' ...", CONFIG_FULLPATH);
 
-        cfg.ini_section = convertToLowercase("global");
         R_TRY(ReadFromConfig(CONFIG_FULLPATH, ParseGlobalConfigLine, &cfg));
 
         R_SUCCEED();
     }
 
-    ams::Result LoadControllerConfig(ControllerConfig *config, uint16_t vendor_id, uint16_t product_id)
+    ams::Result AddControllerToConfig(const char *path, std::string section, std::string profile)
+    {
+        s64 fileOffset = 0;
+        std::stringstream ss;
+        ams::fs::FileHandle file;
+
+        /* Get the current time. */
+        ams::time::PosixTime time;
+        ams::time::StandardUserSystemClock::GetCurrentTime(&time);
+        ams::time::CalendarTime calendar = ams::time::impl::util::ToCalendarTimeInUtc(time);
+
+        /* Open the config file. */
+        if (R_FAILED(ams::fs::OpenFile(std::addressof(file), path, ams::fs::OpenMode_Write | ams::fs::OpenMode_AllowAppend)))
+        {
+            syscon::logger::LogError("Unable to open configuration file: '%s' !", path);
+            return 1;
+        }
+
+        ON_SCOPE_EXIT { ams::fs::CloseFile(file); };
+
+        /* Write the config. */
+        ss << std::endl;
+        ss << "[" << section << "] ;Automatically added on " << static_cast<int>(calendar.year) << "-" << static_cast<int>(calendar.month) << "-" << static_cast<int>(calendar.day) << " " << static_cast<int>(calendar.hour) << ":" << static_cast<int>(calendar.minute) << ":" << static_cast<int>(calendar.second) << "UTC" << std::endl;
+        if (profile != "")
+        {
+            ss << "profile=" << profile << std::endl;
+        }
+        else
+        {
+            ss << "b=1" << std::endl;
+            ss << "a=2" << std::endl;
+            ss << "x=3" << std::endl;
+            ss << "y=4" << std::endl;
+            ss << "l=5" << std::endl;
+            ss << "r=6" << std::endl;
+            ss << "zl=7" << std::endl;
+            ss << "zr=8" << std::endl;
+            ss << "minus=9" << std::endl;
+            ss << "plus=10" << std::endl;
+            ss << "capture=11" << std::endl;
+            ss << "home=12" << std::endl;
+            ss << "lstick_click=13" << std::endl;
+            ss << "rstick_click=14" << std::endl;
+        }
+
+        R_TRY(ams::fs::GetFileSize(&fileOffset, file));
+
+        ams::Result rc = ams::fs::WriteFile(file, fileOffset, ss.str().c_str(), ss.str().length(), ams::fs::WriteOption::Flush);
+        if (R_FAILED(rc))
+        {
+            syscon::logger::LogError("Failed to write configuration file: '%s' !", path);
+            return 1;
+        }
+
+        R_SUCCEED();
+    }
+
+    ams::Result LoadControllerConfig(ControllerConfig *config, uint16_t vendor_id, uint16_t product_id, bool auto_add_controller, const std::string &default_profile)
     {
         ControllerVidPid controllerVidPid(vendor_id, product_id);
-        ConfigINIData cfg;
-        cfg.config = config;
+        ConfigINIData cfg_default("default", config);
+        ConfigINIData cfg_controller(controllerVidPid, config);
 
         syscon::logger::LogDebug("Loading controller config: '%s' [default] ...", CONFIG_FULLPATH);
-
-        cfg.ini_section = convertToLowercase("default");
-        R_TRY(ReadFromConfig(CONFIG_FULLPATH, ParseControllerConfigLine, &cfg));
+        R_TRY(ReadFromConfig(CONFIG_FULLPATH, ParseControllerConfigLine, &cfg_default));
 
         // Override with vendor specific config
         syscon::logger::LogDebug("Loading controller config: '%s' [%s] ...", CONFIG_FULLPATH, std::string(controllerVidPid).c_str());
+        R_TRY(ReadFromConfig(CONFIG_FULLPATH, ParseControllerConfigLine, &cfg_controller));
 
-        cfg.ini_section = convertToLowercase(controllerVidPid);
-        R_TRY(ReadFromConfig(CONFIG_FULLPATH, ParseControllerConfigLine, &cfg));
+        if (!cfg_controller.ini_section_found && auto_add_controller)
+        {
+            syscon::logger::LogDebug("Controller not found in config file, adding it ...");
+            R_TRY(AddControllerToConfig(CONFIG_FULLPATH, std::string(controllerVidPid), default_profile));
+
+            syscon::logger::LogDebug("Reloading controller config: '%s' [%s] ...", CONFIG_FULLPATH, std::string(controllerVidPid).c_str());
+            R_TRY(ReadFromConfig(CONFIG_FULLPATH, ParseControllerConfigLine, &cfg_controller));
+        }
 
         // Check if have a "profile"
         if (config->profile.length() > 0)
         {
             syscon::logger::LogDebug("Loading controller config: '%s' (Profile: [%s]) ... ", CONFIG_FULLPATH, config->profile.c_str());
-            cfg.ini_section = convertToLowercase(config->profile);
-            R_TRY(ReadFromConfig(CONFIG_FULLPATH, ParseControllerConfigLine, &cfg));
+            ConfigINIData cfg_profile(config->profile, config);
+            R_TRY(ReadFromConfig(CONFIG_FULLPATH, ParseControllerConfigLine, &cfg_profile));
 
             // Re-Override with vendor specific config
             // We are doing this to allow the profile to be overrided by the vendor specific config
             // In other words we would like to have [default] overrided by [profile] overrided by [vid-pid]
-            cfg.ini_section = convertToLowercase(controllerVidPid);
-            R_TRY(ReadFromConfig(CONFIG_FULLPATH, ParseControllerConfigLine, &cfg));
+            R_TRY(ReadFromConfig(CONFIG_FULLPATH, ParseControllerConfigLine, &cfg_controller));
         }
 
         for (int i = 0; i < ControllerButton::COUNT; i++)

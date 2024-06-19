@@ -16,9 +16,7 @@ namespace syscon::usb
     namespace
     {
         constexpr size_t MaxUsbHsInterfacesSize = 8;
-
-        // MaxUsbEvents is limited by usbHsCreateInterfaceAvailableEvent, we can have only up to 3 events
-        constexpr size_t MaxUsbEvents = 3;
+        constexpr size_t MaxUsbEvents = 3; // MaxUsbEvents is limited by usbHsCreateInterfaceAvailableEvent, we can have only up to 3 events
 
         // Thread that waits on generic usb event
         void UsbEventThreadFunc(void *arg);
@@ -33,6 +31,7 @@ namespace syscon::usb
 
         bool is_usb_event_thread_running = false;
         bool is_usb_interface_change_thread_running = false;
+        bool g_auto_add_controller = false;
 
         Event g_usbEvent[MaxUsbEvents] = {};
         Waiter g_usbWaiters[MaxUsbEvents] = {};
@@ -52,7 +51,6 @@ namespace syscon::usb
 
             do
             {
-                s32 total_entries = 0;
 
                 /*
                     Weird issue with this function, This function will never return in some cases (XBOX Serie for example #14)
@@ -71,16 +69,18 @@ namespace syscon::usb
                     */
 
                     SwitchUSBLock usbLock;
+                    s32 total_interfaces_hid = 0, total_interfaces_xbox360 = 0, total_interfaces_xboxone = 0, total_interfaces_xbox360w = 0, total_interfaces_xbox = 0;
 
-                    if ((total_entries = QueryAvailableInterfacesByClass(interfaces, sizeof(interfaces), USB_CLASS_HID)) > 0 ||                                     // Generic HID
-                        (total_entries = QueryAvailableInterfacesByClassSubClassProtocol(interfaces, sizeof(interfaces), USB_CLASS_VENDOR_SPEC, 0x5D, 0x81)) > 0 || // XBOX360 Wireless
-                        (total_entries = QueryAvailableInterfacesByClassSubClassProtocol(interfaces, sizeof(interfaces), USB_CLASS_VENDOR_SPEC, 0x5D, 0x01)) > 0 || // XBOX360 Wired
-                        (total_entries = QueryAvailableInterfacesByClassSubClassProtocol(interfaces, sizeof(interfaces), USB_CLASS_VENDOR_SPEC, 0x47, 0xD0)) > 0 || // XBOX ONE
-                        (total_entries = QueryAvailableInterfacesByClassSubClassProtocol(interfaces, sizeof(interfaces), 0x58, 0x42, 0x00)) > 0)                    // XBOX Original
+                    if ((total_interfaces_hid = QueryAvailableInterfacesByClass(interfaces, sizeof(interfaces), USB_CLASS_HID)) > 0 ||                                          // Generic HID
+                        (total_interfaces_xbox360 = QueryAvailableInterfacesByClassSubClassProtocol(interfaces, sizeof(interfaces), USB_CLASS_VENDOR_SPEC, 0x5D, 0x01)) > 0 ||  // XBOX360 Wired
+                        (total_interfaces_xboxone = QueryAvailableInterfacesByClassSubClassProtocol(interfaces, sizeof(interfaces), USB_CLASS_VENDOR_SPEC, 0x47, 0xD0)) > 0 ||  // XBOX ONE
+                        (total_interfaces_xbox360w = QueryAvailableInterfacesByClassSubClassProtocol(interfaces, sizeof(interfaces), USB_CLASS_VENDOR_SPEC, 0x5D, 0x81)) > 0 || // XBOX360 Wireless
+                        (total_interfaces_xbox = QueryAvailableInterfacesByClassSubClassProtocol(interfaces, sizeof(interfaces), 0x58, 0x42, 0x00)) > 0)                        // XBOX Original
 
                     {
                         timeoutNs = MS_TO_NS(1); // Everytime we find a controller we reset the timeout to loop again on next controllers
 
+                        s32 total_entries = total_interfaces_hid + total_interfaces_xbox360 + total_interfaces_xboxone + total_interfaces_xbox360w + total_interfaces_xbox;
                         if (controllers::IsAtControllerLimit())
                         {
                             syscon::logger::LogError("Reach controller limit - Can't add anymore controller !");
@@ -97,8 +97,18 @@ namespace syscon::usb
                                                 interface->device_desc.bDeviceProtocol,
                                                 interface->device_desc.bcdDevice);
 
+                        std::string default_profile = "";
+                        if (total_interfaces_xbox360 > 0)
+                            default_profile = "xbox360";
+                        else if (total_interfaces_xbox360w > 0)
+                            default_profile = "xbox360w";
+                        else if (total_interfaces_xboxone > 0)
+                            default_profile = "xboxone";
+                        else if (total_interfaces_xbox > 0)
+                            default_profile = "xbox";
+
                         ControllerConfig config;
-                        ::syscon::config::LoadControllerConfig(&config, interface->device_desc.idVendor, interface->device_desc.idProduct);
+                        ::syscon::config::LoadControllerConfig(&config, interface->device_desc.idVendor, interface->device_desc.idProduct, g_auto_add_controller, default_profile);
 
                         if (config.driver == "dualshock3")
                         {
@@ -244,9 +254,11 @@ namespace syscon::usb
 
     } // namespace
 
-    void Initialize(syscon::config::DiscoveryMode discovery_mode, std::vector<syscon::config::ControllerVidPid> &discovery_vidpid)
+    void Initialize(syscon::config::DiscoveryMode discovery_mode, std::vector<syscon::config::ControllerVidPid> &discovery_vidpid, bool auto_add_controller)
     {
-        syscon::logger::LogInfo("Discovery mode: %d", discovery_mode);
+        g_auto_add_controller = auto_add_controller;
+
+        syscon::logger::LogInfo("USB configuration: Discovery mode(%d), Auto add controller(%s)", discovery_mode, auto_add_controller ? "true" : "false");
 
         if (discovery_mode == syscon::config::DiscoveryMode::HID_AND_XBOX || discovery_mode == syscon::config::DiscoveryMode::VIDPID_AND_XBOX)
         {
