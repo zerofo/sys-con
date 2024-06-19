@@ -79,8 +79,9 @@ These log levels (trace and debug) cannot be used to play a game, they are for d
 - [x] Activbb X6-34U
 
 ## How to add a new controller ?
-When you plug in a new controller, most of the time only the arrow and the joystick will work, the buttons won't work by default (And right stick might be reversed).
-You will have to do the key mapping yourself, follow the method below to do it.
+As soon as a new controller is plugged, sys-con try to determine the best profile to fit your new controller.
+Most of the time arrows and joystick will works properly, the buttons might not be properly mapped by default (And in rare cases right stick might be reversed).
+If this happen, you will have to map your buttons yourself, follow below method.
 
 ### Method 1 (From a windows PC)
 
@@ -88,10 +89,10 @@ You will have to do the key mapping yourself, follow the method below to do it.
 2. Go to "Control Panel" > "Device Manager" and find your USB device under "Human Interface Devices".
 3. Double click the device or right click and select Properties.
 4. Go to the "Details" tab and select "Hardware IDs" to view its PID and VID. The PID/VID should look like "HID\VID_0810&PID_0001&...", that will become: `[0810-0001]`
-5. Open "joy.cpl" (Either from Win+R or directly in Start Menu)
+5. Open "joy.cpl" (Either from Win+R or directly in Start Menu) 
 6. Select your controller and click "Properties"
 7. Here you should see a panel with button ID (1, 2, 3 ...), press the button and note them (Which button is associated to which ID).
-8. Now Edit /config/sys-con/config.ini on your switch sdcard and add:
+8. Now Edit /config/sys-con/config.ini on your switch sdcard and edit your controller vid-pid section:
 ```
 [0810-0001]
 B=3
@@ -111,13 +112,14 @@ right_stick_y=Rz
 ```
 Where 1, 2, 3, 4, ... is the key ID noted in step 7.
 
-Note: Depending to the controller, this windows procedure might not works. If the mapping is incorrect, please switch to the Method 2.
+Note: Depending to the controller, this windows procedure might not works. If the mapping is incorrect, please switch to Method 2.
 
 ### Method 2 (Directly from the switch logs)
 
-1. Connect your controller to your switch and unplug it
-2. Open /config/sys-con/logs.txt and look for a line like: `Trying to initialize USB device: [0810-0001] ...`
-3. Now Edit /config/sys-con/config.ini on your switch sdcard and add:
+1. Connect your controller to your switch
+2. Go to: Settings -> Controllers & Sensors > Test Input Devices
+3. Press button and try to understand the correct mapping.
+3. Edit /config/sys-con/config.ini on your switch sdcard and edit your controller vid-pid section:
 ```
 [0810-0001]
 B=1
@@ -135,11 +137,6 @@ capture=12
 right_stick_x=Z
 right_stick_y=Rz
 ``` 
-Where 1, 2, 3, 4, ... are randomly set.
-
-4. Now Re-plug your controller 
-5. On your switch go to: Settings -> Controllers & Sensors > Test Input Devices
-6. Try to press button you will quickly understand that the mapping is incorrect, you need now to remap it correctly by changing the /config/sys-con/config.ini
 
 ## Troubleshooting
 For common issues a troubleshooting guide is available: https://github.com/o0Zz/sys-con/blob/master/doc/Troubleshooting.md
