@@ -164,18 +164,14 @@ namespace syscon::usb
                     syscon::logger::LogInfo("USBInterface state was changed !");
 
                     s32 total_entries = QueryAcquiredInterfaces(interfaces, sizeof(interfaces));
-                    if (total_entries > 0)
-                    {
-                        std::vector<s32> interfaceIDsPlugged;
-                        syscon::logger::LogDebug("USBInterface %d interfaces acquired !", total_entries);
-                        for (int i = 0; i < total_entries; i++)
-                        {
-                            syscon::logger::LogDebug("USBInterface Trying to find ID=0x%08X...", interfaces[i].inf.ID);
-                            interfaceIDsPlugged.push_back(interfaces[i].inf.ID);
-                        }
 
-                        controllers::RemoveIfNotPlugged(interfaceIDsPlugged);
-                    }
+                    syscon::logger::LogDebug("USBInterface %d interfaces acquired !", total_entries);
+
+                    std::vector<s32> interfaceIDsPlugged;
+                    for (int i = 0; i < total_entries; i++)
+                        interfaceIDsPlugged.push_back(interfaces[i].inf.ID);
+
+                    controllers::RemoveIfNotPlugged(interfaceIDsPlugged);
                 }
 
             } while (is_usb_interface_change_thread_running);
