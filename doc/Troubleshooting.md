@@ -3,12 +3,12 @@
 ## My controller buttons are not mapped correctly
 You need to map your buttons - Because there are thousands of controllers in the world, it's not possible for sys-con to map all of them.
 This means, if you see that your controller works partially (stick/joystick works) but the buttons are not mapped correctly, you need to update the button mapping yourself.
-See the [README](https://github.com/o0Zz/sys-con?tab=readme-ov-file#configure-a-controller-) for more details.
+See the [README](https://github.com/o0Zz/sys-con?tab=readme-ov-file#configure-a-controller) for more details.
 
 ## My controller right sticks axis are reversed. (X and Y are reversed)
 If your right joystick doesn't behave as it should (for example, you press up and it goes down)
 This means you need to map your joystick as well.
-See the [README](https://github.com/o0Zz/sys-con?tab=readme-ov-file#configure-a-controller-) 
+See the [README](https://github.com/o0Zz/sys-con?tab=readme-ov-file#configure-a-controller) 
 
 And especially these 2 values:
 ```
