@@ -1,30 +1,29 @@
-# sys-con
+# Sys-con
 
-#### A Nintendo Switch custom sysmodule for third-party controller support. 
-
-#### No man-in-the-middle required, No specific hardware required !
+#### Connect any USB controller to your Nintendo Switch ! 
+***Support any controller***: PC controllers, Wheels, Dualshock 3, Dualshock 4, Dualsense (PS5), XBOX, XBOX360, XBOXONE, ...
 
 ## Description
-This sys-module adds support for any joystick or gamepad to the Nintendo Switch.
-Only USB connection is supported - For Bluetooth connection you can use ndeadly's [MissionControl] (https://github.com/ndeadly/MissionControl)
-This fork adds support for all HID game controllers. This means that any PC-compatible USB controller should work with your Nintendo Switch. While the original sys-con only supports Xbox/PS controllers, this one adds support for all other PC controllers.
+Sys-con is a Nintendo Switch module that adds support for all HID and XID joysticks and gamepads to the Nintendo Switch.
+Only **USB** connection is supported (For Bluetooth connection prefer to use ndeadly's [MissionControl](https://github.com/ndeadly/MissionControl))
 
 ## Installation
 Download the latest zip from the [releases page](https://github.com/o0zz/sys-con/releases). Extract it to your SD card and boot/reboot your switch.
 
 ## Configuration
-sys-con comes with a config folder located at `/config/sys-con/`. It contains options for adjusting the stick/trigger deadzone and input remapping. 
+sys-con comes with a configuration folder located in `/config/sys-con/`. It contains configuration for controllers (Button mappings, sticks configuration, triggers configuration, deadzones...).
+
 The configuration is loaded in the following way:
-- The [global] section is only loaded once, when the switch boots, so if you want to apply a setting, you have to reboot the switch.
+- The `[global]` section is only loaded once, when the switch boots, so if you want to apply a setting, you have to reboot the switch.
 - Other sections are for controller configuration, they are loaded each time you plug a controller, so if you want to apply a setting you will have to unplug and then replug your controller to apply it.
 
-Load controller mapping order:
-- First load the [default] section
-- Then it will try to find a [VID-PID] section, if found it will override the default value.
-- If [VID-PID] contains a [profile], it will first load the [profile] then load [VID-PID].
+When a new controller is plugged, the configuration is loaded in below order
+1. First it load the `[default]` section
+2. Then it will load the `[VID-PID]` section
+3. If `[VID-PID]` contains a `[profile]`, it will load the `[profile]` then load `[VID-PID]`.
 
-In other words, the loading order is: [Default] [Profile] [VID-PID].
-If you want to override a setting for only 1 controller, it is better to write down your configuration in [VID-PID].
+In other words, the loading order is: `[Default]` `[Profile]` `[VID-PID]`.
+If you want to override a setting for only 1 controller, it's adviced to change the configuration in `[VID-PID]` in order to not impact others controllers
 
 ## Logs
 In case of issue, you can look at the logs in `/config/sys-con/log.log` (On your SDCard).
@@ -38,11 +37,12 @@ log_level=0
 
 Reboot the Nintendo Switch.
 
-**Important note**: If you enable the trace or debug log level, the sys-module will automatically increase the polling frequency to 100ms (for debug) and 500ms (for trace). This will add a lot of latency to your controller (this isn't a problem and is expected). So, if you want to press a button, you have to hold it down for 1 second. These log levels (trace and debug) cannot be used to play a game, they are for debugging purposes only.
+**Important note**: If you enable the trace(`log_level=0`) or debug(`log_level=1`) log level, sys-con will automatically increase the polling frequency to 100ms (for debug) and 500ms (for trace). This will add a lot of latency to your controller (this isn't a problem and is expected). So, if you want to press a button, you have to hold it down for 1 second. These log levels (trace and debug) cannot be used to play a game, they are for debugging purposes only.
 
 ## Features
-- [x] HID joystick/gamepad supported (PC Controller compatible)
-- [x] Key mapping using VID/PID or profile
+- [x] HID joystick/gamepad/wheels supported (PC Controller compatible)
+- [x] PS and XBOXs controllers supported
+- [x] Custom key mapping using VID/PID and profile.
 - [x] Automatically add new controllers (Try to determine the best driver)
 - [x] Configurable deadzone
 - [x] Configurable polling frequency
