@@ -1,57 +1,58 @@
 # Troubleshooting guide
 
-## My controller pads/joysticks works but buttons don't works
-You need to map your buttons - Because there is thousand of controllers in the world, it's not possible for this sys-module to map all of them.
-It means, if you see your controller is working partially (Stick/Joystick are working) but buttons not, you have to maps the buttons yourself.
-Visit the [README](https://github.com/o0Zz/sys-con?tab=readme-ov-file#how-to-add-a-new-controller-) for more details.
+## My controller buttons are not mapped correctly
+You need to map your buttons - Because there are thousands of controllers in the world, it's not possible for sys-con to map all of them.
+This means, if you see that your controller works partially (stick/joystick works) but the buttons are not mapped correctly, you need to update the button mapping yourself.
+See the [README](https://github.com/o0Zz/sys-con?tab=readme-ov-file#configure-a-controller-) for more details.
 
 ## My controller right sticks axis are reversed. (X and Y are reversed)
-If your right joystick don't behave as it should (Exemple, you press right, it goes up, left, down)
-It means, you need to map your joystick as well.
-Visit the [README](https://github.com/o0Zz/sys-con?tab=readme-ov-file#how-to-add-a-new-controller-) 
+If your right joystick doesn't behave as it should (for example, you press up and it goes down)
+This means you need to map your joystick as well.
+See the [README](https://github.com/o0Zz/sys-con?tab=readme-ov-file#configure-a-controller-) 
 
-And in particular these 2 values:
+And especially these 2 values:
 ```
 [vid-pid]
 right_stick_x=Z
 right_stick_y=Rz
 ```
-Where right_stick_x and right_stick_y might be: Z, -Z, Rz, -Rz, Rx, -Rx, Ry, -Ry (Try all combinaisons until find the correct one)
+Where right_stick_x and right_stick_y could be: Z, -Z, Rz, -Rz, Rx, -Rx, Ry, -Ry (try all combinations to find the right one)
 
 ## My controller don't have Home button, how to simulate home button ?
-In the configuration file, edit your controller and add:
+In the configuration file, edit your controller and add
 
 ```
 [vid-pid]
 simulate_home_from_plus_minus=1
 ```
 
-This will allow you to simulate a home button from plus + minus touch (Most of the time bind on Select+Start)
+This will allow you to simulate a home button from the plus and minus buttons (most often bound to Select+Start).
 
 ## My controller don't works at all
-It probably means your controller is not present in the config.ini file with the correct driver. 
-You need to determine the VID/PID and create a new section in the ini file, then select the correct driver to use:
- - generic (Default mode if nothing is set)
+This probably means that your controller is not configure with the correct driver.
+In the `/config/sys-con/config.ini`, you need to find your controller (\[VID/PID\]) and edit the `driver=` key with one of the following:
+ - generic (default if nothing is set)
  - xbox360
  - xbox
  - xboxone
  - dualshock4
 
-Typically, if you know your controller is a xboxone controller just add:
+Typically, if you know your controller is an xboxone controller, just add
 ```
 [vid-pid]
 driver=xboxone
 ```
 
 ## My official Switch controller don't works when sys-con is enabled
-This issue happen, because sys-con grab all USB devices you try to plug. Thus your need to configure sys-con to only discover certains controllers.
+This problem occurs because sys-con detects all connected USB devices and try to map them.
+So you need to configure sys-con to detect only specific controllers.
 
-1. Edit the config.ini and change `discovery_mode` by `discovery_mode=1`
-2. Update `discovery_vidpid=` in order to add the controllers you want to discover (Other than the official switch ones). 
+1. Edit the `/config/sys-con/config.ini` and change `discovery_mode=0` to `discovery_mode=1`.
+2. Update `discovery_vidpid=` to add the controllers you want to discover (Other than the official switch ones). 
 3. Reboot the switch.
 
 ## My controller is not working or not discovered. I don't know what todo
-Enable logs in Debug mode (Or Trace) (https://github.com/o0Zz/sys-con?tab=readme-ov-file#logs) and looks at the logs.
+Enable logs in Trace mode (https://github.com/o0Zz/sys-con?tab=readme-ov-file#logs) and looks at the logs.
 
 A typically working flow will look like:
 
@@ -87,11 +88,11 @@ A typically working flow will look like:
 
 Search for logs starting with `|E|`, If you find one, this is an error and it might give you a hint about the issue.
 
-## How to attach a logs to a ticket
+## How to attach a logs to a ticket ?
 - Edit `/config/sys-con/config.ini`
 - change `log_level=2` to `log_level=0`
 - Reboot your console
 - Wait for the console to boot
-- Plug your Controllers
+- Connect your controllers
 - Wait for the issue
 - Download the logs from `/config/sys-con/log.log`
