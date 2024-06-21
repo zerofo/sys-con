@@ -22,6 +22,8 @@ static uint32_t GetHidNpadMask()
 SwitchHDLHandler::SwitchHDLHandler(std::unique_ptr<IController> &&controller, int polling_frequency_ms)
     : SwitchVirtualGamepadHandler(std::move(controller), polling_frequency_ms)
 {
+    for (int i = 0; i < CONTROLLER_MAX_INPUTS; i++)
+        m_controllerData[i].m_is_sync = true;
 }
 
 SwitchHDLHandler::~SwitchHDLHandler()
@@ -200,13 +202,24 @@ ams::Result SwitchHDLHandler::UpdateHdlState(const NormalizedButtonData &data, u
     ConvertAxisToSwitchAxis(data.sticks[0].axis_x, data.sticks[0].axis_y, &hdlState->analog_stick_l.x, &hdlState->analog_stick_l.y);
     ConvertAxisToSwitchAxis(data.sticks[1].axis_x, data.sticks[1].axis_y, &hdlState->analog_stick_r.x, &hdlState->analog_stick_r.y);
 
-    syscon::logger::LogDebug("SwitchHDLHandler[%04x-%04x] UpdateHdlState - Idx: %d [Button: 0x%016X LeftX: %d LeftY: %d RightX: %d RightY: %d]", m_controller->GetDevice()->GetVendor(), m_controller->GetDevice()->GetProduct(), input_idx, hdlState->buttons, hdlState->analog_stick_l.x, hdlState->analog_stick_l.y, hdlState->analog_stick_r.x, hdlState->analog_stick_r.y);
+    if (!m_controllerData[input_idx].m_is_sync)
+        m_controllerData[input_idx].m_is_sync = (hdlState->buttons & HidNpadButton_L) && (hdlState->buttons & HidNpadButton_R);
 
-    Result rc = hiddbgSetHdlsState(m_controllerData[input_idx].m_hdlHandle, hdlState);
-    if (R_FAILED(rc))
+    if (m_controllerData[input_idx].m_is_connected && m_controllerData[input_idx].m_is_sync)
+        Attach(input_idx);
+
+    if (IsVirtualDeviceAttached(input_idx))
     {
-        syscon::logger::LogError("SwitchHDLHandler UpdateHdlState - Failed to set HDL state for idx: %d (Ret: 0x%X)", input_idx, rc);
-        R_RETURN(rc);
+        syscon::logger::LogDebug("SwitchHDLHandler[%04x-%04x] UpdateHdlState - Idx: %d [Button: 0x%016X LeftX: %d LeftY: %d RightX: %d RightY: %d]", m_controller->GetDevice()->GetVendor(), m_controller->GetDevice()->GetProduct(), input_idx, hdlState->buttons, hdlState->analog_stick_l.x, hdlState->analog_stick_l.y, hdlState->analog_stick_r.x, hdlState->analog_stick_r.y);
+        Result rc = hiddbgSetHdlsState(m_controllerData[input_idx].m_hdlHandle, hdlState);
+        if (R_FAILED(rc))
+        {
+            // syscon::logger::LogError("SwitchHDLHandler UpdateHdlState - Failed to set HDL state for idx: %d (Ret: 0x%X) - Detaching controller ...", input_idx, rc);
+            m_controllerData[input_idx].m_is_sync = false;
+            Detach(input_idx);
+
+            R_RETURN(rc);
+        }
     }
 
     R_SUCCEED();
@@ -225,16 +238,17 @@ void SwitchHDLHandler::UpdateInput(s32 timeout_us)
         This case happen with wireless Xbox 360 controllers
     */
 
-    if (!m_controller->IsControllerConnected(input_idx))
+    if (m_controllerData[input_idx].m_is_connected != m_controller->IsControllerConnected(input_idx)) // State changed ?
     {
-        Detach(input_idx);
-        return;
+        m_controllerData[input_idx].m_is_connected = m_controller->IsControllerConnected(input_idx);
+        m_controllerData[input_idx].m_is_sync = true; // Force sync to true in order to immediately attach the controller once re-connected
+
+        if (!m_controllerData[input_idx].m_is_connected)
+            Detach(input_idx);
     }
 
     if (R_FAILED(read_rc))
         return;
-
-    Attach(input_idx);
 
     // We get the button inputs from the input packet and update the state of our controller
     UpdateHdlState(buttonData, input_idx);

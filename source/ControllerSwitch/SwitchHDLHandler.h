@@ -28,6 +28,8 @@ public:
     HiddbgHdlsState m_hdlState;
     HidVibrationDeviceHandle m_vibrationDeviceHandle;
     HidVibrationValue m_vibrationLastValue;
+    bool m_is_connected;
+    bool m_is_sync;
 };
 
 class SwitchHDLHandler : public SwitchVirtualGamepadHandler
