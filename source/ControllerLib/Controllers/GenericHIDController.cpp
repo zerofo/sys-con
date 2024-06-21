@@ -10,8 +10,6 @@ GenericHIDController::GenericHIDController(std::unique_ptr<IUSBDevice> &&device,
       m_joystick_count(0)
 {
     LogPrint(LogLevelDebug, "GenericHIDController[%04x-%04x] Created !", m_device->GetVendor(), m_device->GetProduct());
-    for (int i = 0; i < CONTROLLER_MAX_INPUTS; i++)
-        memset(m_last_input_bytes[i], 0, sizeof(m_last_input_bytes[i]));
 }
 
 GenericHIDController::~GenericHIDController()
@@ -74,15 +72,6 @@ ams::Result GenericHIDController::ReadInput(RawInputData *rawData, uint16_t *inp
 
     if (joystick_data.index >= GetInputCount())
         R_RETURN(CONTROL_ERR_UNEXPECTED_DATA);
-
-    // Do nothing if the controller input didn't changed
-    if (memcmp(m_last_input_bytes[joystick_data.index], input_bytes, size) == 0)
-    {
-        // LogPrint(LogLevelDebug, "GenericHIDController[%04x-%04x] No new input data", m_device->GetVendor(), m_device->GetProduct());
-        R_RETURN(CONTROL_ERR_NOTHING_TODO);
-    }
-
-    memcpy(m_last_input_bytes[joystick_data.index], input_bytes, size);
 
     *input_idx = joystick_data.index;
 
