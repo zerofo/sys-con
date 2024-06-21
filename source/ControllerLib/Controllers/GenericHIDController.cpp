@@ -6,9 +6,12 @@
 // https://www.usb.org/sites/default/files/documents/hid1_11.pdf  p55
 
 GenericHIDController::GenericHIDController(std::unique_ptr<IUSBDevice> &&device, const ControllerConfig &config, std::unique_ptr<ILogger> &&logger)
-    : BaseController(std::move(device), config, std::move(logger))
+    : BaseController(std::move(device), config, std::move(logger)),
+      m_joystick_count(0)
 {
     LogPrint(LogLevelDebug, "GenericHIDController[%04x-%04x] Created !", m_device->GetVendor(), m_device->GetProduct());
+    for (int i = 0; i < CONTROLLER_MAX_INPUTS; i++)
+        memset(m_last_input_bytes[i], 0, sizeof(m_last_input_bytes[i]));
 }
 
 GenericHIDController::~GenericHIDController()
@@ -50,24 +53,39 @@ ams::Result GenericHIDController::Initialize()
 
 uint16_t GenericHIDController::GetInputCount()
 {
-    return m_joystick_count;
+    return std::min((int)m_joystick_count, CONTROLLER_MAX_INPUTS);
 }
 
-ams::Result GenericHIDController::ReadInput(RawInputData *rawData, uint16_t *input_idx)
+ams::Result GenericHIDController::ReadInput(RawInputData *rawData, uint16_t *input_idx, uint32_t timeout_us)
 {
     HIDJoystickData joystick_data;
     uint8_t input_bytes[CONTROLLER_INPUT_BUFFER_SIZE];
-    size_t size = sizeof(input_bytes); // TO test, what's happenning if we ask the exact size (from descriptor->MaxInputReportSize)
+    size_t size = std::min(m_inPipe[0]->GetDescriptor()->wMaxPacketSize, (uint16_t)sizeof(input_bytes));
 
-    R_TRY(m_inPipe[0]->Read(input_bytes, &size, 100 /*TimoutUs*/));
+    R_TRY(m_inPipe[0]->Read(input_bytes, &size, timeout_us));
+    if (size == 0)
+        R_RETURN(CONTROL_ERR_NOTHING_TODO);
 
     if (!m_joystick->parseData(input_bytes, size, &joystick_data))
     {
-        LogPrint(LogLevelError, "GenericHIDController[%04x-%04x] Failed to parse input data (size=%d)", m_device->GetVendor(), m_device->GetProduct(), GetInputCount(), size);
+        LogPrint(LogLevelError, "GenericHIDController[%04x-%04x] Failed to parse input data (size=%d)", m_device->GetVendor(), m_device->GetProduct(), size);
         R_RETURN(CONTROL_ERR_UNEXPECTED_DATA);
     }
 
+    if (joystick_data.index >= GetInputCount())
+        R_RETURN(CONTROL_ERR_UNEXPECTED_DATA);
+
+    // Do nothing if the controller input didn't changed
+    if (memcmp(m_last_input_bytes[joystick_data.index], input_bytes, size) == 0)
+    {
+        // LogPrint(LogLevelDebug, "GenericHIDController[%04x-%04x] No new input data", m_device->GetVendor(), m_device->GetProduct());
+        R_RETURN(CONTROL_ERR_NOTHING_TODO);
+    }
+
+    memcpy(m_last_input_bytes[joystick_data.index], input_bytes, size);
+
     *input_idx = joystick_data.index;
+
     for (int i = 0; i < MAX_CONTROLLER_BUTTONS; i++)
         rawData->buttons[i] = joystick_data.buttons[i];
 

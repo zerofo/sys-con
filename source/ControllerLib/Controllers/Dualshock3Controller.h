@@ -121,5 +121,5 @@ public:
     virtual ams::Result Initialize() override;
     virtual ams::Result OpenInterfaces() override;
 
-    ams::Result ReadInput(RawInputData *rawData, uint16_t *input_idx);
+    ams::Result ReadInput(RawInputData *rawData, uint16_t *input_idx, uint32_t timeout_us);
 };

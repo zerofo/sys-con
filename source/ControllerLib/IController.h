@@ -49,7 +49,7 @@ public:
     virtual void Exit() = 0;
 
     virtual uint16_t GetInputCount() = 0;
-    virtual ams::Result ReadInput(NormalizedButtonData *normalData, uint16_t *input_idx) = 0;
+    virtual ams::Result ReadInput(NormalizedButtonData *normalData, uint16_t *input_idx, uint32_t timeout_us) = 0;
 
     virtual bool Support(ControllerFeature aFeature) = 0;
 

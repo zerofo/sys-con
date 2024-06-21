@@ -119,11 +119,11 @@ ams::Result BaseController::SetRumble(uint16_t input_idx, float amp_high, float 
     return 9;
 }
 
-ams::Result BaseController::ReadInput(NormalizedButtonData *normalData, uint16_t *input_idx)
+ams::Result BaseController::ReadInput(NormalizedButtonData *normalData, uint16_t *input_idx, uint32_t timeout_us)
 {
     RawInputData rawData;
 
-    R_TRY(ReadInput(&rawData, input_idx));
+    R_TRY(ReadInput(&rawData, input_idx, timeout_us));
 
     LogPrint(LogLevelDebug, "Controller[%04x-%04x] DATA: X=%d%%, Y=%d%%, Z=%d%%, Rz=%d%%, B1=%d, B2=%d, B3=%d, B4=%d, B5=%d, B6=%d, B7=%d, B8=%d, B9=%d, B10=%d",
              m_device->GetVendor(), m_device->GetProduct(),

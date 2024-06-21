@@ -20,12 +20,12 @@ ams::Result Xbox360Controller::Initialize()
     R_SUCCEED();
 }
 
-ams::Result Xbox360Controller::ReadInput(RawInputData *rawData, uint16_t *input_idx)
+ams::Result Xbox360Controller::ReadInput(RawInputData *rawData, uint16_t *input_idx, uint32_t timeout_us)
 {
     uint8_t input_bytes[CONTROLLER_INPUT_BUFFER_SIZE];
     size_t size = sizeof(input_bytes);
 
-    R_TRY(m_inPipe[0]->Read(input_bytes, &size, 100 /*TimoutUs*/));
+    R_TRY(m_inPipe[0]->Read(input_bytes, &size, timeout_us));
 
     Xbox360ButtonData *buttonData = reinterpret_cast<Xbox360ButtonData *>(input_bytes);
 

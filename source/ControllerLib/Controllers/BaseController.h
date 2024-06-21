@@ -48,9 +48,9 @@ public:
 
     virtual uint16_t GetInputCount() override;
 
-    ams::Result ReadInput(NormalizedButtonData *normalData, uint16_t *input_idx) override;
+    ams::Result ReadInput(NormalizedButtonData *normalData, uint16_t *input_idx, uint32_t timeout_us) override;
 
-    virtual ams::Result ReadInput(RawInputData *rawData, uint16_t *input_idx) = 0;
+    virtual ams::Result ReadInput(RawInputData *rawData, uint16_t *input_idx, uint32_t timeout_us) = 0;
 
     ams::Result SetRumble(uint16_t input_idx, float amp_high, float amp_low) override;
 

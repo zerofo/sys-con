@@ -32,7 +32,7 @@ ams::Result SwitchUSBInterface::Open()
         }
         else
         {
-            //::syscon::logger::LogWarning("SwitchUSBInterface[%x-%x] Input endpoint %d is null", m_interface.device_desc.idVendor, m_interface.device_desc.idProduct, i);
+            //::syscon::logger::LogWarning("SwitchUSBInterface[%04x-%04x] Input endpoint %d is null", m_interface.device_desc.idVendor, m_interface.device_desc.idProduct, i);
         }
     }
 
@@ -46,7 +46,7 @@ ams::Result SwitchUSBInterface::Open()
         }
         else
         {
-            //::syscon::logger::LogWarning("SwitchUSBInterface(%x-%x) Output endpoint %d is null", m_interface.device_desc.idVendor, m_interface.device_desc.idProduct, i);
+            //::syscon::logger::LogWarning("SwitchUSBInterface[%04x-%04x] Output endpoint %d is null", m_interface.device_desc.idVendor, m_interface.device_desc.idProduct, i);
         }
     }
 

@@ -41,7 +41,7 @@ void Xbox360WirelessController::CloseInterfaces()
     BaseController::CloseInterfaces();
 }
 
-ams::Result Xbox360WirelessController::ReadInput(RawInputData *rawData, uint16_t *input_idx)
+ams::Result Xbox360WirelessController::ReadInput(RawInputData *rawData, uint16_t *input_idx, uint32_t timeout_us)
 {
     uint8_t input_bytes[CONTROLLER_INPUT_BUFFER_SIZE];
     size_t size = sizeof(input_bytes);
@@ -49,7 +49,7 @@ ams::Result Xbox360WirelessController::ReadInput(RawInputData *rawData, uint16_t
     uint16_t controller_idx = m_current_controller_idx;
     m_current_controller_idx = (m_current_controller_idx + 1) % XBOX360_MAX_INPUTS;
 
-    R_TRY(m_inPipe[controller_idx]->Read(input_bytes, &size, 100 /*TimoutUs*/));
+    R_TRY(m_inPipe[controller_idx]->Read(input_bytes, &size, timeout_us));
 
     Xbox360ButtonData *buttonData = reinterpret_cast<Xbox360ButtonData *>(input_bytes);
 

@@ -23,7 +23,7 @@ public:
     ams::Result OpenInterfaces() override;
     void CloseInterfaces() override;
 
-    ams::Result ReadInput(RawInputData *rawData, uint16_t *input_idx) override;
+    ams::Result ReadInput(RawInputData *rawData, uint16_t *input_idx, uint32_t timeout_us) override;
 
     bool Support(ControllerFeature feature) override;
 

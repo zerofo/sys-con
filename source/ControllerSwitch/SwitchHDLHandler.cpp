@@ -33,14 +33,7 @@ ams::Result SwitchHDLHandler::Initialize()
 {
     syscon::logger::LogDebug("SwitchHDLHandler[%04x-%04x] Initializing ...", m_controller->GetDevice()->GetVendor(), m_controller->GetDevice()->GetProduct());
 
-    R_TRY(m_controller->Initialize());
-
-    syscon::logger::LogTrace("SwitchHDLHandler[%04x-%04x] support ?", m_controller->GetDevice()->GetVendor(), m_controller->GetDevice()->GetProduct());
-
-    if (GetController()->Support(SUPPORTS_NOTHING))
-        R_SUCCEED();
-
-    syscon::logger::LogTrace("SwitchHDLHandler[%04x-%04x] init ...", m_controller->GetDevice()->GetVendor(), m_controller->GetDevice()->GetProduct());
+    R_TRY(SwitchVirtualGamepadHandler::Initialize());
 
     R_TRY(InitHdlState());
 
@@ -55,14 +48,8 @@ void SwitchHDLHandler::Exit()
 {
     syscon::logger::LogDebug("SwitchHDLHandler[%04x-%04x] Exiting ...", m_controller->GetDevice()->GetVendor(), m_controller->GetDevice()->GetProduct());
 
-    if (GetController()->Support(SUPPORTS_NOTHING))
-    {
-        m_controller->Exit();
-        return;
-    }
+    SwitchVirtualGamepadHandler::Exit();
 
-    ExitThread();
-    m_controller->Exit();
     UninitHdlState();
 
     syscon::logger::LogInfo("SwitchHDLHandler[%04x-%04x] Uninitialized !", m_controller->GetDevice()->GetVendor(), m_controller->GetDevice()->GetProduct());
@@ -210,8 +197,8 @@ ams::Result SwitchHDLHandler::UpdateHdlState(const NormalizedButtonData &data, u
     if (data.buttons[ControllerButton::HOME])
         hdlState->buttons |= HiddbgNpadButton_Home;
 
-    ConvertAxisToSwitchAxis(data.sticks[0].axis_x, data.sticks[0].axis_y, 0, &hdlState->analog_stick_l.x, &hdlState->analog_stick_l.y);
-    ConvertAxisToSwitchAxis(data.sticks[1].axis_x, data.sticks[1].axis_y, 0, &hdlState->analog_stick_r.x, &hdlState->analog_stick_r.y);
+    ConvertAxisToSwitchAxis(data.sticks[0].axis_x, data.sticks[0].axis_y, &hdlState->analog_stick_l.x, &hdlState->analog_stick_l.y);
+    ConvertAxisToSwitchAxis(data.sticks[1].axis_x, data.sticks[1].axis_y, &hdlState->analog_stick_r.x, &hdlState->analog_stick_r.y);
 
     syscon::logger::LogDebug("SwitchHDLHandler[%04x-%04x] UpdateHdlState - Idx: %d [Button: 0x%016X LeftX: %d LeftY: %d RightX: %d RightY: %d]", m_controller->GetDevice()->GetVendor(), m_controller->GetDevice()->GetProduct(), input_idx, hdlState->buttons, hdlState->analog_stick_l.x, hdlState->analog_stick_l.y, hdlState->analog_stick_r.x, hdlState->analog_stick_r.y);
 
@@ -225,12 +212,12 @@ ams::Result SwitchHDLHandler::UpdateHdlState(const NormalizedButtonData &data, u
     R_SUCCEED();
 }
 
-void SwitchHDLHandler::UpdateInput()
+void SwitchHDLHandler::UpdateInput(s32 timeout_us)
 {
     uint16_t input_idx = 0;
     NormalizedButtonData buttonData = {0};
 
-    ams::Result read_rc = m_controller->ReadInput(&buttonData, &input_idx);
+    ams::Result read_rc = m_controller->ReadInput(&buttonData, &input_idx, timeout_us);
 
     /*
         Note: We must not return here if readInput fail, because it might have change the ControllerConnected state.

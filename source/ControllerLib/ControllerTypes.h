@@ -6,7 +6,6 @@
 
 enum ControllerFeature : uint8_t
 {
-    SUPPORTS_NOTHING = 0,
     SUPPORTS_RUMBLE,
     SUPPORTS_COUNT
 };
