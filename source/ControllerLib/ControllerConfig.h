@@ -27,7 +27,8 @@ enum ControllerButton
     CAPTURE,
     HOME,
 
-    COUNT
+    COUNT,
+    NONE
 };
 
 union RGBAColor
@@ -81,7 +82,8 @@ public:
     ControllerStickConfig stickConfig[MAX_JOYSTICKS];
     ControllerAnalogConfig triggerConfig[MAX_TRIGGERS];
 
-    bool simulateHomeFromPlusMinus{false};
+    ControllerButton simulateHome[2]{ControllerButton::NONE};
+    ControllerButton simulateCapture[2]{ControllerButton::NONE};
 
     RGBAColor bodyColor{0, 0, 0, 255};
     RGBAColor buttonsColor{0, 0, 0, 255};

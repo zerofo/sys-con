@@ -184,13 +184,23 @@ ams::Result BaseController::ReadInput(NormalizedButtonData *normalData, uint16_t
     normalData->buttons[ControllerButton::DPAD_RIGHT] = rawData.dpad_right;
     normalData->buttons[ControllerButton::DPAD_LEFT] = rawData.dpad_left;
 
-    if (GetConfig().simulateHomeFromPlusMinus)
+    if (GetConfig().simulateHome[0] != ControllerButton::NONE && GetConfig().simulateHome[1] != ControllerButton::NONE)
     {
-        if (normalData->buttons[ControllerButton::PLUS] && normalData->buttons[ControllerButton::MINUS])
+        if (normalData->buttons[GetConfig().simulateHome[0]] && normalData->buttons[GetConfig().simulateHome[1]])
         {
             normalData->buttons[ControllerButton::HOME] = true;
-            normalData->buttons[ControllerButton::PLUS] = false;
-            normalData->buttons[ControllerButton::MINUS] = false;
+            normalData->buttons[GetConfig().simulateHome[0]] = false;
+            normalData->buttons[GetConfig().simulateHome[1]] = false;
+        }
+    }
+
+    if (GetConfig().simulateCapture[0] != ControllerButton::NONE && GetConfig().simulateCapture[1] != ControllerButton::NONE)
+    {
+        if (normalData->buttons[GetConfig().simulateCapture[0]] && normalData->buttons[GetConfig().simulateCapture[1]])
+        {
+            normalData->buttons[ControllerButton::CAPTURE] = true;
+            normalData->buttons[GetConfig().simulateCapture[0]] = false;
+            normalData->buttons[GetConfig().simulateCapture[1]] = false;
         }
     }
 

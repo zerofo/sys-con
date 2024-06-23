@@ -18,6 +18,14 @@ right_stick_y=Rz
 ```
 Where right_stick_x and right_stick_y could be: Z, -Z, Rz, -Rz, Rx, -Rx, Ry, -Ry (try all combinations to find the right one)
 
+## My XBOX One S/X controller is not detected
+Ussually, this issue happend if you try to start the controller (Press XBOX button) when the USB is already plugged to the Switch.
+Try below procedure:
+    1. Unplug the controller from the switch
+    2. Shutdown the controller
+    3. Power on the controller
+    4. Plug the controller to the switch (Make sure the switch is wakeup)
+
 ## My controller don't have Home button, how to simulate home button ?
 In the configuration file, edit your controller and add
 

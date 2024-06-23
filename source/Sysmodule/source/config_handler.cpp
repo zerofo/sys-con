@@ -44,6 +44,50 @@ namespace syscon::config
             }
         };
 
+        ControllerButton keyStrToButton(const char *name)
+        {
+            std::string nameStr = convertToLowercase(name);
+
+            if (nameStr == "b")
+                return ControllerButton::B;
+            else if (nameStr == "a")
+                return ControllerButton::A;
+            else if (nameStr == "x")
+                return ControllerButton::X;
+            else if (nameStr == "y")
+                return ControllerButton::Y;
+            else if (nameStr == "lstick_click")
+                return ControllerButton::LSTICK_CLICK;
+            else if (nameStr == "rstick_click")
+                return ControllerButton::RSTICK_CLICK;
+            else if (nameStr == "l")
+                return ControllerButton::L;
+            else if (nameStr == "r")
+                return ControllerButton::R;
+            else if (nameStr == "zl")
+                return ControllerButton::ZL;
+            else if (nameStr == "zr")
+                return ControllerButton::ZR;
+            else if (nameStr == "minus")
+                return ControllerButton::MINUS;
+            else if (nameStr == "plus")
+                return ControllerButton::PLUS;
+            else if (nameStr == "dpad_up")
+                return ControllerButton::DPAD_UP;
+            else if (nameStr == "dpad_right")
+                return ControllerButton::DPAD_RIGHT;
+            else if (nameStr == "dpad_down")
+                return ControllerButton::DPAD_DOWN;
+            else if (nameStr == "dpad_left")
+                return ControllerButton::DPAD_LEFT;
+            else if (nameStr == "capture")
+                return ControllerButton::CAPTURE;
+            else if (nameStr == "home")
+                return ControllerButton::HOME;
+
+            return ControllerButton::NONE;
+        }
+
         RGBAColor DecodeColorValue(const char *value)
         {
             RGBAColor color;
@@ -67,6 +111,20 @@ namespace syscon::config
             }
 
             return color;
+        }
+
+        void DecodeHotKey(const char *value, ControllerButton hotkeys[2])
+        {
+            char *tok = strtok(const_cast<char *>(value), "+");
+
+            for (int i = 0; i < 2; i++)
+            {
+                if (tok == NULL)
+                    break;
+
+                hotkeys[i] = keyStrToButton(tok);
+                tok = strtok(NULL, "+");
+            }
         }
 
         ControllerAnalogConfig DecodeAnalogConfig(const std::string &cfg)
@@ -147,48 +205,17 @@ namespace syscon::config
 
             ini_data->ini_section_found = true;
 
-            if (nameStr == "driver")
+            ControllerButton buttonId = keyStrToButton(nameStr.c_str());
+            if (buttonId != ControllerButton::NONE)
+                ini_data->controller_config->buttons_pin[buttonId] = atoi(value);
+            else if (nameStr == "driver")
                 ini_data->controller_config->driver = convertToLowercase(value);
             else if (nameStr == "profile")
                 ini_data->controller_config->profile = convertToLowercase(value);
-            else if (nameStr == "b")
-                ini_data->controller_config->buttons_pin[ControllerButton::B] = atoi(value);
-            else if (nameStr == "a")
-                ini_data->controller_config->buttons_pin[ControllerButton::A] = atoi(value);
-            else if (nameStr == "x")
-                ini_data->controller_config->buttons_pin[ControllerButton::X] = atoi(value);
-            else if (nameStr == "y")
-                ini_data->controller_config->buttons_pin[ControllerButton::Y] = atoi(value);
-            else if (nameStr == "lstick_click")
-                ini_data->controller_config->buttons_pin[ControllerButton::LSTICK_CLICK] = atoi(value);
-            else if (nameStr == "rstick_click")
-                ini_data->controller_config->buttons_pin[ControllerButton::RSTICK_CLICK] = atoi(value);
-            else if (nameStr == "l")
-                ini_data->controller_config->buttons_pin[ControllerButton::L] = atoi(value);
-            else if (nameStr == "r")
-                ini_data->controller_config->buttons_pin[ControllerButton::R] = atoi(value);
-            else if (nameStr == "zl")
-                ini_data->controller_config->buttons_pin[ControllerButton::ZL] = atoi(value);
-            else if (nameStr == "zr")
-                ini_data->controller_config->buttons_pin[ControllerButton::ZR] = atoi(value);
-            else if (nameStr == "minus")
-                ini_data->controller_config->buttons_pin[ControllerButton::MINUS] = atoi(value);
-            else if (nameStr == "plus")
-                ini_data->controller_config->buttons_pin[ControllerButton::PLUS] = atoi(value);
-            else if (nameStr == "dpad_up")
-                ini_data->controller_config->buttons_pin[ControllerButton::DPAD_UP] = atoi(value);
-            else if (nameStr == "dpad_right")
-                ini_data->controller_config->buttons_pin[ControllerButton::DPAD_RIGHT] = atoi(value);
-            else if (nameStr == "dpad_down")
-                ini_data->controller_config->buttons_pin[ControllerButton::DPAD_DOWN] = atoi(value);
-            else if (nameStr == "dpad_left")
-                ini_data->controller_config->buttons_pin[ControllerButton::DPAD_LEFT] = atoi(value);
-            else if (nameStr == "capture")
-                ini_data->controller_config->buttons_pin[ControllerButton::CAPTURE] = atoi(value);
-            else if (nameStr == "home")
-                ini_data->controller_config->buttons_pin[ControllerButton::HOME] = atoi(value);
-            else if (nameStr == "simulate_home_from_plus_minus")
-                ini_data->controller_config->simulateHomeFromPlusMinus = atoi(value) == 0 ? false : true;
+            else if (nameStr == "simulate_home")
+                DecodeHotKey(value, ini_data->controller_config->simulateHome);
+            else if (nameStr == "simulate_capture")
+                DecodeHotKey(value, ini_data->controller_config->simulateCapture);
             else if (nameStr == "left_stick_x")
                 ini_data->controller_config->stickConfig[0].X = DecodeAnalogConfig(value);
             else if (nameStr == "left_stick_y")
@@ -221,7 +248,6 @@ namespace syscon::config
             {
                 syscon::logger::LogError("Unknown key: %s, continue anyway ...", name);
             }
-
             return 1; // Success
         }
 
