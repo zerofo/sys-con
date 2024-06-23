@@ -46,23 +46,26 @@ namespace syscon::config
 
         RGBAColor DecodeColorValue(const char *value)
         {
-            RGBAColor color = {0, 0, 0, 255};
+            RGBAColor color;
+            color.rgbaValue = 0x000000FF;
 
-            if (value[0] != '#')
+            if (value[0] == '#')
+                value = &value[1];
+
+            if (strlen(value) == 8) // R G B A
             {
-                syscon::logger::LogError("Invalid color value: %s (Missing # at the begining)", value);
-                return color;
+                color.rgbaValue = strtol(value, NULL, 16);
+            }
+            else if (strlen(value) == 6) // R G B
+            {
+                color.rgbaValue = strtol(value, NULL, 16);
+                color.rgbaValue = (color.rgbaValue << 8) | 0xFF; // Add Alpha
+            }
+            else
+            {
+                syscon::logger::LogError("Invalid color value: %s (Invalid length (Expecting 8 or 6 got %d))", value, strlen(value));
             }
 
-            value = &value[1];
-
-            if (strlen(value) != 8)
-            {
-                syscon::logger::LogError("Invalid color value: %s (Invalid length (Expectred 8 got %d))", value, strlen(value));
-                return color;
-            }
-
-            color.rgbaValue = strtol(value, NULL, 16);
             return color;
         }
 
@@ -136,6 +139,7 @@ namespace syscon::config
             std::string sectionStr = convertToLowercase(section);
             std::string nameStr = convertToLowercase(name);
 
+            // Note: Below log cause a crash, need to fix it
             // syscon::logger::LogTrace("Parsing controller config line: %s, %s, %s (expect: %s)", section, name, value, ini_data->ini_section.c_str());
 
             if (ini_data->ini_section != sectionStr)

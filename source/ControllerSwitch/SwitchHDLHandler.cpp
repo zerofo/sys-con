@@ -214,6 +214,12 @@ ams::Result SwitchHDLHandler::UpdateHdlState(const NormalizedButtonData &data, u
         Result rc = hiddbgSetHdlsState(m_controllerData[input_idx].m_hdlHandle, hdlState);
         if (R_FAILED(rc))
         {
+            /*
+                The switch will automatically detach the controller if user goes to SYNC menu or if user enter in a game with only 1 controller (i.e: tftpd)
+                So, we must detach the controller if we failed to set the HDL state (In order to avoid a desync between the controller and the switch)
+                This case might also happen if user plugged a controller and we were not able to attach it (i.e: if the game do no accept more controller)
+            */
+
             // syscon::logger::LogError("SwitchHDLHandler UpdateHdlState - Failed to set HDL state for idx: %d (Ret: 0x%X) - Detaching controller ...", input_idx, rc);
             m_controllerData[input_idx].m_is_sync = false;
             Detach(input_idx);

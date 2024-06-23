@@ -63,7 +63,7 @@ namespace syscon::usb
                     syscon::logger::LogDebug("New USB device detected (Or polling timeout), checking for controllers ...");
 
                     /*
-                        For unknown reason we have to keep this lock in order to lock all usb stacks during the controller initialization
+                        For unknown reason we have to keep this lock in order to lock the usb stacks during the controller initialization
                         If we don't do that, we will have some issue with the USB stack when we have multiple controllers connected at boot time
                         (Example: Not being able to setLed to the device - On XBOX360 wired controller)
                     */
@@ -127,6 +127,7 @@ namespace syscon::usb
                         }
                         else if (config.driver == "xboxone")
                         {
+                            /* One XboxOne controller will expose 2 interfaces, thus we have to take all of them */
                             syscon::logger::LogInfo("Initializing Xbox One controller (Interface count: %d) ...", total_entries);
                             controllers::Insert(std::make_unique<XboxOneController>(std::make_unique<SwitchUSBDevice>(interfaces, total_entries), config, std::make_unique<syscon::logger::Logger>()));
                         }
@@ -137,6 +138,7 @@ namespace syscon::usb
                         }
                         else
                         {
+                            /* Generic controller expose 1 interface, thus we have to take only 1 */
                             syscon::logger::LogInfo("Initializing Generic controller (Interface count: %d) ...", total_entries);
                             controllers::Insert(std::make_unique<GenericHIDController>(std::make_unique<SwitchUSBDevice>(interfaces, 1), config, std::make_unique<syscon::logger::Logger>()));
                         }
