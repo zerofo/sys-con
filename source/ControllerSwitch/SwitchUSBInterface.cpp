@@ -20,7 +20,11 @@ ams::Result SwitchUSBInterface::Open()
 
     ::syscon::logger::LogDebug("SwitchUSBInterface[%04x-%04x] Openning ...", m_interface.device_desc.idVendor, m_interface.device_desc.idProduct);
 
-    R_TRY(usbHsAcquireUsbIf(&m_session, &m_interface));
+    if (R_FAILED(usbHsAcquireUsbIf(&m_session, &m_interface)))
+    {
+        ::syscon::logger::LogError("SwitchUSBInterface[%04x-%04x] Failed to acquire USB interface !", m_interface.device_desc.idVendor, m_interface.device_desc.idProduct);
+        R_RETURN(CONTROL_ERR_USB_INTERFACE_ACQUIRE);
+    }
 
     for (int i = 0; i < SWITCH_USB_MAX_ENDPOINTS; i++)
     {
