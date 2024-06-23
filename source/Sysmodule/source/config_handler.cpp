@@ -127,6 +127,36 @@ namespace syscon::config
             }
         }
 
+        HidDeviceType DecodeControllerType(const char *value)
+        {
+            std::string type = convertToLowercase(value);
+
+            if (type == "pro")
+                return HidDeviceType_FullKey3;
+            else if (type == "tarragon")
+                return HidDeviceType_FullKey6;
+            else if (type == "snes")
+                return HidDeviceType_Lucia;
+            else if (type == "pokeballplus")
+                return HidDeviceType_Palma;
+            else if (type == "gamecube")
+                return HidDeviceType_FullKey13;
+            else if (type == "pro2")
+                return HidDeviceType_FullKey15;
+            else if (type == "3rdpartypro")
+                return HidDeviceType_System19;
+            else if (type == "n64")
+                return HidDeviceType_Lagon;
+            else if (type == "sega")
+                return HidDeviceType_Lager;
+            else if (type == "nes")
+                return HidDeviceType_LarkNesLeft;
+            else if (type == "famicom")
+                return HidDeviceType_LarkHvcLeft;
+
+            return HidDeviceType_FullKey15;
+        }
+
         ControllerAnalogConfig DecodeAnalogConfig(const std::string &cfg)
         {
             ControllerAnalogConfig analogCfg;
@@ -212,6 +242,8 @@ namespace syscon::config
                 ini_data->controller_config->driver = convertToLowercase(value);
             else if (nameStr == "profile")
                 ini_data->controller_config->profile = convertToLowercase(value);
+            else if (nameStr == "controller_type")
+                ini_data->controller_config->controllerType = DecodeControllerType(value);
             else if (nameStr == "simulate_home")
                 DecodeHotKey(value, ini_data->controller_config->simulateHome);
             else if (nameStr == "simulate_capture")

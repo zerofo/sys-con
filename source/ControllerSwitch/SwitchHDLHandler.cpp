@@ -116,10 +116,10 @@ ams::Result SwitchHDLHandler::InitHdlState()
     {
         m_controllerData[i].reset();
 
-        syscon::logger::LogDebug("SwitchHDLHandler[%04x-%04x] Initializing HDL device idx: %d ...", m_controller->GetDevice()->GetVendor(), m_controller->GetDevice()->GetProduct(), i);
+        syscon::logger::LogDebug("SwitchHDLHandler[%04x-%04x] Initializing HDL device idx: %d (Controller type: %d) ...", m_controller->GetDevice()->GetVendor(), m_controller->GetDevice()->GetProduct(), i, m_controller->GetConfig().controllerType);
 
         // Set the controller type to Pro-Controller, and set the npadInterfaceType.
-        m_controllerData[i].m_deviceInfo.deviceType = HidDeviceType_FullKey15;
+        m_controllerData[i].m_deviceInfo.deviceType = m_controller->GetConfig().controllerType;
         m_controllerData[i].m_deviceInfo.npadInterfaceType = HidNpadInterfaceType_USB;
 
         // Set the controller colors. The grip colors are for Pro-Controller on [9.0.0+].
@@ -129,10 +129,10 @@ ams::Result SwitchHDLHandler::InitHdlState()
         m_controllerData[i].m_deviceInfo.colorRightGrip = __builtin_bswap32(m_controller->GetConfig().rightGripColor.rgbaValue);
 
         m_controllerData[i].m_hdlState.battery_level = 4; // Set battery charge to full.
-        m_controllerData[i].m_hdlState.analog_stick_l.x = 0x1234;
-        m_controllerData[i].m_hdlState.analog_stick_l.y = -0x1234;
-        m_controllerData[i].m_hdlState.analog_stick_r.x = 0x5678;
-        m_controllerData[i].m_hdlState.analog_stick_r.y = -0x5678;
+        m_controllerData[i].m_hdlState.analog_stick_l.x = 0;
+        m_controllerData[i].m_hdlState.analog_stick_l.y = 0;
+        m_controllerData[i].m_hdlState.analog_stick_r.x = 0;
+        m_controllerData[i].m_hdlState.analog_stick_r.y = 0;
     }
 
     syscon::logger::LogDebug("SwitchHDLHandler[%04x-%04x] HDL state successfully initialized !", m_controller->GetDevice()->GetVendor(), m_controller->GetDevice()->GetProduct());

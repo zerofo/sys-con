@@ -74,6 +74,7 @@ class ControllerConfig
 public:
     std::string driver;
     std::string profile;
+    HidDeviceType controllerType{HidDeviceType_FullKey15};
 
     uint8_t stickDeadzonePercent[MAX_JOYSTICKS]{0};
     uint8_t triggerDeadzonePercent[MAX_TRIGGERS]{0};
