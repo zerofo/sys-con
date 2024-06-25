@@ -23,7 +23,7 @@ namespace syscon::usb
         // Thread that waits on any disconnected usb devices
         void UsbInterfaceChangeThreadFunc(void *arg);
 
-        alignas(ams::os::ThreadStackAlignment) u8 usb_event_thread_stack[0x2000];
+        alignas(ams::os::ThreadStackAlignment) u8 usb_event_thread_stack[0x4000];
         alignas(ams::os::ThreadStackAlignment) u8 usb_interface_change_thread_stack[0x2000];
 
         Thread g_usb_event_thread;
