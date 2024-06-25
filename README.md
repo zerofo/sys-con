@@ -123,7 +123,7 @@ Where 1, 2, 3, 4, ... is the key ID noted in step 7.
 Note: Depending to the controller, this windows procedure might not works. If the mapping is incorrect, switch to Method 1
 
 ## Troubleshooting
-For common issues a troubleshooting guide is available: https://github.com/o0Zz/sys-con/blob/master/doc/Troubleshooting.md
+For common issues a troubleshooting guide is available: [Troubleshooting](https://github.com/o0Zz/sys-con/blob/master/doc/Troubleshooting.md)
 
 ## Contribution
 All contributions are welcome, you can be a simple user or developer, if you did some mapping work in the config.ini or if you have any feedback, feel free to share it in [Discussions](https://github.com/o0Zz/sys-con/discussions) or submit a [Pull request](https://github.com/o0Zz/sys-con/pulls)

@@ -6,7 +6,7 @@ This means, if you see that your controller works partially (stick/joystick work
 See the [README](https://github.com/o0Zz/sys-con?tab=readme-ov-file#configure-a-controller) for more details.
 
 ## My controller right sticks axis are reversed. (X and Y are reversed)
-If your right joystick doesn't behave as it should (for example, you press up and it goes down)
+If your right joystick doesn't behave as it should (for example, you press up and it goes right)
 This means you need to map your joystick as well.
 See the [README](https://github.com/o0Zz/sys-con?tab=readme-ov-file#configure-a-controller) 
 
@@ -19,22 +19,26 @@ right_stick_y=Rz
 Where right_stick_x and right_stick_y could be: Z, -Z, Rz, -Rz, Rx, -Rx, Ry, -Ry (try all combinations to find the right one)
 
 ## My XBOX One S/X controller is not detected
-Ussually, this issue happend if you try to start the controller (Press XBOX button) when the USB is already plugged to the Switch.
-Try below procedure:
-    1. Unplug the controller from the switch
-    2. Shutdown the controller
+This usually happens when you try to start the controller (press the XBOX button) when the USB is already connected to the switch.
+Try the following procedure:
+    1. Disconnect the controller from the switch
+    2. Shut down the controller
     3. Power on the controller
-    4. Plug the controller to the switch (Make sure the switch is wakeup)
+    4. Connect the controller to the switch (make sure the switch is set to wake up).
 
-## My controller don't have Home button, how to simulate home button ?
-In the configuration file, edit your controller and add
+## My controller don't have Home or Capture button, how to simulate home or capture button ?
+In the configuration file, edit your controller and add `simulate_home=` `simulate_capture=` followed by the buttons you want to use to simulate it.
 
+Example:
 ```
 [vid-pid]
-simulate_home_from_plus_minus=1
-```
+simulate_home=minus+plus
+simulate_capture=plus+L
 
-This will allow you to simulate a home button from the plus and minus buttons (most often bound to Select+Start).
+[vid-pid]
+simulate_home=plus+dpad_up
+simulate_capture=plus+dpad_down
+```
 
 ## My controller don't works at all
 This probably means that your controller is not configure with the correct driver.
