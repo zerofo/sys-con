@@ -131,7 +131,7 @@ namespace syscon::config
         {
             std::string type = convertToLowercase(value);
 
-            if (type == "pro")
+            if (type == "prowithbattery")
                 return HidDeviceType_FullKey3;
             else if (type == "tarragon")
                 return HidDeviceType_FullKey6;
@@ -141,7 +141,7 @@ namespace syscon::config
                 return HidDeviceType_Palma;
             else if (type == "gamecube")
                 return HidDeviceType_FullKey13;
-            else if (type == "pro2")
+            else if (type == "pro")
                 return HidDeviceType_FullKey15;
             else if (type == "3rdpartypro")
                 return HidDeviceType_System19;
@@ -227,9 +227,7 @@ namespace syscon::config
             std::string sectionStr = convertToLowercase(section);
             std::string nameStr = convertToLowercase(name);
 
-            // Note: Below log cause a crash, need to fix it
             // syscon::logger::LogTrace("Parsing controller config line: %s, %s, %s (expect: %s)", section, name, value, ini_data->ini_section.c_str());
-
             if (ini_data->ini_section != sectionStr)
                 return 1; // Not the section we are looking for (return success to continue parsing)
 
