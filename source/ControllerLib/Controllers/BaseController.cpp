@@ -179,10 +179,22 @@ ams::Result BaseController::ReadInput(NormalizedButtonData *normalData, uint16_t
     normalData->buttons[ControllerButton::CAPTURE] = rawData.buttons[GetConfig().buttons_pin[ControllerButton::CAPTURE]] ? true : false;
     normalData->buttons[ControllerButton::HOME] = rawData.buttons[GetConfig().buttons_pin[ControllerButton::HOME]] ? true : false;
 
-    normalData->buttons[ControllerButton::DPAD_UP] = rawData.dpad_up;
-    normalData->buttons[ControllerButton::DPAD_DOWN] = rawData.dpad_down;
-    normalData->buttons[ControllerButton::DPAD_RIGHT] = rawData.dpad_right;
-    normalData->buttons[ControllerButton::DPAD_LEFT] = rawData.dpad_left;
+    normalData->buttons[ControllerButton::DPAD_UP] = rawData.buttons[GetConfig().buttons_pin[ControllerButton::DPAD_UP]];
+    normalData->buttons[ControllerButton::DPAD_DOWN] = rawData.buttons[GetConfig().buttons_pin[ControllerButton::DPAD_DOWN]];
+    normalData->buttons[ControllerButton::DPAD_RIGHT] = rawData.buttons[GetConfig().buttons_pin[ControllerButton::DPAD_RIGHT]];
+    normalData->buttons[ControllerButton::DPAD_LEFT] = rawData.buttons[GetConfig().buttons_pin[ControllerButton::DPAD_LEFT]];
+
+    if (GetConfig().buttons_pin[ControllerButton::DPAD_UP] == 0)
+        normalData->buttons[ControllerButton::DPAD_UP] = rawData.dpad_up;
+
+    if (GetConfig().buttons_pin[ControllerButton::DPAD_DOWN] == 0)
+        normalData->buttons[ControllerButton::DPAD_DOWN] = rawData.dpad_down;
+
+    if (GetConfig().buttons_pin[ControllerButton::DPAD_RIGHT] == 0)
+        normalData->buttons[ControllerButton::DPAD_RIGHT] = rawData.dpad_right;
+
+    if (GetConfig().buttons_pin[ControllerButton::DPAD_LEFT] == 0)    
+        normalData->buttons[ControllerButton::DPAD_LEFT] = rawData.dpad_left;
 
     if (GetConfig().simulateHome[0] != ControllerButton::NONE && GetConfig().simulateHome[1] != ControllerButton::NONE)
     {
