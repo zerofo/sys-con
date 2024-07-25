@@ -26,6 +26,14 @@ Try the following procedure:
     3. Power on the controller
     4. Connect the controller to the switch (make sure the switch is set to wake up).
 
+## I got error: "Failed to acquire USB interface - Error: 0x25A8C ..."
+This error occur when two drivers try to acquire the controller.
+Most of the time, this issue occured when you plug an official switch controller and the switch itself try to open it.
+To fix the problem:
+
+1. Edit the `/config/sys-con/config.ini` and change `discovery_mode=0` to `discovery_mode=1`
+2. Reboot the switch.
+
 ## My controller don't have Home or Capture button, how to simulate home or capture button ?
 In the configuration file, edit your controller and add `simulate_home=` `simulate_capture=` followed by the buttons you want to use to simulate it.
 

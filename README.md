@@ -51,14 +51,12 @@ Reboot the Nintendo Switch.
 
 ## Supported controller
 - [x] All PC Controllers
-- [x] Dualshock 4
-- [x] Dualshock 3
-- [x] Dualsense (PS5)
-- [x] Xbox Original
-- [x] Xbox 360 Controller
-- [x] Xbox 360 Wireless adapter (Up to 4 controller can be connected)
-- [x] Xbox One X/S Controller
+- [x] All Playstation Controllers
+- [x] All Xbox Controllers
 - [x] Wheels
+
+A complete list of tested controller is available 
+[here](https://github.com/o0Zz/sys-con/blob/master/doc/TestedControllers.md)
 
 ## Configure a controller
 When a new controller is connected, sys-con tries to determine the best profile for this new controller.
@@ -158,4 +156,9 @@ For an in-depth explanation of how sys-con works, see [here](source).
 ### Debug the application
 In order to debug the applicaiton, you can directly refer to the logs available there: `/config/sys-con/log.log`.
 
+## Credits
+@texita: For his contribution in controllers testing and mappings
+
+## Support
+If you want to support this work 
 [![ko-fi](https://www.ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/o0Zzz)
