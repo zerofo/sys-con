@@ -30,9 +30,8 @@ jobs:
         git config --global --add safe.directory `pwd`
         git submodule update --remote 
         make -j $(nproc)
-        ls -la out
         cd out 
-        zip -r sys-con.zip out
+        zip -r sys-con.zip *
     - name: Upload file
       uses: actions/upload-artifact@v4
       with:
