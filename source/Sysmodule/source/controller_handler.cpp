@@ -82,15 +82,15 @@ namespace syscon::controllers
         controllerHandlers.reserve(MaxControllerHandlersSize);
     }
 
-    void Reset()
+    void Clear()
     {
-        syscon::logger::LogDebug("Controllers Reset !");
+        syscon::logger::LogDebug("Controllers clear (Release all controllers) !");
         std::scoped_lock scoped_lock(controllerMutex);
         controllerHandlers.clear();
     }
 
     void Exit()
     {
-        Reset();
+        Clear();
     }
 } // namespace syscon::controllers

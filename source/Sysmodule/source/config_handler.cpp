@@ -58,8 +58,24 @@ namespace syscon::config
                 return ControllerButton::Y;
             else if (nameStr == "lstick_click")
                 return ControllerButton::LSTICK_CLICK;
+            else if (nameStr == "lstick_left")
+                return ControllerButton::LSTICK_LEFT;
+            else if (nameStr == "lstick_right")
+                return ControllerButton::LSTICK_RIGHT;
+            else if (nameStr == "lstick_up")
+                return ControllerButton::LSTICK_UP;
+            else if (nameStr == "lstick_down")
+                return ControllerButton::LSTICK_DOWN;
             else if (nameStr == "rstick_click")
                 return ControllerButton::RSTICK_CLICK;
+            else if (nameStr == "rstick_left")
+                return ControllerButton::RSTICK_LEFT;
+            else if (nameStr == "rstick_right")
+                return ControllerButton::RSTICK_RIGHT;
+            else if (nameStr == "rstick_up")
+                return ControllerButton::RSTICK_UP;
+            else if (nameStr == "rstick_down")
+                return ControllerButton::RSTICK_DOWN;
             else if (nameStr == "l")
                 return ControllerButton::L;
             else if (nameStr == "r")
@@ -127,34 +143,34 @@ namespace syscon::config
             }
         }
 
-        HidDeviceType DecodeControllerType(const char *value)
+        ControllerType DecodeControllerType(const char *value)
         {
             std::string type = convertToLowercase(value);
 
             if (type == "prowithbattery")
-                return HidDeviceType_FullKey3;
+                return ControllerType_ProWithBattery;
             else if (type == "tarragon")
-                return HidDeviceType_FullKey6;
+                return ControllerType_Tarragon;
             else if (type == "snes")
-                return HidDeviceType_Lucia;
+                return ControllerType_Snes;
             else if (type == "pokeballplus")
-                return HidDeviceType_Palma;
+                return ControllerType_PokeballPlus;
             else if (type == "gamecube")
-                return HidDeviceType_FullKey13;
+                return ControllerType_Gamecube;
             else if (type == "pro")
-                return HidDeviceType_FullKey15;
+                return ControllerType_Pro;
             else if (type == "3rdpartypro")
-                return HidDeviceType_System19;
+                return ControllerType_3rdPartyPro;
             else if (type == "n64")
-                return HidDeviceType_Lagon;
+                return ControllerType_N64;
             else if (type == "sega")
-                return HidDeviceType_Lager;
+                return ControllerType_Sega;
             else if (type == "nes")
-                return HidDeviceType_LarkNesLeft;
+                return ControllerType_Nes;
             else if (type == "famicom")
-                return HidDeviceType_LarkHvcLeft;
+                return ControllerType_Famicom;
 
-            return HidDeviceType_FullKey15;
+            return ControllerType_Unknown;
         }
 
         ControllerAnalogConfig DecodeAnalogConfig(const std::string &cfg)

@@ -38,23 +38,23 @@ public:
     BaseController(std::unique_ptr<IUSBDevice> &&device, const ControllerConfig &config, std::unique_ptr<ILogger> &&logger);
     virtual ~BaseController() override;
 
-    virtual ams::Result Initialize() override;
+    virtual ControllerResult Initialize() override;
     virtual void Exit() override;
 
-    virtual ams::Result OpenInterfaces();
+    virtual ControllerResult OpenInterfaces();
     virtual void CloseInterfaces();
 
     virtual bool Support(ControllerFeature feature) override;
 
     virtual uint16_t GetInputCount() override;
 
-    ams::Result ReadInput(NormalizedButtonData *normalData, uint16_t *input_idx, uint32_t timeout_us) override;
+    ControllerResult ReadInput(NormalizedButtonData *normalData, uint16_t *input_idx, uint32_t timeout_us) override;
 
-    virtual ams::Result ReadInput(RawInputData *rawData, uint16_t *input_idx, uint32_t timeout_us) = 0;
+    virtual ControllerResult ReadInput(RawInputData *rawData, uint16_t *input_idx, uint32_t timeout_us) = 0;
 
-    ams::Result SetRumble(uint16_t input_idx, float amp_high, float amp_low) override;
+    ControllerResult SetRumble(uint16_t input_idx, float amp_high, float amp_low) override;
 
     // Helper functions
-    float Normalize(int32_t value, int32_t min, int32_t max);
-    float ApplyDeadzone(uint8_t deadzonePercent, float value);
+    static float Normalize(int32_t value, int32_t min, int32_t max);
+    static float ApplyDeadzone(uint8_t deadzonePercent, float value);
 };

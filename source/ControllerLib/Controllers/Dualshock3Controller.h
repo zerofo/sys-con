@@ -92,7 +92,7 @@ struct Dualshock3ButtonData
     uint16_t accelerometer_y;
     uint16_t accelerometer_z;
     uint16_t gyroscope;
-} __attribute__((packed));
+};
 
 enum Dualshock3LEDValue : uint8_t
 {
@@ -111,15 +111,15 @@ enum Dualshock3LEDValue : uint8_t
 class Dualshock3Controller : public BaseController
 {
 private:
-    ams::Result SendCommand(Dualshock3FeatureValue feature, const void *buffer, uint16_t size);
-    ams::Result SetLED(Dualshock3LEDValue value);
+    ControllerResult SendCommand(Dualshock3FeatureValue feature, const void *buffer, uint16_t size);
+    ControllerResult SetLED(Dualshock3LEDValue value);
 
 public:
     Dualshock3Controller(std::unique_ptr<IUSBDevice> &&device, const ControllerConfig &config, std::unique_ptr<ILogger> &&logger);
     virtual ~Dualshock3Controller() override;
 
-    virtual ams::Result Initialize() override;
-    virtual ams::Result OpenInterfaces() override;
+    virtual ControllerResult Initialize() override;
+    virtual ControllerResult OpenInterfaces() override;
 
-    ams::Result ReadInput(RawInputData *rawData, uint16_t *input_idx, uint32_t timeout_us);
+    ControllerResult ReadInput(RawInputData *rawData, uint16_t *input_idx, uint32_t timeout_us);
 };

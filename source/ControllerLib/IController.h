@@ -45,15 +45,15 @@ public:
     }
     virtual ~IController() = default;
 
-    virtual ams::Result Initialize() = 0;
+    virtual ControllerResult Initialize() = 0;
     virtual void Exit() = 0;
 
     virtual uint16_t GetInputCount() = 0;
-    virtual ams::Result ReadInput(NormalizedButtonData *normalData, uint16_t *input_idx, uint32_t timeout_us) = 0;
+    virtual ControllerResult ReadInput(NormalizedButtonData *normalData, uint16_t *input_idx, uint32_t timeout_us) = 0;
 
     virtual bool Support(ControllerFeature aFeature) = 0;
 
-    virtual ams::Result SetRumble(uint16_t input_idx, float amp_high, float amp_low) = 0;
+    virtual ControllerResult SetRumble(uint16_t input_idx, float amp_high, float amp_low) = 0;
 
     virtual bool IsControllerConnected(uint16_t input_idx)
     {

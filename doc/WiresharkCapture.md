@@ -35,8 +35,8 @@ You will probably see multiple USBPcaps when you try to start a capture, you may
 1. Start a capture on a USBPcap (USBPcap1, USBPcap2, ...)
 2. Wait without using any USB device (mouse, keyboard, ...) - Here you will have 2 behaviours, either nothing will move or you will have a constant flow of data.
 3. Now connect your controller:
-  - If you see new data coming (e.g. acceleration of data), you have found the correct USBPcap. 
-  - If you do not see any changes, you have selected the wrong USBPcap. Repeat these steps with the next USBPcap.
+  - If you see new data coming or if you see data going faster, you probably found the correct USBPcap. 
+  - If you see no changes, you have selected the wrong USBPcap. Repeat these steps with the next USBPcap.
 
 ### Procedure to have a clean capture
 Once you have found the correct USBPcap (see the steps above), we can start a clean capture.

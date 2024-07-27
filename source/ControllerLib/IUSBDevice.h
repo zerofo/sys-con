@@ -1,6 +1,7 @@
 #pragma once
-#include <cstdio>
 #include "IUSBInterface.h"
+#include <memory>
+#include <cstdio>
 #include <vector>
 
 class IUSBDevice
@@ -15,7 +16,7 @@ public:
     virtual ~IUSBDevice() = default;
 
     // Open and close the device.
-    virtual ams::Result Open() = 0;
+    virtual ControllerResult Open() = 0;
     virtual void Close() = 0;
 
     // Reset the device.

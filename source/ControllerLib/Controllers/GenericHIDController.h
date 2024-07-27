@@ -1,6 +1,7 @@
 #pragma once
 
 #include "BaseController.h"
+#include <memory>
 
 class HIDJoystick;
 
@@ -14,9 +15,9 @@ public:
     GenericHIDController(std::unique_ptr<IUSBDevice> &&device, const ControllerConfig &config, std::unique_ptr<ILogger> &&logger);
     virtual ~GenericHIDController() override;
 
-    virtual ams::Result Initialize() override;
+    virtual ControllerResult Initialize() override;
 
     virtual uint16_t GetInputCount() override;
 
-    virtual ams::Result ReadInput(RawInputData *rawData, uint16_t *input_idx, uint32_t timeout_us) override;
+    virtual ControllerResult ReadInput(RawInputData *rawData, uint16_t *input_idx, uint32_t timeout_us) override;
 };

@@ -11,31 +11,39 @@ Dualshock3Controller::~Dualshock3Controller()
 {
 }
 
-ams::Result Dualshock3Controller::Initialize()
+ControllerResult Dualshock3Controller::Initialize()
 {
-    R_TRY(BaseController::Initialize());
+    ControllerResult result = BaseController::Initialize();
+    if (result != CONTROLLER_STATUS_SUCCESS)
+        return result;
 
     SetLED(DS3LED_1);
 
-    R_SUCCEED();
+    return CONTROLLER_STATUS_SUCCESS;
 }
 
-ams::Result Dualshock3Controller::OpenInterfaces()
+ControllerResult Dualshock3Controller::OpenInterfaces()
 {
-    R_TRY(BaseController::OpenInterfaces());
+    ControllerResult result = BaseController::OpenInterfaces();
+    if (result != CONTROLLER_STATUS_SUCCESS)
+        return result;
 
     constexpr uint8_t initBytes[] = {0x42, 0x0C, 0x00, 0x00};
-    R_TRY(SendCommand(Ds3FeatureStartDevice, initBytes, sizeof(initBytes)));
+    result = SendCommand(Ds3FeatureStartDevice, initBytes, sizeof(initBytes));
+    if (result != CONTROLLER_STATUS_SUCCESS)
+        return result;
 
-    R_SUCCEED();
+    return CONTROLLER_STATUS_SUCCESS;
 }
 
-ams::Result Dualshock3Controller::ReadInput(RawInputData *rawData, uint16_t *input_idx, uint32_t timeout_us)
+ControllerResult Dualshock3Controller::ReadInput(RawInputData *rawData, uint16_t *input_idx, uint32_t timeout_us)
 {
     uint8_t input_bytes[CONTROLLER_INPUT_BUFFER_SIZE];
     size_t size = sizeof(input_bytes);
 
-    R_TRY(m_inPipe[0]->Read(input_bytes, &size, timeout_us));
+    ControllerResult result = m_inPipe[0]->Read(input_bytes, &size, timeout_us);
+    if (result != CONTROLLER_STATUS_SUCCESS)
+        return result;
 
     *input_idx = 0;
 
@@ -57,31 +65,31 @@ ams::Result Dualshock3Controller::ReadInput(RawInputData *rawData, uint16_t *inp
         rawData->buttons[12] = buttonData->button12;
         rawData->buttons[13] = buttonData->button13;
 
-        rawData->Rx = Normalize(buttonData->Rx, 0, 255);
-        rawData->Ry = Normalize(buttonData->Ry, 0, 255);
+        rawData->Rx = BaseController::Normalize(buttonData->Rx, 0, 255);
+        rawData->Ry = BaseController::Normalize(buttonData->Ry, 0, 255);
 
-        rawData->X = Normalize(buttonData->X, 0, 255);
-        rawData->Y = Normalize(buttonData->Y, 0, 255);
-        rawData->Z = Normalize(buttonData->Z, 0, 255);
-        rawData->Rz = Normalize(buttonData->Rz, 0, 255);
+        rawData->X = BaseController::Normalize(buttonData->X, 0, 255);
+        rawData->Y = BaseController::Normalize(buttonData->Y, 0, 255);
+        rawData->Z = BaseController::Normalize(buttonData->Z, 0, 255);
+        rawData->Rz = BaseController::Normalize(buttonData->Rz, 0, 255);
 
         rawData->dpad_up = buttonData->dpad_up;
         rawData->dpad_right = buttonData->dpad_right;
         rawData->dpad_down = buttonData->dpad_down;
         rawData->dpad_left = buttonData->dpad_left;
 
-        R_SUCCEED();
+        return CONTROLLER_STATUS_SUCCESS;
     }
 
-    R_RETURN(CONTROL_ERR_UNEXPECTED_DATA);
+    return CONTROLLER_STATUS_UNEXPECTED_DATA;
 }
 
-ams::Result Dualshock3Controller::SendCommand(Dualshock3FeatureValue feature, const void *buffer, uint16_t size)
+ControllerResult Dualshock3Controller::SendCommand(Dualshock3FeatureValue feature, const void *buffer, uint16_t size)
 {
-    R_RETURN(m_interfaces[0]->ControlTransferOutput(0x21, 0x09, static_cast<uint16_t>(feature), 0, buffer, size));
+    return m_interfaces[0]->ControlTransferOutput(0x21, 0x09, static_cast<uint16_t>(feature), 0, buffer, size);
 }
 
-ams::Result Dualshock3Controller::SetLED(Dualshock3LEDValue value)
+ControllerResult Dualshock3Controller::SetLED(Dualshock3LEDValue value)
 {
     const uint8_t ledPacket[]{
         0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -90,5 +98,5 @@ ams::Result Dualshock3Controller::SetLED(Dualshock3LEDValue value)
         LED_PERMANENT,
         LED_PERMANENT,
         LED_PERMANENT};
-    R_RETURN(SendCommand(Ds3FeatureUnknown1, ledPacket, sizeof(ledPacket)));
+    return SendCommand(Ds3FeatureUnknown1, ledPacket, sizeof(ledPacket));
 }

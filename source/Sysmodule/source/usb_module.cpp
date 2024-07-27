@@ -239,7 +239,7 @@ namespace syscon::usb
                     syscon::logger::LogError("Unable to add future events ! (Max USB events reached !)");
                     isMaxEventLogged = true;
                 }
-                return CONTROL_ERR_OUT_OF_MEMORY;
+                return CONTROLLER_STATUS_OUT_OF_MEMORY;
             }
 
             syscon::logger::LogDebug("Adding event with filter: %s (%d/%d)...", name.c_str(), g_usbEventCount + 1, MaxUsbEvents);
@@ -328,7 +328,7 @@ namespace syscon::usb
             usbHsDestroyInterfaceAvailableEvent(&g_usbEvent[i], i);
         }
 
-        controllers::Reset();
+        controllers::Clear();
     }
 
 } // namespace syscon::usb

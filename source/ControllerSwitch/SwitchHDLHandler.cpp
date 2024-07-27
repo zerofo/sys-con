@@ -108,6 +108,34 @@ ams::Result SwitchHDLHandler::Detach(uint16_t input_idx)
     R_SUCCEED();
 }
 
+u8 ControllerTypeToDeviceType(ControllerType type)
+{
+    if (type == ControllerType_ProWithBattery)
+        return HidDeviceType_FullKey3;
+    else if (type == ControllerType_Tarragon)
+        return HidDeviceType_FullKey6;
+    else if (type == ControllerType_Snes)
+        return HidDeviceType_Lucia;
+    else if (type == ControllerType_PokeballPlus)
+        return HidDeviceType_Palma;
+    else if (type == ControllerType_Gamecube)
+        return HidDeviceType_FullKey13;
+    else if (type == ControllerType_Pro)
+        return HidDeviceType_FullKey15;
+    else if (type == ControllerType_3rdPartyPro)
+        return HidDeviceType_System19;
+    else if (type == ControllerType_N64)
+        return HidDeviceType_Lagon;
+    else if (type == ControllerType_Sega)
+        return HidDeviceType_Lager;
+    else if (type == ControllerType_Nes)
+        return HidDeviceType_LarkNesLeft;
+    else if (type == ControllerType_Famicom)
+        return HidDeviceType_LarkHvcLeft;
+
+    return HidDeviceType_FullKey15;
+}
+
 ams::Result SwitchHDLHandler::InitHdlState()
 {
     syscon::logger::LogDebug("SwitchHDLHandler[%04x-%04x] Initializing HDL state ...", m_controller->GetDevice()->GetVendor(), m_controller->GetDevice()->GetProduct());
@@ -119,7 +147,7 @@ ams::Result SwitchHDLHandler::InitHdlState()
         syscon::logger::LogDebug("SwitchHDLHandler[%04x-%04x] Initializing HDL device idx: %d (Controller type: %d) ...", m_controller->GetDevice()->GetVendor(), m_controller->GetDevice()->GetProduct(), i, m_controller->GetConfig().controllerType);
 
         // Set the controller type to Pro-Controller, and set the npadInterfaceType.
-        m_controllerData[i].m_deviceInfo.deviceType = m_controller->GetConfig().controllerType;
+        m_controllerData[i].m_deviceInfo.deviceType = ControllerTypeToDeviceType(m_controller->GetConfig().controllerType);
         m_controllerData[i].m_deviceInfo.npadInterfaceType = HidNpadInterfaceType_USB;
 
         // Set the controller colors. The grip colors are for Pro-Controller on [9.0.0+].

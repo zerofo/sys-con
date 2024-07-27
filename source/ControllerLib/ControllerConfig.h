@@ -13,7 +13,15 @@ enum ControllerButton
     B,
     Y,
     LSTICK_CLICK,
+    LSTICK_LEFT,
+    LSTICK_RIGHT,
+    LSTICK_UP,
+    LSTICK_DOWN,
     RSTICK_CLICK,
+    RSTICK_LEFT,
+    RSTICK_RIGHT,
+    RSTICK_UP,
+    RSTICK_DOWN,
     L,
     R,
     ZL,
@@ -57,6 +65,22 @@ enum ControllerAnalogBinding
     ControllerAnalogBinding_Count
 };
 
+enum ControllerType
+{
+    ControllerType_Unknown = 0,
+    ControllerType_Pro,
+    ControllerType_ProWithBattery,
+    ControllerType_Tarragon,
+    ControllerType_Snes,
+    ControllerType_PokeballPlus,
+    ControllerType_Gamecube,
+    ControllerType_3rdPartyPro,
+    ControllerType_N64,
+    ControllerType_Sega,
+    ControllerType_Nes,
+    ControllerType_Famicom
+};
+
 struct ControllerAnalogConfig
 {
     float sign{1.0};
@@ -74,7 +98,7 @@ class ControllerConfig
 public:
     std::string driver;
     std::string profile;
-    HidDeviceType controllerType{HidDeviceType_FullKey15};
+    ControllerType controllerType{ControllerType_Pro};
 
     uint8_t stickDeadzonePercent[MAX_JOYSTICKS]{0};
     uint8_t triggerDeadzonePercent[MAX_TRIGGERS]{0};

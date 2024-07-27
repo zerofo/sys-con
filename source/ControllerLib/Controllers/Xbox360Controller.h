@@ -69,17 +69,17 @@ enum Xbox360LEDValue : uint8_t
 class Xbox360Controller : public BaseController
 {
 private:
-    ams::Result SetLED(uint16_t input_idx, Xbox360LEDValue value);
+    ControllerResult SetLED(uint16_t input_idx, Xbox360LEDValue value);
 
 public:
     Xbox360Controller(std::unique_ptr<IUSBDevice> &&device, const ControllerConfig &config, std::unique_ptr<ILogger> &&logger);
     virtual ~Xbox360Controller() override;
 
-    ams::Result Initialize() override;
+    ControllerResult Initialize() override;
 
-    ams::Result ReadInput(RawInputData *rawData, uint16_t *input_idx, uint32_t timeout_us) override;
+    ControllerResult ReadInput(RawInputData *rawData, uint16_t *input_idx, uint32_t timeout_us) override;
 
     bool Support(ControllerFeature feature) override;
 
-    ams::Result SetRumble(uint16_t input_idx, float amp_high, float amp_low) override;
+    ControllerResult SetRumble(uint16_t input_idx, float amp_high, float amp_low) override;
 };

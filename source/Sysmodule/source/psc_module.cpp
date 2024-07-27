@@ -41,7 +41,7 @@ namespace syscon::psc
                             case PscPmState_ReadySleep:
                             case PscPmState_ReadyShutdown:
                                 ::syscon::logger::LogDebug("Power management: Sleep");
-                                controllers::Reset();
+                                controllers::Clear();
                                 break;
                             default:
                                 break;

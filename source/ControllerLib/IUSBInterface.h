@@ -27,14 +27,14 @@ public:
     };
     virtual ~IUSBInterface() = default;
 
-    virtual ams::Result Open() = 0;
+    virtual ControllerResult Open() = 0;
     virtual void Close() = 0;
 
-    virtual ams::Result ControlTransferInput(uint8_t bmRequestType, uint8_t bmRequest, uint16_t wValue, uint16_t wIndex, void *buffer, uint16_t *wLength) = 0;
-    virtual ams::Result ControlTransferOutput(uint8_t bmRequestType, uint8_t bmRequest, uint16_t wValue, uint16_t wIndex, const void *buffer, uint16_t wLength) = 0;
+    virtual ControllerResult ControlTransferInput(uint8_t bmRequestType, uint8_t bmRequest, uint16_t wValue, uint16_t wIndex, void *buffer, uint16_t *wLength) = 0;
+    virtual ControllerResult ControlTransferOutput(uint8_t bmRequestType, uint8_t bmRequest, uint16_t wValue, uint16_t wIndex, const void *buffer, uint16_t wLength) = 0;
 
     virtual IUSBEndpoint *GetEndpoint(IUSBEndpoint::Direction direction, uint8_t index) = 0;
     virtual InterfaceDescriptor *GetDescriptor() = 0;
 
-    virtual ams::Result Reset() = 0;
+    virtual ControllerResult Reset() = 0;
 };

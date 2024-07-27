@@ -13,13 +13,18 @@ BaseController::~BaseController()
 {
 }
 
-ams::Result BaseController::Initialize()
+ControllerResult BaseController::Initialize()
 {
     LogPrint(LogLevelDebug, "Controller[%04x-%04x] Initializing ...", m_device->GetVendor(), m_device->GetProduct());
 
-    R_TRY(OpenInterfaces());
+    ControllerResult result = OpenInterfaces();
+    if (result != CONTROLLER_STATUS_SUCCESS)
+    {
+        LogPrint(LogLevelError, "Controller[%04x-%04x] Failed to open interfaces !", m_device->GetVendor(), m_device->GetProduct());
+        return result;
+    }
 
-    R_SUCCEED();
+    return CONTROLLER_STATUS_SUCCESS;
 }
 
 void BaseController::Exit()
@@ -32,16 +37,16 @@ uint16_t BaseController::GetInputCount()
     return 1;
 }
 
-ams::Result BaseController::OpenInterfaces()
+ControllerResult BaseController::OpenInterfaces()
 {
     int interfaceCount = 0;
     LogPrint(LogLevelDebug, "Controller[%04x-%04x] Opening interfaces ...", m_device->GetVendor(), m_device->GetProduct());
 
-    ams::Result rc = m_device->Open();
-    if (R_FAILED(rc))
+    ControllerResult result = m_device->Open();
+    if (result != CONTROLLER_STATUS_SUCCESS)
     {
         LogPrint(LogLevelError, "Controller[%04x-%04x] Failed to open device !", m_device->GetVendor(), m_device->GetProduct());
-        R_RETURN(rc);
+        return result;
     }
 
     std::vector<std::unique_ptr<IUSBInterface>> &interfaces = m_device->GetInterfaces();
@@ -49,7 +54,12 @@ ams::Result BaseController::OpenInterfaces()
     {
         LogPrint(LogLevelDebug, "Controller[%04x-%04x] Opening interface idx=%d ...", m_device->GetVendor(), m_device->GetProduct(), interfaceCount++);
 
-        R_TRY(interface->Open());
+        ControllerResult result = interface->Open();
+        if (result != CONTROLLER_STATUS_SUCCESS)
+        {
+            LogPrint(LogLevelError, "Controller[%04x-%04x] Failed to open interface %d !", m_device->GetVendor(), m_device->GetProduct(), interfaceCount);
+            return result;
+        }
 
         for (uint8_t idx = 0; idx < 15; idx++)
         {
@@ -57,11 +67,11 @@ ams::Result BaseController::OpenInterfaces()
             if (inEndpoint == NULL)
                 continue;
 
-            rc = inEndpoint->Open();
-            if (R_FAILED(rc))
+            ControllerResult result = inEndpoint->Open();
+            if (result != CONTROLLER_STATUS_SUCCESS)
             {
                 LogPrint(LogLevelError, "Controller[%04x-%04x] Failed to open input endpoint %d !", m_device->GetVendor(), m_device->GetProduct(), idx);
-                R_RETURN(rc);
+                return result;
             }
 
             m_inPipe.push_back(inEndpoint);
@@ -73,11 +83,11 @@ ams::Result BaseController::OpenInterfaces()
             if (outEndpoint == NULL)
                 continue;
 
-            rc = outEndpoint->Open();
-            if (R_FAILED(rc))
+            result = outEndpoint->Open();
+            if (result != CONTROLLER_STATUS_SUCCESS)
             {
                 LogPrint(LogLevelError, "Controller[%04x-%04x] Failed to open output  endpoint %d !", m_device->GetVendor(), m_device->GetProduct(), idx);
-                R_RETURN(rc);
+                return result;
             }
 
             m_outPipe.push_back(outEndpoint);
@@ -89,11 +99,11 @@ ams::Result BaseController::OpenInterfaces()
     if (m_inPipe.empty())
     {
         LogPrint(LogLevelError, "Controller[%04x-%04x] Not input endpoint found !", m_device->GetVendor(), m_device->GetProduct());
-        R_RETURN(CONTROL_ERR_INVALID_ENDPOINT);
+        return CONTROLLER_STATUS_INVALID_ENDPOINT;
     }
 
     LogPrint(LogLevelDebug, "Controller[%04x-%04x] successfully opened !", m_device->GetVendor(), m_device->GetProduct());
-    R_SUCCEED();
+    return CONTROLLER_STATUS_SUCCESS;
 }
 
 void BaseController::CloseInterfaces()
@@ -103,27 +113,26 @@ void BaseController::CloseInterfaces()
 
 bool BaseController::Support(ControllerFeature feature)
 {
-    switch (feature)
-    {
-        default:
-            return false;
-    }
+    (void)feature;
+    return false;
 }
 
-ams::Result BaseController::SetRumble(uint16_t input_idx, float amp_high, float amp_low)
+ControllerResult BaseController::SetRumble(uint16_t input_idx, float amp_high, float amp_low)
 {
     (void)input_idx;
     (void)amp_high;
     (void)amp_low;
     // Not implemented yet
-    return 9;
+    return CONTROLLER_STATUS_NOT_IMPLEMENTED;
 }
 
-ams::Result BaseController::ReadInput(NormalizedButtonData *normalData, uint16_t *input_idx, uint32_t timeout_us)
+ControllerResult BaseController::ReadInput(NormalizedButtonData *normalData, uint16_t *input_idx, uint32_t timeout_us)
 {
     RawInputData rawData;
 
-    R_TRY(ReadInput(&rawData, input_idx, timeout_us));
+    ControllerResult result = ReadInput(&rawData, input_idx, timeout_us);
+    if (result != CONTROLLER_STATUS_SUCCESS)
+        return result;
 
     LogPrint(LogLevelDebug, "Controller[%04x-%04x] DATA: X=%d%%, Y=%d%%, Z=%d%%, Rz=%d%%, B1=%d, B2=%d, B3=%d, B4=%d, B5=%d, B6=%d, B7=%d, B8=%d, B9=%d, B10=%d",
              m_device->GetVendor(), m_device->GetProduct(),
@@ -148,13 +157,13 @@ ams::Result BaseController::ReadInput(NormalizedButtonData *normalData, uint16_t
         rawData.Rx,
         rawData.Ry};
 
-    normalData->triggers[0] = GetConfig().triggerConfig[0].sign * ApplyDeadzone(GetConfig().triggerDeadzonePercent[0], bindAnalog[GetConfig().triggerConfig[0].bind]);
-    normalData->triggers[1] = GetConfig().triggerConfig[1].sign * ApplyDeadzone(GetConfig().triggerDeadzonePercent[1], bindAnalog[GetConfig().triggerConfig[1].bind]);
+    normalData->triggers[0] = GetConfig().triggerConfig[0].sign * BaseController::ApplyDeadzone(GetConfig().triggerDeadzonePercent[0], bindAnalog[GetConfig().triggerConfig[0].bind]);
+    normalData->triggers[1] = GetConfig().triggerConfig[1].sign * BaseController::ApplyDeadzone(GetConfig().triggerDeadzonePercent[1], bindAnalog[GetConfig().triggerConfig[1].bind]);
 
-    normalData->sticks[0].axis_x = GetConfig().stickConfig[0].X.sign * ApplyDeadzone(GetConfig().stickDeadzonePercent[0], bindAnalog[GetConfig().stickConfig[0].X.bind]);
-    normalData->sticks[0].axis_y = GetConfig().stickConfig[0].Y.sign * ApplyDeadzone(GetConfig().stickDeadzonePercent[0], bindAnalog[GetConfig().stickConfig[0].Y.bind]);
-    normalData->sticks[1].axis_x = GetConfig().stickConfig[1].X.sign * ApplyDeadzone(GetConfig().stickDeadzonePercent[1], bindAnalog[GetConfig().stickConfig[1].X.bind]);
-    normalData->sticks[1].axis_y = GetConfig().stickConfig[1].Y.sign * ApplyDeadzone(GetConfig().stickDeadzonePercent[1], bindAnalog[GetConfig().stickConfig[1].Y.bind]);
+    normalData->sticks[0].axis_x = GetConfig().stickConfig[0].X.sign * BaseController::ApplyDeadzone(GetConfig().stickDeadzonePercent[0], bindAnalog[GetConfig().stickConfig[0].X.bind]);
+    normalData->sticks[0].axis_y = GetConfig().stickConfig[0].Y.sign * BaseController::ApplyDeadzone(GetConfig().stickDeadzonePercent[0], bindAnalog[GetConfig().stickConfig[0].Y.bind]);
+    normalData->sticks[1].axis_x = GetConfig().stickConfig[1].X.sign * BaseController::ApplyDeadzone(GetConfig().stickDeadzonePercent[1], bindAnalog[GetConfig().stickConfig[1].X.bind]);
+    normalData->sticks[1].axis_y = GetConfig().stickConfig[1].Y.sign * BaseController::ApplyDeadzone(GetConfig().stickDeadzonePercent[1], bindAnalog[GetConfig().stickConfig[1].Y.bind]);
 
     normalData->buttons[ControllerButton::X] = rawData.buttons[GetConfig().buttons_pin[ControllerButton::X]] ? true : false;
     normalData->buttons[ControllerButton::A] = rawData.buttons[GetConfig().buttons_pin[ControllerButton::A]] ? true : false;
@@ -193,7 +202,7 @@ ams::Result BaseController::ReadInput(NormalizedButtonData *normalData, uint16_t
     if (GetConfig().buttons_pin[ControllerButton::DPAD_RIGHT] == 0)
         normalData->buttons[ControllerButton::DPAD_RIGHT] = rawData.dpad_right;
 
-    if (GetConfig().buttons_pin[ControllerButton::DPAD_LEFT] == 0)    
+    if (GetConfig().buttons_pin[ControllerButton::DPAD_LEFT] == 0)
         normalData->buttons[ControllerButton::DPAD_LEFT] = rawData.dpad_left;
 
     if (GetConfig().simulateHome[0] != ControllerButton::NONE && GetConfig().simulateHome[1] != ControllerButton::NONE)
@@ -216,27 +225,27 @@ ams::Result BaseController::ReadInput(NormalizedButtonData *normalData, uint16_t
         }
     }
 
-    R_SUCCEED();
+    return CONTROLLER_STATUS_SUCCESS;
 }
 
 float BaseController::ApplyDeadzone(uint8_t deadzonePercent, float value)
 {
-    float deadzone = 1.0 * deadzonePercent / 100;
+    float deadzone = 1.0f * deadzonePercent / 100.0f;
 
     if (std::abs(value) < deadzone)
         return 0.0f;
 
     if (value > 0)
-        value = (value - deadzone) / (1.0 - deadzone);
+        value = (value - deadzone) / (1.0f - deadzone);
     else
-        value = (value + deadzone) / (1.0 - deadzone);
+        value = (value + deadzone) / (1.0f - deadzone);
 
     return value;
 }
 
 float BaseController::Normalize(int32_t value, int32_t min, int32_t max)
 {
-    float range = (max - min) / 2;
+    float range = floor((max - min) / 2.0f);
     float offset = range;
 
     if (range == max)

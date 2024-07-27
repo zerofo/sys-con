@@ -13,3 +13,4 @@ out/*
 *.flag
 *.zip
 version.h
+/build/

@@ -92,6 +92,8 @@
         "*.rh": "cpp",
         "ranges": "cpp",
         "stack": "cpp",
-        "iostream": "cpp"
+        "iostream": "cpp",
+        "any": "cpp",
+        "unordered_set": "cpp"
     },
 }

@@ -13,6 +13,6 @@ namespace syscon::controllers
     void SetPollingFrequency(int polling_frequency_ms);
 
     void Initialize();
-    void Reset();
+    void Clear();
     void Exit();
 } // namespace syscon::controllers

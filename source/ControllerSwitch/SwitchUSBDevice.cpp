@@ -22,12 +22,12 @@ SwitchUSBDevice::SwitchUSBDevice()
 {
 }
 
-ams::Result SwitchUSBDevice::Open()
+ControllerResult SwitchUSBDevice::Open()
 {
-    if (m_interfaces.size() != 0)
-        R_SUCCEED();
+    if (m_interfaces.size() == 0)
+        return CONTROLLER_STATUS_NO_INTERFACES;
 
-    R_RETURN(CONTROL_ERR_NO_INTERFACES);
+    return CONTROLLER_STATUS_SUCCESS;
 }
 
 void SwitchUSBDevice::Close()
