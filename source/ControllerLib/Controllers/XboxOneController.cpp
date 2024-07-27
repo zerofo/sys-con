@@ -119,7 +119,7 @@ ControllerResult XboxOneController::Initialize()
     return CONTROLLER_STATUS_SUCCESS;
 }
 
-ControllerResult XboxOneController::ReadInput(RawInputData *rawData, uint16_t *input_idx, uint32_t timeout_us)
+ControllerResult XboxOneController::ReadRawInput(RawInputData *rawData, uint16_t *input_idx, uint32_t timeout_us)
 {
     uint8_t input_bytes[CONTROLLER_INPUT_BUFFER_SIZE];
     size_t size = sizeof(input_bytes);

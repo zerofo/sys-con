@@ -262,6 +262,8 @@ namespace syscon::config
                 DecodeHotKey(value, ini_data->controller_config->simulateHome);
             else if (nameStr == "simulate_capture")
                 DecodeHotKey(value, ini_data->controller_config->simulateCapture);
+            else if (nameStr == "stick_activation_threshold")
+                ini_data->controller_config->stickActivationThreshold = atoi(value);
             else if (nameStr == "left_stick_x")
                 ini_data->controller_config->stickConfig[0].X = DecodeAnalogConfig(value);
             else if (nameStr == "left_stick_y")

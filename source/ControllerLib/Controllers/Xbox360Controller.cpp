@@ -22,7 +22,7 @@ ControllerResult Xbox360Controller::Initialize()
     return CONTROLLER_STATUS_SUCCESS;
 }
 
-ControllerResult Xbox360Controller::ReadInput(RawInputData *rawData, uint16_t *input_idx, uint32_t timeout_us)
+ControllerResult Xbox360Controller::ReadRawInput(RawInputData *rawData, uint16_t *input_idx, uint32_t timeout_us)
 {
     uint8_t input_bytes[CONTROLLER_INPUT_BUFFER_SIZE];
     size_t size = sizeof(input_bytes);

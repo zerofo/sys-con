@@ -49,8 +49,7 @@ public:
     virtual uint16_t GetInputCount() override;
 
     ControllerResult ReadInput(NormalizedButtonData *normalData, uint16_t *input_idx, uint32_t timeout_us) override;
-
-    virtual ControllerResult ReadInput(RawInputData *rawData, uint16_t *input_idx, uint32_t timeout_us) = 0;
+    virtual ControllerResult ReadRawInput(RawInputData *rawData, uint16_t *input_idx, uint32_t timeout_us) = 0;
 
     ControllerResult SetRumble(uint16_t input_idx, float amp_high, float amp_low) override;
 

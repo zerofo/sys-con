@@ -5,7 +5,7 @@ project(SysCon)
 add_subdirectory(source/ControllerLib)
 
 #HIDDataInterpreter
-add_subdirectory(lib/HIDDataInterpreter)
+add_subdirectory(lib/HIDDataInterpreter/src)
 
 #Import the tests
 add_subdirectory(tests)

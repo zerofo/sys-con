@@ -36,7 +36,7 @@ ControllerResult Dualshock3Controller::OpenInterfaces()
     return CONTROLLER_STATUS_SUCCESS;
 }
 
-ControllerResult Dualshock3Controller::ReadInput(RawInputData *rawData, uint16_t *input_idx, uint32_t timeout_us)
+ControllerResult Dualshock3Controller::ReadRawInput(RawInputData *rawData, uint16_t *input_idx, uint32_t timeout_us)
 {
     uint8_t input_bytes[CONTROLLER_INPUT_BUFFER_SIZE];
     size_t size = sizeof(input_bytes);

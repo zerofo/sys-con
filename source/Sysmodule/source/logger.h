@@ -30,7 +30,7 @@ namespace syscon::logger
     class Logger : public ILogger
     {
     public:
-        void Print(LogLevel lvl, const char *format, ::std::va_list vl) override;
-        void PrintBuffer(LogLevel lvl, const uint8_t *buffer, size_t size) override;
+        void Log(LogLevel lvl, const char *format, ::std::va_list vl) override;
+        void LogBuffer(LogLevel lvl, const uint8_t *buffer, size_t size) override;
     };
 } // namespace syscon::logger

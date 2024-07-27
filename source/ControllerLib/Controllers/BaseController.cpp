@@ -6,7 +6,7 @@
 BaseController::BaseController(std::unique_ptr<IUSBDevice> &&device, const ControllerConfig &config, std::unique_ptr<ILogger> &&logger)
     : IController(std::move(device), config, std::move(logger))
 {
-    LogPrint(LogLevelDebug, "Controller[%04x-%04x] Created !", m_device->GetVendor(), m_device->GetProduct());
+    Log(LogLevelDebug, "Controller[%04x-%04x] Created !", m_device->GetVendor(), m_device->GetProduct());
 }
 
 BaseController::~BaseController()
@@ -15,12 +15,12 @@ BaseController::~BaseController()
 
 ControllerResult BaseController::Initialize()
 {
-    LogPrint(LogLevelDebug, "Controller[%04x-%04x] Initializing ...", m_device->GetVendor(), m_device->GetProduct());
+    Log(LogLevelDebug, "Controller[%04x-%04x] Initializing ...", m_device->GetVendor(), m_device->GetProduct());
 
     ControllerResult result = OpenInterfaces();
     if (result != CONTROLLER_STATUS_SUCCESS)
     {
-        LogPrint(LogLevelError, "Controller[%04x-%04x] Failed to open interfaces !", m_device->GetVendor(), m_device->GetProduct());
+        Log(LogLevelError, "Controller[%04x-%04x] Failed to open interfaces !", m_device->GetVendor(), m_device->GetProduct());
         return result;
     }
 
@@ -40,24 +40,24 @@ uint16_t BaseController::GetInputCount()
 ControllerResult BaseController::OpenInterfaces()
 {
     int interfaceCount = 0;
-    LogPrint(LogLevelDebug, "Controller[%04x-%04x] Opening interfaces ...", m_device->GetVendor(), m_device->GetProduct());
+    Log(LogLevelDebug, "Controller[%04x-%04x] Opening interfaces ...", m_device->GetVendor(), m_device->GetProduct());
 
     ControllerResult result = m_device->Open();
     if (result != CONTROLLER_STATUS_SUCCESS)
     {
-        LogPrint(LogLevelError, "Controller[%04x-%04x] Failed to open device !", m_device->GetVendor(), m_device->GetProduct());
+        Log(LogLevelError, "Controller[%04x-%04x] Failed to open device !", m_device->GetVendor(), m_device->GetProduct());
         return result;
     }
 
     std::vector<std::unique_ptr<IUSBInterface>> &interfaces = m_device->GetInterfaces();
     for (auto &&interface : interfaces)
     {
-        LogPrint(LogLevelDebug, "Controller[%04x-%04x] Opening interface idx=%d ...", m_device->GetVendor(), m_device->GetProduct(), interfaceCount++);
+        Log(LogLevelDebug, "Controller[%04x-%04x] Opening interface idx=%d ...", m_device->GetVendor(), m_device->GetProduct(), interfaceCount++);
 
         ControllerResult result = interface->Open();
         if (result != CONTROLLER_STATUS_SUCCESS)
         {
-            LogPrint(LogLevelError, "Controller[%04x-%04x] Failed to open interface %d !", m_device->GetVendor(), m_device->GetProduct(), interfaceCount);
+            Log(LogLevelError, "Controller[%04x-%04x] Failed to open interface %d !", m_device->GetVendor(), m_device->GetProduct(), interfaceCount);
             return result;
         }
 
@@ -70,7 +70,7 @@ ControllerResult BaseController::OpenInterfaces()
             ControllerResult result = inEndpoint->Open();
             if (result != CONTROLLER_STATUS_SUCCESS)
             {
-                LogPrint(LogLevelError, "Controller[%04x-%04x] Failed to open input endpoint %d !", m_device->GetVendor(), m_device->GetProduct(), idx);
+                Log(LogLevelError, "Controller[%04x-%04x] Failed to open input endpoint %d !", m_device->GetVendor(), m_device->GetProduct(), idx);
                 return result;
             }
 
@@ -86,7 +86,7 @@ ControllerResult BaseController::OpenInterfaces()
             result = outEndpoint->Open();
             if (result != CONTROLLER_STATUS_SUCCESS)
             {
-                LogPrint(LogLevelError, "Controller[%04x-%04x] Failed to open output  endpoint %d !", m_device->GetVendor(), m_device->GetProduct(), idx);
+                Log(LogLevelError, "Controller[%04x-%04x] Failed to open output  endpoint %d !", m_device->GetVendor(), m_device->GetProduct(), idx);
                 return result;
             }
 
@@ -98,11 +98,11 @@ ControllerResult BaseController::OpenInterfaces()
 
     if (m_inPipe.empty())
     {
-        LogPrint(LogLevelError, "Controller[%04x-%04x] Not input endpoint found !", m_device->GetVendor(), m_device->GetProduct());
+        Log(LogLevelError, "Controller[%04x-%04x] Not input endpoint found !", m_device->GetVendor(), m_device->GetProduct());
         return CONTROLLER_STATUS_INVALID_ENDPOINT;
     }
 
-    LogPrint(LogLevelDebug, "Controller[%04x-%04x] successfully opened !", m_device->GetVendor(), m_device->GetProduct());
+    Log(LogLevelDebug, "Controller[%04x-%04x] successfully opened !", m_device->GetVendor(), m_device->GetProduct());
     return CONTROLLER_STATUS_SUCCESS;
 }
 
@@ -130,23 +130,23 @@ ControllerResult BaseController::ReadInput(NormalizedButtonData *normalData, uin
 {
     RawInputData rawData;
 
-    ControllerResult result = ReadInput(&rawData, input_idx, timeout_us);
+    ControllerResult result = ReadRawInput(&rawData, input_idx, timeout_us);
     if (result != CONTROLLER_STATUS_SUCCESS)
         return result;
 
-    LogPrint(LogLevelDebug, "Controller[%04x-%04x] DATA: X=%d%%, Y=%d%%, Z=%d%%, Rz=%d%%, B1=%d, B2=%d, B3=%d, B4=%d, B5=%d, B6=%d, B7=%d, B8=%d, B9=%d, B10=%d",
-             m_device->GetVendor(), m_device->GetProduct(),
-             (int)(rawData.X * 100.0), (int)(rawData.Y * 100.0), (int)(rawData.Z * 100.0), (int)(rawData.Rz * 100.0),
-             rawData.buttons[1] ? 1 : 0,
-             rawData.buttons[2] ? 1 : 0,
-             rawData.buttons[3] ? 1 : 0,
-             rawData.buttons[4] ? 1 : 0,
-             rawData.buttons[5] ? 1 : 0,
-             rawData.buttons[6] ? 1 : 0,
-             rawData.buttons[7] ? 1 : 0,
-             rawData.buttons[8] ? 1 : 0,
-             rawData.buttons[9] ? 1 : 0,
-             rawData.buttons[10] ? 1 : 0);
+    Log(LogLevelDebug, "Controller[%04x-%04x] DATA: X=%d%%, Y=%d%%, Z=%d%%, Rz=%d%%, B1=%d, B2=%d, B3=%d, B4=%d, B5=%d, B6=%d, B7=%d, B8=%d, B9=%d, B10=%d",
+        m_device->GetVendor(), m_device->GetProduct(),
+        (int)(rawData.X * 100.0), (int)(rawData.Y * 100.0), (int)(rawData.Z * 100.0), (int)(rawData.Rz * 100.0),
+        rawData.buttons[1] ? 1 : 0,
+        rawData.buttons[2] ? 1 : 0,
+        rawData.buttons[3] ? 1 : 0,
+        rawData.buttons[4] ? 1 : 0,
+        rawData.buttons[5] ? 1 : 0,
+        rawData.buttons[6] ? 1 : 0,
+        rawData.buttons[7] ? 1 : 0,
+        rawData.buttons[8] ? 1 : 0,
+        rawData.buttons[9] ? 1 : 0,
+        rawData.buttons[10] ? 1 : 0);
 
     float bindAnalog[ControllerAnalogBinding_Count] = {
         0.0,
@@ -165,6 +165,54 @@ ControllerResult BaseController::ReadInput(NormalizedButtonData *normalData, uin
     normalData->sticks[1].axis_x = GetConfig().stickConfig[1].X.sign * BaseController::ApplyDeadzone(GetConfig().stickDeadzonePercent[1], bindAnalog[GetConfig().stickConfig[1].X.bind]);
     normalData->sticks[1].axis_y = GetConfig().stickConfig[1].Y.sign * BaseController::ApplyDeadzone(GetConfig().stickDeadzonePercent[1], bindAnalog[GetConfig().stickConfig[1].Y.bind]);
 
+    // Stick as button
+    normalData->buttons[ControllerButton::LSTICK_LEFT] = rawData.buttons[GetConfig().buttons_pin[ControllerButton::LSTICK_LEFT]] ? true : false;
+    normalData->buttons[ControllerButton::LSTICK_RIGHT] = rawData.buttons[GetConfig().buttons_pin[ControllerButton::LSTICK_RIGHT]] ? true : false;
+    normalData->buttons[ControllerButton::LSTICK_UP] = rawData.buttons[GetConfig().buttons_pin[ControllerButton::LSTICK_UP]] ? true : false;
+    normalData->buttons[ControllerButton::LSTICK_DOWN] = rawData.buttons[GetConfig().buttons_pin[ControllerButton::LSTICK_DOWN]] ? true : false;
+    normalData->buttons[ControllerButton::RSTICK_LEFT] = rawData.buttons[GetConfig().buttons_pin[ControllerButton::RSTICK_LEFT]] ? true : false;
+    normalData->buttons[ControllerButton::RSTICK_RIGHT] = rawData.buttons[GetConfig().buttons_pin[ControllerButton::RSTICK_RIGHT]] ? true : false;
+    normalData->buttons[ControllerButton::RSTICK_UP] = rawData.buttons[GetConfig().buttons_pin[ControllerButton::RSTICK_UP]] ? true : false;
+    normalData->buttons[ControllerButton::RSTICK_DOWN] = rawData.buttons[GetConfig().buttons_pin[ControllerButton::RSTICK_DOWN]] ? true : false;
+
+    // Set stick from button (If any)
+    if (normalData->buttons[ControllerButton::LSTICK_LEFT])
+        normalData->sticks[0].axis_x = -1.0f;
+    if (normalData->buttons[ControllerButton::LSTICK_RIGHT])
+        normalData->sticks[0].axis_x = 1.0f;
+    if (normalData->buttons[ControllerButton::LSTICK_UP])
+        normalData->sticks[0].axis_y = -1.0f;
+    if (normalData->buttons[ControllerButton::LSTICK_DOWN])
+        normalData->sticks[0].axis_y = 1.0f;
+    if (normalData->buttons[ControllerButton::RSTICK_LEFT])
+        normalData->sticks[1].axis_x = -1.0f;
+    if (normalData->buttons[ControllerButton::RSTICK_RIGHT])
+        normalData->sticks[1].axis_x = 1.0f;
+    if (normalData->buttons[ControllerButton::RSTICK_UP])
+        normalData->sticks[1].axis_y = -1.0f;
+    if (normalData->buttons[ControllerButton::RSTICK_DOWN])
+        normalData->sticks[1].axis_y = 1.0f;
+
+    // Set button state from stick
+    float stickActivationThreshold = (GetConfig().stickActivationThreshold / 100.0f);
+    if (normalData->sticks[0].axis_x > stickActivationThreshold)
+        normalData->buttons[ControllerButton::LSTICK_RIGHT] = true;
+    if (normalData->sticks[0].axis_x < -stickActivationThreshold)
+        normalData->buttons[ControllerButton::LSTICK_LEFT] = true;
+    if (normalData->sticks[0].axis_y > stickActivationThreshold)
+        normalData->buttons[ControllerButton::LSTICK_DOWN] = true;
+    if (normalData->sticks[0].axis_y < -stickActivationThreshold)
+        normalData->buttons[ControllerButton::LSTICK_UP] = true;
+    if (normalData->sticks[1].axis_x > stickActivationThreshold)
+        normalData->buttons[ControllerButton::RSTICK_RIGHT] = true;
+    if (normalData->sticks[1].axis_x < -stickActivationThreshold)
+        normalData->buttons[ControllerButton::RSTICK_LEFT] = true;
+    if (normalData->sticks[1].axis_y > stickActivationThreshold)
+        normalData->buttons[ControllerButton::RSTICK_DOWN] = true;
+    if (normalData->sticks[1].axis_y < -stickActivationThreshold)
+        normalData->buttons[ControllerButton::RSTICK_UP] = true;
+
+    // Set Buttons
     normalData->buttons[ControllerButton::X] = rawData.buttons[GetConfig().buttons_pin[ControllerButton::X]] ? true : false;
     normalData->buttons[ControllerButton::A] = rawData.buttons[GetConfig().buttons_pin[ControllerButton::A]] ? true : false;
     normalData->buttons[ControllerButton::B] = rawData.buttons[GetConfig().buttons_pin[ControllerButton::B]] ? true : false;
@@ -173,38 +221,32 @@ ControllerResult BaseController::ReadInput(NormalizedButtonData *normalData, uin
     normalData->buttons[ControllerButton::RSTICK_CLICK] = rawData.buttons[GetConfig().buttons_pin[ControllerButton::RSTICK_CLICK]] ? true : false;
     normalData->buttons[ControllerButton::L] = rawData.buttons[GetConfig().buttons_pin[ControllerButton::L]] ? true : false;
     normalData->buttons[ControllerButton::R] = rawData.buttons[GetConfig().buttons_pin[ControllerButton::R]] ? true : false;
-
     normalData->buttons[ControllerButton::ZL] = rawData.buttons[GetConfig().buttons_pin[ControllerButton::ZL]] ? true : false;
     normalData->buttons[ControllerButton::ZR] = rawData.buttons[GetConfig().buttons_pin[ControllerButton::ZR]] ? true : false;
-
-    if (GetConfig().buttons_pin[ControllerButton::ZL] == 0)
-        normalData->buttons[ControllerButton::ZL] = normalData->triggers[0] > 0;
-
-    if (GetConfig().buttons_pin[ControllerButton::ZR] == 0)
-        normalData->buttons[ControllerButton::ZR] = normalData->triggers[1] > 0;
-
     normalData->buttons[ControllerButton::MINUS] = rawData.buttons[GetConfig().buttons_pin[ControllerButton::MINUS]] ? true : false;
     normalData->buttons[ControllerButton::PLUS] = rawData.buttons[GetConfig().buttons_pin[ControllerButton::PLUS]] ? true : false;
     normalData->buttons[ControllerButton::CAPTURE] = rawData.buttons[GetConfig().buttons_pin[ControllerButton::CAPTURE]] ? true : false;
     normalData->buttons[ControllerButton::HOME] = rawData.buttons[GetConfig().buttons_pin[ControllerButton::HOME]] ? true : false;
-
     normalData->buttons[ControllerButton::DPAD_UP] = rawData.buttons[GetConfig().buttons_pin[ControllerButton::DPAD_UP]];
     normalData->buttons[ControllerButton::DPAD_DOWN] = rawData.buttons[GetConfig().buttons_pin[ControllerButton::DPAD_DOWN]];
     normalData->buttons[ControllerButton::DPAD_RIGHT] = rawData.buttons[GetConfig().buttons_pin[ControllerButton::DPAD_RIGHT]];
     normalData->buttons[ControllerButton::DPAD_LEFT] = rawData.buttons[GetConfig().buttons_pin[ControllerButton::DPAD_LEFT]];
 
+    // Special fallback if button pin are not set
+    if (GetConfig().buttons_pin[ControllerButton::ZL] == 0)
+        normalData->buttons[ControllerButton::ZL] = normalData->triggers[0] > 0;
+    if (GetConfig().buttons_pin[ControllerButton::ZR] == 0)
+        normalData->buttons[ControllerButton::ZR] = normalData->triggers[1] > 0;
     if (GetConfig().buttons_pin[ControllerButton::DPAD_UP] == 0)
         normalData->buttons[ControllerButton::DPAD_UP] = rawData.dpad_up;
-
     if (GetConfig().buttons_pin[ControllerButton::DPAD_DOWN] == 0)
         normalData->buttons[ControllerButton::DPAD_DOWN] = rawData.dpad_down;
-
     if (GetConfig().buttons_pin[ControllerButton::DPAD_RIGHT] == 0)
         normalData->buttons[ControllerButton::DPAD_RIGHT] = rawData.dpad_right;
-
     if (GetConfig().buttons_pin[ControllerButton::DPAD_LEFT] == 0)
         normalData->buttons[ControllerButton::DPAD_LEFT] = rawData.dpad_left;
 
+    // Simulate buttons
     if (GetConfig().simulateHome[0] != ControllerButton::NONE && GetConfig().simulateHome[1] != ControllerButton::NONE)
     {
         if (normalData->buttons[GetConfig().simulateHome[0]] && normalData->buttons[GetConfig().simulateHome[1]])

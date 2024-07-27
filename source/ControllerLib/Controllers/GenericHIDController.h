@@ -19,5 +19,5 @@ public:
 
     virtual uint16_t GetInputCount() override;
 
-    virtual ControllerResult ReadInput(RawInputData *rawData, uint16_t *input_idx, uint32_t timeout_us) override;
+    virtual ControllerResult ReadRawInput(RawInputData *rawData, uint16_t *input_idx, uint32_t timeout_us) override;
 };

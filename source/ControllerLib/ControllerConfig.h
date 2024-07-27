@@ -100,6 +100,7 @@ public:
     std::string profile;
     ControllerType controllerType{ControllerType_Pro};
 
+    uint8_t stickActivationThreshold{0};
     uint8_t stickDeadzonePercent[MAX_JOYSTICKS]{0};
     uint8_t triggerDeadzonePercent[MAX_TRIGGERS]{0};
     uint8_t buttons_pin[MAX_CONTROLLER_BUTTONS]{0};
