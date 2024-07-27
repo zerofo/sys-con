@@ -26,3 +26,7 @@
 | BSP-D9 Mobile Phone Stretch Game Controller | Yes | - | - |
 | Hori Real Arcade Pro 4 | Yes | - | https://www.amazon.com/HORI-Real-Arcade-Pro-PlayStation-4/dp/B00SULMRI4 |
 | Qanba Drone 1 | Yes | - | https://www.amazon.com/Qanba-Drone-PlayStation-4/dp/B01I0GEDEY |
+| PowerA Nintendo Switch Wired Controller | Yes | - | https://www.amazon.com/PowerA-Wired-Controller-Nintendo-Switch-Black/dp/B07PDJ45BT |
+| PS2 Dual Converter | Yes | - | https://www.aliexpress.com/item/4000662529384.html |
+| Raphnet Classic Controller USB adapter | Yes | - | - |
+| Y3 Joypad | No | - | https://pt.aliexpress.com/item/1005005458136372.html |
