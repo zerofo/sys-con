@@ -41,7 +41,7 @@ jobs:
       uses: svenstaro/upload-release-action@v2
       with:
         repo_token: ${{ secrets.release_token }}
-        file: ./sys-con.zip
+        file: ./out/sys-con.zip
         tag: ${{ github.ref }}
         overwrite: true
         file_glob: true
