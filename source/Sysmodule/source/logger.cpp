@@ -160,12 +160,12 @@ namespace syscon::logger
 
     void Logger::Log(LogLevel lvl, const char *format, ::std::va_list vl)
     {
-        Log(lvl, format, vl);
+        syscon::logger::Log(lvl, format, vl);
     }
 
     void Logger::LogBuffer(LogLevel lvl, const uint8_t *buffer, size_t size)
     {
-        LogBuffer(lvl, buffer, size);
+        syscon::logger::LogBuffer(lvl, buffer, size);
     }
 
 } // namespace syscon::logger

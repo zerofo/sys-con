@@ -160,9 +160,10 @@ namespace syscon::config
             {
                 if (is_number(tok))
                 {
+                    int pin = atoi(tok);
+
                     if (button_pin_idx < MAX_PIN_BY_BUTTONS)
                     {
-                        int pin = atoi(tok);
                         if (pin < MAX_CONTROLLER_BUTTONS)
                             button_pin[button_pin_idx++] = pin;
                         else
