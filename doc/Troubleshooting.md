@@ -1,7 +1,7 @@
 # Troubleshooting guide
 
 ## My controller buttons are not mapped correctly
-You need to map your buttons - Because there are thousands of controllers in the world, it's not possible for sys-con to map all of them.
+It's expected, you need to map the buttons by yourself - There are thousands of controllers in the world, it's not possible for sys-con to map all of them.
 This means, if you see that your controller works partially (stick/joystick works) but the buttons are not mapped correctly, you need to update the button mapping yourself.
 See the [README](https://github.com/o0Zz/sys-con?tab=readme-ov-file#configure-a-controller) for more details.
 
@@ -63,6 +63,14 @@ Typically, if you know your controller is an xboxone controller, just add
 driver=xboxone
 ```
 
+## My Nintendo Switch crash during boot
+If you see a crash with Program ID: 690000000000000D, it means something is wrong with sys-con.
+Most of the time it's one of below reasons:
+
+1) You selected the wrong build: Try to use the build that match your atmosphere version.
+2) Something is wrong with your configuration file. Even if sys-con try to be as robust as possible, you might have an issue with your configuration. Try to restore the default one.
+3) You have the latest version of atmosphere (Not yet supported by sys-con) - Open a ticket.
+
 ## My official Switch controller don't works when sys-con is enabled
 This problem occurs because sys-con detects all connected USB devices and try to map them.
 So you need to configure sys-con to detect only specific controllers.
@@ -72,7 +80,7 @@ So you need to configure sys-con to detect only specific controllers.
 3. Reboot the switch.
 
 ## I want to bind a button to multiple controller buttons 
-If you need to map 1 button (Example: X) to multiple controller button (Example: 13 and 2) you can do it like that:
+It's possible to bind a button (Example: X) to multiple controller button (Example: 13 and 2):
 
 ```
 [vid-pid]
@@ -80,14 +88,14 @@ x=13,2
 ```
 
 ## I want to bind a button to dpad or stick
-If you need to map 1 button (Example: X) to dpad or sticks (Example: dpad_up, rstick_up ) you can do it like that:
+It's possible to map a button (Example: X) to dpad/sticks/... (Example: dpad_up, rstick_up):
 
 ```
 [vid-pid]
 x=dpad_up
 ```
 
-If needed, you can combinate alias and pin like that:
+It's also possible to combinate alias and controller button:
 
 ```
 [vid-pid]
