@@ -117,10 +117,7 @@ ControllerResult SwitchUSBEndpoint::Read(uint8_t *outBuffer, size_t *bufferSizeI
         }
 
         if (R_FAILED(eventWait(usbHsEpGetXferEvent(&m_epSession), aTimeoutUs * 1000)))
-        {
-            ::syscon::logger::LogError("SwitchUSBEndpoint: ReadAsync timeout!");
             return CONTROLLER_STATUS_TIMEOUT;
-        }
 
         eventClear(usbHsEpGetXferEvent(&m_epSession));
 
