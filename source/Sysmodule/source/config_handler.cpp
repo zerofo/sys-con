@@ -44,7 +44,7 @@ namespace syscon::config
             }
         };
 
-        ControllerButton keyStrToButton(const char *name)
+        ControllerButton stringToButton(const char *name)
         {
             std::string nameStr = convertToLowercase(name);
 
@@ -104,7 +104,7 @@ namespace syscon::config
             return ControllerButton::NONE;
         }
 
-        RGBAColor DecodeColorValue(const char *value)
+        RGBAColor hexStringColorToRGBA(const char *value)
         {
             RGBAColor color;
             color.rgbaValue = 0x000000FF;
@@ -129,7 +129,7 @@ namespace syscon::config
             return color;
         }
 
-        void DecodeHotKey(const char *value, ControllerButton hotkeys[2])
+        void parseHotKey(const char *value, ControllerButton hotkeys[2])
         {
             char *tok = strtok(const_cast<char *>(value), "+");
 
@@ -138,12 +138,49 @@ namespace syscon::config
                 if (tok == NULL)
                     break;
 
-                hotkeys[i] = keyStrToButton(tok);
+                hotkeys[i] = stringToButton(tok);
                 tok = strtok(NULL, "+");
             }
         }
 
-        ControllerType DecodeControllerType(const char *value)
+        bool is_number(const std::string &s)
+        {
+            std::string::const_iterator it = s.begin();
+            while (it != s.end() && std::isdigit(*it))
+                ++it;
+            return !s.empty() && it == s.end();
+        }
+
+        void parseBinding(const char *value, uint8_t button_pin[MAX_PIN_BY_BUTTONS], ControllerButton *button_alias)
+        {
+            int button_pin_idx = 0;
+            char *tok = strtok(const_cast<char *>(value), ",");
+
+            while (tok != NULL)
+            {
+                if (is_number(tok))
+                {
+                    if (button_pin_idx < MAX_PIN_BY_BUTTONS)
+                    {
+                        int pin = atoi(tok);
+                        if (pin < MAX_CONTROLLER_BUTTONS)
+                            button_pin[button_pin_idx++] = pin;
+                        else
+                            syscon::logger::LogError("Invalid PIN: %d (Max: %d) - Ignoring it !", pin, MAX_CONTROLLER_BUTTONS);
+                    }
+                    else
+                        syscon::logger::LogError("Too many button pin configured (Max: %d) (Ignoring pin: %d)", MAX_PIN_BY_BUTTONS, pin);
+                }
+                else
+                {
+                    *button_alias = stringToButton(tok);
+                }
+
+                tok = strtok(NULL, ",");
+            }
+        }
+
+        ControllerType stringToControllerType(const char *value)
         {
             std::string type = convertToLowercase(value);
 
@@ -173,7 +210,7 @@ namespace syscon::config
             return ControllerType_Unknown;
         }
 
-        ControllerAnalogConfig DecodeAnalogConfig(const std::string &cfg)
+        ControllerAnalogConfig stringToAnalogConfig(const std::string &cfg)
         {
             ControllerAnalogConfig analogCfg;
             std::string stickcfg = convertToLowercase(cfg);
@@ -249,33 +286,33 @@ namespace syscon::config
 
             ini_data->ini_section_found = true;
 
-            ControllerButton buttonId = keyStrToButton(nameStr.c_str());
+            ControllerButton buttonId = stringToButton(nameStr.c_str());
             if (buttonId != ControllerButton::NONE)
-                ini_data->controller_config->buttons_pin[buttonId] = atoi(value);
+                parseBinding(value, ini_data->controller_config->buttons_pin[buttonId], &ini_data->controller_config->buttons_alias[buttonId]);
             else if (nameStr == "driver")
                 ini_data->controller_config->driver = convertToLowercase(value);
             else if (nameStr == "profile")
                 ini_data->controller_config->profile = convertToLowercase(value);
             else if (nameStr == "controller_type")
-                ini_data->controller_config->controllerType = DecodeControllerType(value);
+                ini_data->controller_config->controllerType = stringToControllerType(value);
             else if (nameStr == "simulate_home")
-                DecodeHotKey(value, ini_data->controller_config->simulateHome);
+                parseHotKey(value, ini_data->controller_config->simulateHome);
             else if (nameStr == "simulate_capture")
-                DecodeHotKey(value, ini_data->controller_config->simulateCapture);
+                parseHotKey(value, ini_data->controller_config->simulateCapture);
             else if (nameStr == "stick_activation_threshold")
                 ini_data->controller_config->stickActivationThreshold = atoi(value);
             else if (nameStr == "left_stick_x")
-                ini_data->controller_config->stickConfig[0].X = DecodeAnalogConfig(value);
+                ini_data->controller_config->stickConfig[0].X = stringToAnalogConfig(value);
             else if (nameStr == "left_stick_y")
-                ini_data->controller_config->stickConfig[0].Y = DecodeAnalogConfig(value);
+                ini_data->controller_config->stickConfig[0].Y = stringToAnalogConfig(value);
             else if (nameStr == "right_stick_x")
-                ini_data->controller_config->stickConfig[1].X = DecodeAnalogConfig(value);
+                ini_data->controller_config->stickConfig[1].X = stringToAnalogConfig(value);
             else if (nameStr == "right_stick_y")
-                ini_data->controller_config->stickConfig[1].Y = DecodeAnalogConfig(value);
+                ini_data->controller_config->stickConfig[1].Y = stringToAnalogConfig(value);
             else if (nameStr == "left_trigger")
-                ini_data->controller_config->triggerConfig[0] = DecodeAnalogConfig(value);
+                ini_data->controller_config->triggerConfig[0] = stringToAnalogConfig(value);
             else if (nameStr == "right_trigger")
-                ini_data->controller_config->triggerConfig[1] = DecodeAnalogConfig(value);
+                ini_data->controller_config->triggerConfig[1] = stringToAnalogConfig(value);
             else if (nameStr == "left_stick_deadzone")
                 ini_data->controller_config->stickDeadzonePercent[0] = atoi(value);
             else if (nameStr == "right_stick_deadzone")
@@ -285,13 +322,13 @@ namespace syscon::config
             else if (nameStr == "right_trigger_deadzone")
                 ini_data->controller_config->triggerDeadzonePercent[1] = atoi(value);
             else if (nameStr == "color_body")
-                ini_data->controller_config->bodyColor = DecodeColorValue(value);
+                ini_data->controller_config->bodyColor = hexStringColorToRGBA(value);
             else if (nameStr == "color_buttons")
-                ini_data->controller_config->buttonsColor = DecodeColorValue(value);
+                ini_data->controller_config->buttonsColor = hexStringColorToRGBA(value);
             else if (nameStr == "color_leftgrip")
-                ini_data->controller_config->leftGripColor = DecodeColorValue(value);
+                ini_data->controller_config->leftGripColor = hexStringColorToRGBA(value);
             else if (nameStr == "color_rightgrip")
-                ini_data->controller_config->rightGripColor = DecodeColorValue(value);
+                ini_data->controller_config->rightGripColor = hexStringColorToRGBA(value);
             else
             {
                 syscon::logger::LogError("Unknown key: %s, continue anyway ...", name);
@@ -374,8 +411,6 @@ namespace syscon::config
             ss << "plus=10" << std::endl;
             ss << "capture=11" << std::endl;
             ss << "home=12" << std::endl;
-            ss << "lstick_click=13" << std::endl;
-            ss << "rstick_click=14" << std::endl;
         }
 
         R_TRY(ams::fs::GetFileSize(&fileOffset, file));
@@ -425,15 +460,6 @@ namespace syscon::config
             R_TRY(ReadFromConfig(CONFIG_FULLPATH, ParseControllerConfigLine, &cfg_controller));
         }
 
-        for (int i = 0; i < ControllerButton::COUNT; i++)
-        {
-            if (config->buttons_pin[i] >= MAX_CONTROLLER_BUTTONS)
-            {
-                syscon::logger::LogError("Invalid button pin: %d (Max: %d)", config->buttons_pin[i], MAX_CONTROLLER_BUTTONS);
-                return 1;
-            }
-        }
-
         if (config->stickConfig[0].X.bind == ControllerAnalogBinding_Unknown)
             config->stickConfig[0].X.bind = ControllerAnalogBinding_X;
         if (config->stickConfig[0].Y.bind == ControllerAnalogBinding_Unknown)
@@ -448,10 +474,10 @@ namespace syscon::config
         if (config->triggerConfig[1].bind == ControllerAnalogBinding_Unknown)
             config->triggerConfig[1].bind = ControllerAnalogBinding_RY;
 
-        if (config->buttons_pin[ControllerButton::B] == 0 && config->buttons_pin[ControllerButton::A] == 0 && config->buttons_pin[ControllerButton::Y] == 0 && config->buttons_pin[ControllerButton::X] == 0)
+        if (config->buttons_pin[ControllerButton::B][0] == 0 && config->buttons_pin[ControllerButton::A][0] == 0 && config->buttons_pin[ControllerButton::Y][0] == 0 && config->buttons_pin[ControllerButton::X][0] == 0)
             syscon::logger::LogError("No buttons configured for this controller [%04x-%04x] - Stick might works but buttons will not work (https://github.com/o0Zz/sys-con/blob/master/doc/Troubleshooting.md)", vendor_id, product_id);
         else
-            syscon::logger::LogInfo("Controller successfully loaded (B=%d, A=%d, Y=%d, X=%d, ...) !", config->buttons_pin[ControllerButton::B], config->buttons_pin[ControllerButton::A], config->buttons_pin[ControllerButton::Y], config->buttons_pin[ControllerButton::X]);
+            syscon::logger::LogInfo("Controller successfully loaded (B=%d, A=%d, Y=%d, X=%d, ...) !", config->buttons_pin[ControllerButton::B][0], config->buttons_pin[ControllerButton::A][0], config->buttons_pin[ControllerButton::Y][0], config->buttons_pin[ControllerButton::X][0]);
 
         R_SUCCEED();
     }

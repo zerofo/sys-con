@@ -126,6 +126,10 @@ ControllerResult BaseController::SetRumble(uint16_t input_idx, float amp_high, f
     return CONTROLLER_STATUS_NOT_IMPLEMENTED;
 }
 
+static_assert(MAX_PIN_BY_BUTTONS == 2, "You need to update IsPinPressed macro !");
+#define IsPinPressed(rawData, controllerButton) \
+    (rawData.buttons[GetConfig().buttons_pin[controllerButton][0]] || rawData.buttons[GetConfig().buttons_pin[controllerButton][1]]) ? true : false
+
 ControllerResult BaseController::ReadInput(NormalizedButtonData *normalData, uint16_t *input_idx, uint32_t timeout_us)
 {
     RawInputData rawData;
@@ -166,14 +170,14 @@ ControllerResult BaseController::ReadInput(NormalizedButtonData *normalData, uin
     normalData->sticks[1].axis_y = GetConfig().stickConfig[1].Y.sign * BaseController::ApplyDeadzone(GetConfig().stickDeadzonePercent[1], bindAnalog[GetConfig().stickConfig[1].Y.bind]);
 
     // Stick as button
-    normalData->buttons[ControllerButton::LSTICK_LEFT] = rawData.buttons[GetConfig().buttons_pin[ControllerButton::LSTICK_LEFT]] ? true : false;
-    normalData->buttons[ControllerButton::LSTICK_RIGHT] = rawData.buttons[GetConfig().buttons_pin[ControllerButton::LSTICK_RIGHT]] ? true : false;
-    normalData->buttons[ControllerButton::LSTICK_UP] = rawData.buttons[GetConfig().buttons_pin[ControllerButton::LSTICK_UP]] ? true : false;
-    normalData->buttons[ControllerButton::LSTICK_DOWN] = rawData.buttons[GetConfig().buttons_pin[ControllerButton::LSTICK_DOWN]] ? true : false;
-    normalData->buttons[ControllerButton::RSTICK_LEFT] = rawData.buttons[GetConfig().buttons_pin[ControllerButton::RSTICK_LEFT]] ? true : false;
-    normalData->buttons[ControllerButton::RSTICK_RIGHT] = rawData.buttons[GetConfig().buttons_pin[ControllerButton::RSTICK_RIGHT]] ? true : false;
-    normalData->buttons[ControllerButton::RSTICK_UP] = rawData.buttons[GetConfig().buttons_pin[ControllerButton::RSTICK_UP]] ? true : false;
-    normalData->buttons[ControllerButton::RSTICK_DOWN] = rawData.buttons[GetConfig().buttons_pin[ControllerButton::RSTICK_DOWN]] ? true : false;
+    normalData->buttons[ControllerButton::LSTICK_LEFT] = IsPinPressed(rawData, ControllerButton::LSTICK_LEFT);
+    normalData->buttons[ControllerButton::LSTICK_RIGHT] = IsPinPressed(rawData, ControllerButton::LSTICK_RIGHT);
+    normalData->buttons[ControllerButton::LSTICK_UP] = IsPinPressed(rawData, ControllerButton::LSTICK_UP);
+    normalData->buttons[ControllerButton::LSTICK_DOWN] = IsPinPressed(rawData, ControllerButton::LSTICK_DOWN);
+    normalData->buttons[ControllerButton::RSTICK_LEFT] = IsPinPressed(rawData, ControllerButton::RSTICK_LEFT);
+    normalData->buttons[ControllerButton::RSTICK_RIGHT] = IsPinPressed(rawData, ControllerButton::RSTICK_RIGHT);
+    normalData->buttons[ControllerButton::RSTICK_UP] = IsPinPressed(rawData, ControllerButton::RSTICK_UP);
+    normalData->buttons[ControllerButton::RSTICK_DOWN] = IsPinPressed(rawData, ControllerButton::RSTICK_DOWN);
 
     // Set stick from button (If any)
     if (normalData->buttons[ControllerButton::LSTICK_LEFT])
@@ -213,37 +217,37 @@ ControllerResult BaseController::ReadInput(NormalizedButtonData *normalData, uin
         normalData->buttons[ControllerButton::RSTICK_UP] = true;
 
     // Set Buttons
-    normalData->buttons[ControllerButton::X] = rawData.buttons[GetConfig().buttons_pin[ControllerButton::X]] ? true : false;
-    normalData->buttons[ControllerButton::A] = rawData.buttons[GetConfig().buttons_pin[ControllerButton::A]] ? true : false;
-    normalData->buttons[ControllerButton::B] = rawData.buttons[GetConfig().buttons_pin[ControllerButton::B]] ? true : false;
-    normalData->buttons[ControllerButton::Y] = rawData.buttons[GetConfig().buttons_pin[ControllerButton::Y]] ? true : false;
-    normalData->buttons[ControllerButton::LSTICK_CLICK] = rawData.buttons[GetConfig().buttons_pin[ControllerButton::LSTICK_CLICK]] ? true : false;
-    normalData->buttons[ControllerButton::RSTICK_CLICK] = rawData.buttons[GetConfig().buttons_pin[ControllerButton::RSTICK_CLICK]] ? true : false;
-    normalData->buttons[ControllerButton::L] = rawData.buttons[GetConfig().buttons_pin[ControllerButton::L]] ? true : false;
-    normalData->buttons[ControllerButton::R] = rawData.buttons[GetConfig().buttons_pin[ControllerButton::R]] ? true : false;
-    normalData->buttons[ControllerButton::ZL] = rawData.buttons[GetConfig().buttons_pin[ControllerButton::ZL]] ? true : false;
-    normalData->buttons[ControllerButton::ZR] = rawData.buttons[GetConfig().buttons_pin[ControllerButton::ZR]] ? true : false;
-    normalData->buttons[ControllerButton::MINUS] = rawData.buttons[GetConfig().buttons_pin[ControllerButton::MINUS]] ? true : false;
-    normalData->buttons[ControllerButton::PLUS] = rawData.buttons[GetConfig().buttons_pin[ControllerButton::PLUS]] ? true : false;
-    normalData->buttons[ControllerButton::CAPTURE] = rawData.buttons[GetConfig().buttons_pin[ControllerButton::CAPTURE]] ? true : false;
-    normalData->buttons[ControllerButton::HOME] = rawData.buttons[GetConfig().buttons_pin[ControllerButton::HOME]] ? true : false;
-    normalData->buttons[ControllerButton::DPAD_UP] = rawData.buttons[GetConfig().buttons_pin[ControllerButton::DPAD_UP]];
-    normalData->buttons[ControllerButton::DPAD_DOWN] = rawData.buttons[GetConfig().buttons_pin[ControllerButton::DPAD_DOWN]];
-    normalData->buttons[ControllerButton::DPAD_RIGHT] = rawData.buttons[GetConfig().buttons_pin[ControllerButton::DPAD_RIGHT]];
-    normalData->buttons[ControllerButton::DPAD_LEFT] = rawData.buttons[GetConfig().buttons_pin[ControllerButton::DPAD_LEFT]];
+    normalData->buttons[ControllerButton::X] = IsPinPressed(rawData, ControllerButton::X);
+    normalData->buttons[ControllerButton::A] = IsPinPressed(rawData, ControllerButton::A);
+    normalData->buttons[ControllerButton::B] = IsPinPressed(rawData, ControllerButton::B);
+    normalData->buttons[ControllerButton::Y] = IsPinPressed(rawData, ControllerButton::Y);
+    normalData->buttons[ControllerButton::LSTICK_CLICK] = IsPinPressed(rawData, ControllerButton::LSTICK_CLICK);
+    normalData->buttons[ControllerButton::RSTICK_CLICK] = IsPinPressed(rawData, ControllerButton::RSTICK_CLICK);
+    normalData->buttons[ControllerButton::L] = IsPinPressed(rawData, ControllerButton::L);
+    normalData->buttons[ControllerButton::R] = IsPinPressed(rawData, ControllerButton::R);
+    normalData->buttons[ControllerButton::ZL] = IsPinPressed(rawData, ControllerButton::ZL);
+    normalData->buttons[ControllerButton::ZR] = IsPinPressed(rawData, ControllerButton::ZR);
+    normalData->buttons[ControllerButton::MINUS] = IsPinPressed(rawData, ControllerButton::MINUS);
+    normalData->buttons[ControllerButton::PLUS] = IsPinPressed(rawData, ControllerButton::PLUS);
+    normalData->buttons[ControllerButton::CAPTURE] = IsPinPressed(rawData, ControllerButton::CAPTURE);
+    normalData->buttons[ControllerButton::HOME] = IsPinPressed(rawData, ControllerButton::HOME);
+    normalData->buttons[ControllerButton::DPAD_UP] = IsPinPressed(rawData, ControllerButton::DPAD_UP);
+    normalData->buttons[ControllerButton::DPAD_DOWN] = IsPinPressed(rawData, ControllerButton::DPAD_DOWN);
+    normalData->buttons[ControllerButton::DPAD_RIGHT] = IsPinPressed(rawData, ControllerButton::DPAD_RIGHT);
+    normalData->buttons[ControllerButton::DPAD_LEFT] = IsPinPressed(rawData, ControllerButton::DPAD_LEFT);
 
     // Special fallback if button pin are not set
-    if (GetConfig().buttons_pin[ControllerButton::ZL] == 0)
+    if (GetConfig().buttons_pin[ControllerButton::ZL][0] == 0)
         normalData->buttons[ControllerButton::ZL] = normalData->triggers[0] > 0;
-    if (GetConfig().buttons_pin[ControllerButton::ZR] == 0)
+    if (GetConfig().buttons_pin[ControllerButton::ZR][0] == 0)
         normalData->buttons[ControllerButton::ZR] = normalData->triggers[1] > 0;
-    if (GetConfig().buttons_pin[ControllerButton::DPAD_UP] == 0)
+    if (GetConfig().buttons_pin[ControllerButton::DPAD_UP][0] == 0)
         normalData->buttons[ControllerButton::DPAD_UP] = rawData.dpad_up;
-    if (GetConfig().buttons_pin[ControllerButton::DPAD_DOWN] == 0)
+    if (GetConfig().buttons_pin[ControllerButton::DPAD_DOWN][0] == 0)
         normalData->buttons[ControllerButton::DPAD_DOWN] = rawData.dpad_down;
-    if (GetConfig().buttons_pin[ControllerButton::DPAD_RIGHT] == 0)
+    if (GetConfig().buttons_pin[ControllerButton::DPAD_RIGHT][0] == 0)
         normalData->buttons[ControllerButton::DPAD_RIGHT] = rawData.dpad_right;
-    if (GetConfig().buttons_pin[ControllerButton::DPAD_LEFT] == 0)
+    if (GetConfig().buttons_pin[ControllerButton::DPAD_LEFT][0] == 0)
         normalData->buttons[ControllerButton::DPAD_LEFT] = rawData.dpad_left;
 
     // Simulate buttons
@@ -265,6 +269,14 @@ ControllerResult BaseController::ReadInput(NormalizedButtonData *normalData, uin
             normalData->buttons[GetConfig().simulateCapture[0]] = false;
             normalData->buttons[GetConfig().simulateCapture[1]] = false;
         }
+    }
+
+    // Handle alias
+    for (int i = 0; i < MAX_CONTROLLER_BUTTONS; i++)
+    {
+        ControllerButton alias_button = GetConfig().buttons_alias[i];
+        if (alias_button != ControllerButton::NONE && normalData->buttons[i] == false)
+            normalData->buttons[i] = normalData->buttons[alias_button];
     }
 
     return CONTROLLER_STATUS_SUCCESS;

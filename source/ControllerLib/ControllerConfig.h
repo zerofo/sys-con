@@ -2,13 +2,16 @@
 #include <cstdint>
 #include <string>
 
-#define MAX_JOYSTICKS          2
-#define MAX_TRIGGERS           2
+#define MAX_JOYSTICKS      2
+#define MAX_TRIGGERS       2
+#define MAX_PIN_BY_BUTTONS 2
+
 #define MAX_CONTROLLER_BUTTONS 32
 
 enum ControllerButton
 {
-    X = 0,
+    NONE = 0,
+    X,
     A,
     B,
     Y,
@@ -35,8 +38,7 @@ enum ControllerButton
     CAPTURE,
     HOME,
 
-    COUNT,
-    NONE
+    COUNT
 };
 
 union RGBAColor
@@ -103,7 +105,9 @@ public:
     uint8_t stickActivationThreshold{0};
     uint8_t stickDeadzonePercent[MAX_JOYSTICKS]{0};
     uint8_t triggerDeadzonePercent[MAX_TRIGGERS]{0};
-    uint8_t buttons_pin[MAX_CONTROLLER_BUTTONS]{0};
+
+    uint8_t buttons_pin[MAX_CONTROLLER_BUTTONS][MAX_PIN_BY_BUTTONS]{0};
+    ControllerButton buttons_alias[MAX_CONTROLLER_BUTTONS]{ControllerButton::NONE};
 
     ControllerStickConfig stickConfig[MAX_JOYSTICKS];
     ControllerAnalogConfig triggerConfig[MAX_TRIGGERS];

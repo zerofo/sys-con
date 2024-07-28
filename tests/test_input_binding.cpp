@@ -14,8 +14,8 @@ public:
 class MockLogger : public ILogger
 {
 public:
-    MOCK_METHOD(void, Log, (LogLevel aLogLevel, const char *format, ::std::va_list vl), (override));
-    MOCK_METHOD(void, LogBuffer, (LogLevel aLogLevel, const uint8_t *buffer, size_t size), (override));
+    void Log(LogLevel aLogLevel, const char *format, ::std::va_list vl) override {}
+    void LogBuffer(LogLevel aLogLevel, const uint8_t *buffer, size_t size) override {}
 };
 
 class MockBaseController : public BaseController
@@ -33,6 +33,7 @@ NormalizedButtonData TestReadInput(ControllerConfig config, RawInputData inputDa
     NormalizedButtonData normalizedData = {0};
 
     MockBaseController controller(std::make_unique<MockDevice>(), config, std::make_unique<MockLogger>());
+
     EXPECT_CALL(controller, ReadRawInput(::testing::_, ::testing::_, ::testing::_))
         .WillOnce(::testing::DoAll(
             ::testing::SetArgPointee<0>(inputData), // Set the first argument (rawData) to expectedData
@@ -49,10 +50,10 @@ NormalizedButtonData TestReadInput(ControllerConfig config, RawInputData inputDa
 TEST(UTILS, test_input_binding_basis)
 {
     ControllerConfig config;
-    config.buttons_pin[ControllerButton::X] = 1;
-    config.buttons_pin[ControllerButton::Y] = 2;
-    config.buttons_pin[ControllerButton::A] = 3;
-    config.buttons_pin[ControllerButton::B] = 4;
+    config.buttons_pin[ControllerButton::X][0] = 1;
+    config.buttons_pin[ControllerButton::Y][0] = 2;
+    config.buttons_pin[ControllerButton::A][0] = 3;
+    config.buttons_pin[ControllerButton::B][0] = 4;
 
     RawInputData inputData;
     inputData.buttons[1] = true;
@@ -89,10 +90,10 @@ TEST(UTILS, test_input_deadzone)
 TEST(UTILS, test_input_simulate_buttons)
 {
     ControllerConfig config;
-    config.buttons_pin[ControllerButton::X] = 1;
-    config.buttons_pin[ControllerButton::Y] = 2;
-    config.buttons_pin[ControllerButton::A] = 3;
-    config.buttons_pin[ControllerButton::B] = 4;
+    config.buttons_pin[ControllerButton::X][0] = 1;
+    config.buttons_pin[ControllerButton::Y][0] = 2;
+    config.buttons_pin[ControllerButton::A][0] = 3;
+    config.buttons_pin[ControllerButton::B][0] = 4;
     config.simulateHome[0] = ControllerButton::X;
     config.simulateHome[1] = ControllerButton::Y;
     config.simulateCapture[0] = ControllerButton::A;
@@ -117,10 +118,10 @@ TEST(UTILS, test_input_simulate_buttons)
 TEST(UTILS, test_input_stick_by_buttons)
 {
     ControllerConfig config;
-    config.buttons_pin[ControllerButton::LSTICK_LEFT] = 1;
-    config.buttons_pin[ControllerButton::LSTICK_DOWN] = 2;
-    config.buttons_pin[ControllerButton::RSTICK_RIGHT] = 3;
-    config.buttons_pin[ControllerButton::RSTICK_UP] = 4;
+    config.buttons_pin[ControllerButton::LSTICK_LEFT][0] = 1;
+    config.buttons_pin[ControllerButton::LSTICK_DOWN][0] = 2;
+    config.buttons_pin[ControllerButton::RSTICK_RIGHT][0] = 3;
+    config.buttons_pin[ControllerButton::RSTICK_UP][0] = 4;
 
     RawInputData inputData;
     inputData.buttons[1] = true;
@@ -142,4 +143,37 @@ TEST(UTILS, test_input_stick_by_buttons)
 
     EXPECT_FLOAT_EQ(normalizedData.sticks[1].axis_x, 1.0f);
     EXPECT_FLOAT_EQ(normalizedData.sticks[1].axis_y, -1.0f);
+}
+
+TEST(UTILS, test_input_alias)
+{
+    ControllerConfig config;
+    config.buttons_alias[ControllerButton::X] = ControllerButton::DPAD_UP;
+
+    RawInputData inputData;
+    inputData.dpad_up = true;
+
+    NormalizedButtonData normalizedData = TestReadInput(config, inputData);
+
+    EXPECT_TRUE(normalizedData.buttons[ControllerButton::X]);
+    EXPECT_FALSE(normalizedData.buttons[ControllerButton::A]);
+    EXPECT_FALSE(normalizedData.buttons[ControllerButton::Y]);
+    EXPECT_FALSE(normalizedData.buttons[ControllerButton::B]);
+
+    EXPECT_TRUE(normalizedData.buttons[ControllerButton::DPAD_UP]);
+    EXPECT_FALSE(normalizedData.buttons[ControllerButton::DPAD_DOWN]);
+}
+
+TEST(UTILS, test_input_multiple_pin)
+{
+    ControllerConfig config;
+    config.buttons_pin[ControllerButton::X][0] = 1;
+    config.buttons_pin[ControllerButton::X][1] = 2;
+
+    RawInputData inputData;
+    inputData.buttons[2] = true;
+
+    NormalizedButtonData normalizedData = TestReadInput(config, inputData);
+
+    EXPECT_TRUE(normalizedData.buttons[ControllerButton::X]);
 }
