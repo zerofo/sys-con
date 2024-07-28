@@ -198,23 +198,27 @@ ControllerResult BaseController::ReadInput(NormalizedButtonData *normalData, uin
         normalData->sticks[1].axis_y = 1.0f;
 
     // Set button state from stick
+
     float stickActivationThreshold = (GetConfig().stickActivationThreshold / 100.0f);
-    if (normalData->sticks[0].axis_x > stickActivationThreshold)
-        normalData->buttons[ControllerButton::LSTICK_RIGHT] = true;
-    if (normalData->sticks[0].axis_x < -stickActivationThreshold)
-        normalData->buttons[ControllerButton::LSTICK_LEFT] = true;
-    if (normalData->sticks[0].axis_y > stickActivationThreshold)
-        normalData->buttons[ControllerButton::LSTICK_DOWN] = true;
-    if (normalData->sticks[0].axis_y < -stickActivationThreshold)
-        normalData->buttons[ControllerButton::LSTICK_UP] = true;
-    if (normalData->sticks[1].axis_x > stickActivationThreshold)
-        normalData->buttons[ControllerButton::RSTICK_RIGHT] = true;
-    if (normalData->sticks[1].axis_x < -stickActivationThreshold)
-        normalData->buttons[ControllerButton::RSTICK_LEFT] = true;
-    if (normalData->sticks[1].axis_y > stickActivationThreshold)
-        normalData->buttons[ControllerButton::RSTICK_DOWN] = true;
-    if (normalData->sticks[1].axis_y < -stickActivationThreshold)
-        normalData->buttons[ControllerButton::RSTICK_UP] = true;
+    if (stickActivationThreshold > 0.0f)
+    {
+        if (normalData->sticks[0].axis_x > stickActivationThreshold)
+            normalData->buttons[ControllerButton::LSTICK_RIGHT] = true;
+        if (normalData->sticks[0].axis_x < -stickActivationThreshold)
+            normalData->buttons[ControllerButton::LSTICK_LEFT] = true;
+        if (normalData->sticks[0].axis_y > stickActivationThreshold)
+            normalData->buttons[ControllerButton::LSTICK_DOWN] = true;
+        if (normalData->sticks[0].axis_y < -stickActivationThreshold)
+            normalData->buttons[ControllerButton::LSTICK_UP] = true;
+        if (normalData->sticks[1].axis_x > stickActivationThreshold)
+            normalData->buttons[ControllerButton::RSTICK_RIGHT] = true;
+        if (normalData->sticks[1].axis_x < -stickActivationThreshold)
+            normalData->buttons[ControllerButton::RSTICK_LEFT] = true;
+        if (normalData->sticks[1].axis_y > stickActivationThreshold)
+            normalData->buttons[ControllerButton::RSTICK_DOWN] = true;
+        if (normalData->sticks[1].axis_y < -stickActivationThreshold)
+            normalData->buttons[ControllerButton::RSTICK_UP] = true;
+    }
 
     // Set Buttons
     normalData->buttons[ControllerButton::X] = IsPinPressed(rawData, ControllerButton::X);
@@ -250,6 +254,14 @@ ControllerResult BaseController::ReadInput(NormalizedButtonData *normalData, uin
     if (GetConfig().buttons_pin[ControllerButton::DPAD_LEFT][0] == 0)
         normalData->buttons[ControllerButton::DPAD_LEFT] = rawData.dpad_left;
 
+    // Handle alias
+    for (int i = 0; i < MAX_CONTROLLER_BUTTONS; i++)
+    {
+        ControllerButton alias_button = GetConfig().buttons_alias[i];
+        if (alias_button != ControllerButton::NONE && normalData->buttons[i] == false)
+            normalData->buttons[i] = normalData->buttons[alias_button];
+    }
+
     // Simulate buttons
     if (GetConfig().simulateHome[0] != ControllerButton::NONE && GetConfig().simulateHome[1] != ControllerButton::NONE)
     {
@@ -269,14 +281,6 @@ ControllerResult BaseController::ReadInput(NormalizedButtonData *normalData, uin
             normalData->buttons[GetConfig().simulateCapture[0]] = false;
             normalData->buttons[GetConfig().simulateCapture[1]] = false;
         }
-    }
-
-    // Handle alias
-    for (int i = 0; i < MAX_CONTROLLER_BUTTONS; i++)
-    {
-        ControllerButton alias_button = GetConfig().buttons_alias[i];
-        if (alias_button != ControllerButton::NONE && normalData->buttons[i] == false)
-            normalData->buttons[i] = normalData->buttons[alias_button];
     }
 
     return CONTROLLER_STATUS_SUCCESS;

@@ -47,13 +47,17 @@ NormalizedButtonData TestReadInput(ControllerConfig config, RawInputData inputDa
 
 /* --------------------------- Tests --------------------------- */
 
-TEST(UTILS, test_input_binding_basis)
+TEST(BaseController, test_input_binding_basis)
 {
     ControllerConfig config;
     config.buttons_pin[ControllerButton::X][0] = 1;
     config.buttons_pin[ControllerButton::Y][0] = 2;
     config.buttons_pin[ControllerButton::A][0] = 3;
     config.buttons_pin[ControllerButton::B][0] = 4;
+    config.stickConfig[0].X.bind = ControllerAnalogBinding_X;
+    config.stickConfig[0].X.sign = 1.0f;
+    config.stickConfig[0].Y.bind = ControllerAnalogBinding_Y;
+    config.stickConfig[0].Y.sign = 1.0f;
 
     RawInputData inputData;
     inputData.buttons[1] = true;
@@ -67,11 +71,11 @@ TEST(UTILS, test_input_binding_basis)
     EXPECT_FALSE(normalizedData.buttons[ControllerButton::Y]);
     EXPECT_TRUE(normalizedData.buttons[ControllerButton::A]);
     EXPECT_FALSE(normalizedData.buttons[ControllerButton::B]);
-    EXPECT_FLOAT_EQ(inputData.X, 0.5f);
-    EXPECT_FLOAT_EQ(inputData.Y, -0.5f);
+    EXPECT_FLOAT_EQ(normalizedData.sticks[0].axis_x, 0.5f);
+    EXPECT_FLOAT_EQ(normalizedData.sticks[0].axis_y, -0.5f);
 }
 
-TEST(UTILS, test_input_deadzone)
+TEST(BaseController, test_input_deadzone)
 {
     ControllerConfig config;
     config.stickDeadzonePercent[0] = 10;
@@ -87,7 +91,7 @@ TEST(UTILS, test_input_deadzone)
     EXPECT_FLOAT_EQ(normalizedData.sticks[0].axis_y, 0.0f);
 }
 
-TEST(UTILS, test_input_simulate_buttons)
+TEST(BaseController, test_input_simulate_buttons)
 {
     ControllerConfig config;
     config.buttons_pin[ControllerButton::X][0] = 1;
@@ -115,7 +119,7 @@ TEST(UTILS, test_input_simulate_buttons)
     EXPECT_TRUE(normalizedData.buttons[ControllerButton::CAPTURE]);
 }
 
-TEST(UTILS, test_input_stick_by_buttons)
+TEST(BaseController, test_input_stick_by_buttons)
 {
     ControllerConfig config;
     config.buttons_pin[ControllerButton::LSTICK_LEFT][0] = 1;
@@ -145,7 +149,7 @@ TEST(UTILS, test_input_stick_by_buttons)
     EXPECT_FLOAT_EQ(normalizedData.sticks[1].axis_y, -1.0f);
 }
 
-TEST(UTILS, test_input_alias)
+TEST(BaseController, test_input_alias)
 {
     ControllerConfig config;
     config.buttons_alias[ControllerButton::X] = ControllerButton::DPAD_UP;
@@ -164,7 +168,7 @@ TEST(UTILS, test_input_alias)
     EXPECT_FALSE(normalizedData.buttons[ControllerButton::DPAD_DOWN]);
 }
 
-TEST(UTILS, test_input_multiple_pin)
+TEST(BaseController, test_input_multiple_pin)
 {
     ControllerConfig config;
     config.buttons_pin[ControllerButton::X][0] = 1;
@@ -176,4 +180,49 @@ TEST(UTILS, test_input_multiple_pin)
     NormalizedButtonData normalizedData = TestReadInput(config, inputData);
 
     EXPECT_TRUE(normalizedData.buttons[ControllerButton::X]);
+}
+
+TEST(BaseController, test_input_complex_combination)
+{
+    ControllerConfig config;
+    config.stickActivationThreshold = 10;
+    config.buttons_pin[ControllerButton::L][0] = 1;
+    config.buttons_pin[ControllerButton::L][1] = 2;
+    config.buttons_alias[ControllerButton::A] = ControllerButton::L;
+    config.buttons_alias[ControllerButton::X] = ControllerButton::DPAD_UP;
+    config.buttons_alias[ControllerButton::Y] = ControllerButton::LSTICK_LEFT;
+    config.buttons_alias[ControllerButton::R] = ControllerButton::DPAD_RIGHT;
+    config.simulateHome[0] = ControllerButton::Y;
+    config.simulateHome[1] = ControllerButton::X;
+    config.simulateCapture[0] = ControllerButton::A;
+    config.simulateCapture[1] = ControllerButton::R;
+    config.stickConfig[0].X.bind = ControllerAnalogBinding_X;
+    config.stickConfig[0].X.sign = 1.0f;
+    config.stickConfig[0].Y.bind = ControllerAnalogBinding_Y;
+    config.stickConfig[0].Y.sign = 1.0f;
+
+    RawInputData inputData;
+    inputData.X = -0.5f;
+    inputData.buttons[1] = true;
+    inputData.dpad_up = true;
+    inputData.dpad_right = true;
+    // inputData.buttons[2] = true; // Enable L
+    // L linked to A
+    // R linked to DPAD_RIGHT
+    // L+R will simulate CAPTURE
+
+    // DPAD_UP is alias of X
+    // axis_x(0.5) will generate a LSTICK_LEFT
+    // LSTICK_LEFT will enable Y
+    // X+Y will simulate HOME
+
+    NormalizedButtonData normalizedData = TestReadInput(config, inputData);
+
+    EXPECT_FALSE(normalizedData.buttons[ControllerButton::X]);
+    EXPECT_FALSE(normalizedData.buttons[ControllerButton::Y]);
+    EXPECT_TRUE(normalizedData.buttons[ControllerButton::HOME]);
+    EXPECT_TRUE(normalizedData.buttons[ControllerButton::CAPTURE]);
+    EXPECT_TRUE(normalizedData.buttons[ControllerButton::DPAD_UP]);
+    EXPECT_TRUE(normalizedData.buttons[ControllerButton::DPAD_RIGHT]);
+    EXPECT_FLOAT_EQ(normalizedData.sticks[0].axis_x, -0.5f);
 }

@@ -71,6 +71,29 @@ So you need to configure sys-con to detect only specific controllers.
 2. Update `discovery_vidpid=` to add the controllers you want to discover (Other than the official switch ones). 
 3. Reboot the switch.
 
+## Bind 1 button to multiple pin
+If you need to map 1 button (Example: X) to multiple pin (Example: 13 and 2) you can do it like that:
+
+```
+[vid-pid]
+x=13,2
+```
+
+## Bind 1 button to another button
+If you need to map 1 button (Example: X) to another button (Example: DPAD_UP) you can do it like that:
+
+```
+[vid-pid]
+x=dpad_up
+```
+
+If needed, you can combinate alias and pin like that:
+
+```
+[vid-pid]
+x=13,2,dpad_up
+```
+
 ## My controller is not working or not discovered. I don't know what todo
 Enable logs in Trace mode (https://github.com/o0Zz/sys-con?tab=readme-ov-file#logs) and looks at the logs.
 

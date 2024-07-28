@@ -1,7 +1,7 @@
 #include <gtest/gtest.h>
 #include "Controllers/BaseController.h"
 
-TEST(UTILS, test_normalize)
+TEST(BaseController, test_normalize)
 {
     //-32768, 32767
     EXPECT_FLOAT_EQ(BaseController::Normalize(-32768, -32768, 32767), -1.0f);

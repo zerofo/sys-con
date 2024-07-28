@@ -1,7 +1,7 @@
 #include <gtest/gtest.h>
 #include "Controllers/BaseController.h"
 
-TEST(UTILS, test_deadzone)
+TEST(BaseController, test_deadzone)
 {
     // Deadzone 0%
     EXPECT_FLOAT_EQ(BaseController::ApplyDeadzone(0, 0.0f), 0.0f);
