@@ -157,8 +157,9 @@ For an in-depth explanation of how sys-con works, see [here](source).
 In order to debug the applicaiton, you can directly refer to the logs available there: `/config/sys-con/log.log`.
 
 ## Credits
-@texita: For his contribution in controllers testing and mappings
+**Texita** For his contribution in controllers testings and mappings
 
 ## Support
 If you want to support this work 
+
 [![ko-fi](https://www.ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/o0Zzz)

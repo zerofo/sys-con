@@ -80,11 +80,17 @@ bool Xbox360Controller::Support(ControllerFeature feature)
 ControllerResult Xbox360Controller::SetRumble(uint16_t input_idx, float amp_high, float amp_low)
 {
     uint8_t rumbleData[]{0x00, 0x08, 0x00, (uint8_t)(amp_high * 255), (uint8_t)(amp_low * 255), 0x00, 0x00, 0x00};
+    if (m_outPipe.size() <= input_idx)
+        return CONTROLLER_STATUS_INVALID_INDEX;
+
     return m_outPipe[input_idx]->Write(rumbleData, sizeof(rumbleData));
 }
 
 ControllerResult Xbox360Controller::SetLED(uint16_t input_idx, Xbox360LEDValue value)
 {
     uint8_t ledPacket[]{0x01, 0x03, (uint8_t)(value)};
+    if (m_outPipe.size() <= input_idx)
+        return CONTROLLER_STATUS_SUCCESS;
+
     return m_outPipe[input_idx]->Write(ledPacket, sizeof(ledPacket));
 }

@@ -129,6 +129,9 @@ uint16_t Xbox360WirelessController::GetInputCount()
 ControllerResult Xbox360WirelessController::SetRumble(uint16_t input_idx, float amp_high, float amp_low)
 {
     uint8_t rumbleData[]{0x00, (uint8_t)(input_idx + 1), 0x0F, 0xC0, 0x00, (uint8_t)(amp_high * 255), (uint8_t)(amp_low * 255), 0x00, 0x00, 0x00, 0x00, 0x00};
+    if (m_outPipe.size() <= input_idx)
+        return CONTROLLER_STATUS_INVALID_INDEX;
+
     return m_outPipe[input_idx]->Write(rumbleData, sizeof(rumbleData));
 }
 
@@ -140,6 +143,9 @@ bool Xbox360WirelessController::IsControllerConnected(uint16_t input_idx)
 ControllerResult Xbox360WirelessController::SetLED(uint16_t input_idx, Xbox360LEDValue value)
 {
     uint8_t ledPacket[]{0x00, (uint8_t)(input_idx + 1), 0x08, (uint8_t)(value | 0x40), 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+    if (m_outPipe.size() <= input_idx)
+        return CONTROLLER_STATUS_SUCCESS;
+
     return m_outPipe[input_idx]->Write(ledPacket, sizeof(ledPacket));
 }
 
@@ -147,8 +153,11 @@ ControllerResult Xbox360WirelessController::OnControllerConnect(uint16_t input_i
 {
     Log(LogLevelInfo, "Xbox360WirelessController Wireless controller connected (Idx: %d) ...", input_idx);
 
-    m_outPipe[input_idx]->Write(reconnectPacket, sizeof(reconnectPacket));
-    m_outPipe[input_idx]->Write(initDriverPacket, sizeof(initDriverPacket));
+    if (m_outPipe.size() > input_idx)
+    {
+        m_outPipe[input_idx]->Write(reconnectPacket, sizeof(reconnectPacket));
+        m_outPipe[input_idx]->Write(initDriverPacket, sizeof(initDriverPacket));
+    }
 
     SetLED(input_idx, (Xbox360LEDValue)((int)XBOX360LED_TOPLEFT + input_idx));
 
@@ -161,7 +170,8 @@ ControllerResult Xbox360WirelessController::OnControllerDisconnect(uint16_t inpu
 {
     Log(LogLevelInfo, "Xbox360WirelessController Wireless controller disconnected (Idx: %d) ...", input_idx);
 
-    m_outPipe[input_idx]->Write(poweroffPacket, sizeof(poweroffPacket));
+    if (m_outPipe.size() > input_idx)
+        m_outPipe[input_idx]->Write(poweroffPacket, sizeof(poweroffPacket));
 
     m_is_connected[input_idx] = false;
 

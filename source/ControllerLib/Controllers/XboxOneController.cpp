@@ -186,6 +186,9 @@ ControllerResult XboxOneController::ReadRawInput(RawInputData *rawData, uint16_t
 
 ControllerResult XboxOneController::SendInitBytes(uint16_t input_idx)
 {
+    if (m_outPipe.size() <= input_idx)
+        return CONTROLLER_STATUS_SUCCESS;
+
     uint16_t vendor = m_device->GetVendor();
     uint16_t product = m_device->GetProduct();
     for (size_t i = 0; i < sizeof(xboxone_init_packets) / sizeof(struct xboxone_init_packet); i++)
@@ -217,6 +220,9 @@ ControllerResult XboxOneController::WriteAckModeReport(uint16_t input_idx, uint8
         sequence,
         GIP_PL_LEN(9), 0x00, GIP_CMD_VIRTUAL_KEY, GIP_OPT_INTERNAL, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00};
 
+    if (m_outPipe.size() <= input_idx)
+        return CONTROLLER_STATUS_SUCCESS;
+
     return m_outPipe[input_idx]->Write(report, sizeof(report));
 }
 
@@ -237,5 +243,9 @@ ControllerResult XboxOneController::SetRumble(uint16_t input_idx, float amp_high
         (uint8_t)(amp_high * 255),
         (uint8_t)(amp_low * 255),
         0xff, 0x00, 0x00};
+
+    if (m_outPipe.size() <= input_idx)
+        return CONTROLLER_STATUS_INVALID_INDEX;
+
     return m_outPipe[input_idx]->Write(rumble_data, sizeof(rumble_data));
 }
