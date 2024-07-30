@@ -441,7 +441,7 @@ namespace syscon::config
 
         if (!cfg_controller.ini_section_found && auto_add_controller)
         {
-            syscon::logger::LogDebug("Controller not found in config file, adding it ...");
+            syscon::logger::LogDebug("Controller not found in config file, adding it as '%s'...", default_profile.c_str());
             R_TRY(AddControllerToConfig(CONFIG_FULLPATH, std::string(controllerVidPid), default_profile));
 
             syscon::logger::LogDebug("Reloading controller config: '%s' [%s] ...", CONFIG_FULLPATH, std::string(controllerVidPid).c_str());
