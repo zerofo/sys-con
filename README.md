@@ -67,8 +67,8 @@ In most cases the arrows and joystick will work fine, the buttons may not be map
 1. Connect your controller to the switch
 2. On the switch, go to Settings -> Controllers & Sensors > Test Input Devices
 3. Press the button and try to understand the correct mapping.
-3. On your SDCard, edit `/config/sys-con/config.ini` and find your controller `[vid-pid]` section (most likely the latest one).
-Note: A new section will be created automatically if the controller is not known to sys-con. This means that the new controller is most likely the latest one. 
+3. On your SDCard, edit `/config/sys-con/config.ini` and find your controller's `[vid-pid]` section (most likely at the end of the file).
+Note: A new section is automatically created if the controller is not known to sys-con. This means that your controller will most likely be the last one (at the end).
 
 Typical configuration will look like
 ```
@@ -88,7 +88,13 @@ capture=12
 right_stick_x=Z
 right_stick_y=Rz
 ``` 
-Where A, B, Y, X ... need to be set to a button id ( 1,2,3,4,5 ..)
+Where ButtonName (A, B, Y, X ...) need to be assign to a ButtonID (1,2,3,4,5 ...)
+Now, according to what you found in step 2, you need to match ButtonName with ButtonID.
+For example, if you found that 'B' is reversed with 'A', just swap the ButtonID:
+```
+B=2
+A=1
+```
 
 ### Method 2 (From a windows PC)
 1. Connect your controller to your PC
@@ -96,8 +102,8 @@ Where A, B, Y, X ... need to be set to a button id ( 1,2,3,4,5 ..)
 3. Double click on the device or right click and select Properties.
 4. Go to the 'Details' tab and select 'Hardware IDs' to view its PID and VID. The PID/VID should look like "HID\VID_0810&PID_0001&...", which becomes: `[0810-0001]`.
 5. Open "joy.cpl" (either from Win+R or directly from the Start menu). 
-6. Select your controller and click on "Properties
-7. Here you should see a panel with button IDs (1, 2, 3 ...), press the button and make a note of them (which button is assigned to which ID).
+6. Select your controller and click on "Properties"
+7. Here you should see a panel with ButtonID (1, 2, 3 ...), press the button and make a note of them (which button is assigned to which ID).
 8. Now edit `/config/sys-con/config.ini` on your switch sdcard and edit your controller's vid-pid section:
 
 ```
@@ -117,7 +123,7 @@ capture=12
 right_stick_x=Z
 right_stick_y=Rz
 ```
-Where 1, 2, 3, 4, ... is the key ID noted in step 7.
+Where ButtonID (1,2,3,4, ...) is the key ID noted in step 7.
 Note: Depending to the controller, this windows procedure might not works. If the mapping is incorrect, switch to Method 1
 
 ## Troubleshooting
