@@ -294,6 +294,10 @@ namespace syscon::config
                 ini_data->controller_config->driver = convertToLowercase(value);
             else if (nameStr == "profile")
                 ini_data->controller_config->profile = convertToLowercase(value);
+            else if (nameStr == "input_max_packet_size")
+                ini_data->controller_config->inputMaxPacketSize = atoi(value);
+            else if (nameStr == "output_max_packet_size")
+                ini_data->controller_config->outputMaxPacketSize = atoi(value);
             else if (nameStr == "controller_type")
                 ini_data->controller_config->controllerType = stringToControllerType(value);
             else if (nameStr == "simulate_home")

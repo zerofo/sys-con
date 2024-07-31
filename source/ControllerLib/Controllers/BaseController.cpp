@@ -67,7 +67,7 @@ ControllerResult BaseController::OpenInterfaces()
             if (inEndpoint == NULL)
                 continue;
 
-            ControllerResult result = inEndpoint->Open();
+            ControllerResult result = inEndpoint->Open(GetConfig().inputMaxPacketSize);
             if (result != CONTROLLER_STATUS_SUCCESS)
             {
                 Log(LogLevelError, "Controller[%04x-%04x] Failed to open input endpoint %d !", m_device->GetVendor(), m_device->GetProduct(), idx);
@@ -83,7 +83,7 @@ ControllerResult BaseController::OpenInterfaces()
             if (outEndpoint == NULL)
                 continue;
 
-            result = outEndpoint->Open();
+            result = outEndpoint->Open(GetConfig().outputMaxPacketSize);
             if (result != CONTROLLER_STATUS_SUCCESS)
             {
                 Log(LogLevelError, "Controller[%04x-%04x] Failed to open output  endpoint %d !", m_device->GetVendor(), m_device->GetProduct(), idx);

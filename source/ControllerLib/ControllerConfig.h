@@ -100,6 +100,10 @@ class ControllerConfig
 public:
     std::string driver;
     std::string profile;
+
+    uint32_t inputMaxPacketSize{0};
+    uint32_t outputMaxPacketSize{0};
+
     ControllerType controllerType{ControllerType_Pro};
 
     uint8_t stickActivationThreshold{0};

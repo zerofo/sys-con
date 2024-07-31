@@ -70,6 +70,7 @@ Most of the time it's one of below reasons:
 1) You selected the wrong build: Try to use the build that match your atmosphere version.
 2) Something is wrong with your configuration file. Even if sys-con try to be as robust as possible, you might have an issue with your configuration. Try to restore the default one.
 3) You have the latest version of atmosphere (Not yet supported by sys-con) - Open a ticket.
+4) All other cases - Open a ticket
 
 ## My official Switch controller don't works when sys-con is enabled
 This problem occurs because sys-con detects all connected USB devices and try to map them.
