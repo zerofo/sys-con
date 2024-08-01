@@ -14,7 +14,8 @@
 | Wave Afterglow PDP Xbox Series | Yes | - | - |
 | Hori battlepad | Yes | - | - |
 | Atomic PSX/PS2 adapter | Yes | - | - |
-| Y3 Arcade Fighter Stick | Yes | - | https://aliexpress.com/item/1005006369969745.html |
+| Y3 Arcade Fighter Stick (DATA FROG)  | Yes | - | https://aliexpress.com/item/1005006369969745.html |
+| Y3 Arcade Fighter Stick with GAME STICK 4K LITE SEGAM M8 V7.0 | Yes | - | https://aliexpress.com/item/1005006369969745.html |
 | Activbb X6-34U Controller | Yes | - | - |
 | Foyu Controller | Yes | - | - |
 | HS-WU025 | Yes | PC Mode | - |
@@ -29,4 +30,7 @@
 | PowerA Nintendo Switch Wired Controller | Yes | - | https://www.amazon.com/PowerA-Wired-Controller-Nintendo-Switch-Black/dp/B07PDJ45BT |
 | PS2 Dual Converter | Yes | - | https://www.aliexpress.com/item/4000662529384.html |
 | Raphnet Classic Controller USB adapter | Yes | - | - |
-| Y3 Joypad | No | - | https://pt.aliexpress.com/item/1005005458136372.html |
+| Y3 Joypad with Receiver no-name | Yes | - | https://aliexpress.com/item/1005002359869263.html |
+| Y3 Joypad with GAME STICK 4K LITE SEGAM M8 V4.0 | Yes | - | https://aliexpress.com/item/1005002359869263.html |
+| MayFlash N64 Controller Adapter| Yes | - | https://www.amazon.com/dp/B002B9FIUU |
+| Y3 Joypad (Receiver YC5)| No | - | https://aliexpress.com/item/1005005458136372.html |
