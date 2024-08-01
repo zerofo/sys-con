@@ -26,9 +26,13 @@ ControllerResult GenericHIDController::Initialize()
     uint16_t size = sizeof(buffer);
     // https://www.usb.org/sites/default/files/hid1_11.pdf
 
-    Log(LogLevelDebug, "GenericHIDController[%04x-%04x] Reading report descriptor ...", m_device->GetVendor(), m_device->GetProduct());
+    /// SET_IDLE
+    result = m_interfaces[0]->ControlTransferOutput((uint8_t)IUSBEndpoint::USB_ENDPOINT_OUT | 0x20 | (uint8_t)USB_RECIPIENT_INTERFACE, USB_REQUEST_SET_IDLE, 0, m_interfaces[0]->GetDescriptor()->bInterfaceNumber, nullptr, 0);
+    if (result != CONTROLLER_STATUS_SUCCESS)
+        Log(LogLevelError, "GenericHIDController[%04x-%04x] SET_IDLE failed, continue anyway ...", m_device->GetVendor(), m_device->GetProduct());
+
     // Get HID report descriptor
-    result = m_interfaces[0]->ControlTransferInput((uint8_t)IUSBEndpoint::USB_ENDPOINT_IN | (uint8_t)USB_RECIPIENT_INTERFACE, USB_REQUEST_GET_DESCRIPTOR, (USB_DT_REPORT << 8) | m_interfaces[0]->GetDescriptor()->bInterfaceNumber, 0, buffer, &size);
+    result = m_interfaces[0]->ControlTransferInput((uint8_t)IUSBEndpoint::USB_ENDPOINT_IN | (uint8_t)USB_RECIPIENT_INTERFACE, USB_REQUEST_GET_DESCRIPTOR, (USB_DT_REPORT << 8), m_interfaces[0]->GetDescriptor()->bInterfaceNumber, buffer, &size);
     if (result != CONTROLLER_STATUS_SUCCESS)
     {
         Log(LogLevelError, "GenericHIDController[%04x-%04x] Failed to get HID report descriptor", m_device->GetVendor(), m_device->GetProduct());
