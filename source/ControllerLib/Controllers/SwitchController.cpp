@@ -65,15 +65,16 @@ ControllerResult SwitchController::ReadRawInput(RawInputData *rawData, uint16_t 
     rawData->buttons[14] = buttonData->button14;
     rawData->buttons[15] = buttonData->button15;
     rawData->buttons[16] = buttonData->button16;
+    rawData->buttons[17] = buttonData->button17;
+    rawData->buttons[18] = buttonData->button18;
+    rawData->buttons[19] = buttonData->button19;
 
-    rawData->Rx = 0;
-    rawData->Ry = 0;
-
+    /*
     rawData->X = BaseController::Normalize(buttonData->stick_left_x, -32768, 32767);
     rawData->Y = BaseController::Normalize(-buttonData->stick_left_y, -32768, 32767);
     rawData->Z = BaseController::Normalize(buttonData->stick_right_x, -32768, 32767);
     rawData->Rz = BaseController::Normalize(-buttonData->stick_right_y, -32768, 32767);
-
+    */
     rawData->dpad_up = buttonData->dpad_up;
     rawData->dpad_right = buttonData->dpad_right;
     rawData->dpad_down = buttonData->dpad_down;
