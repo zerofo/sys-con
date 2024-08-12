@@ -5,7 +5,7 @@
 # Boot the switch, enter in ftpd, use this script to do basic actions:
 # "ftp upload" to upload the binary (You just built) directly to the switch
 # "ftp logs" to display the logs
-# Same commads are available with "sd", usefull when the nintendo switch crash on boot (You plug the sdcard to your laptop and debug from there)
+# Same commands are available with "sd", usefull when the nintendo switch crash on boot (You plug the sdcard to your laptop and debug from there)
 
 # IP of your switch on your network:
 FTP_URL=ftp://192.168.10.238:5000
@@ -39,8 +39,6 @@ display_logs () {
 		if [[ $line == "|I|"* ]]; then
 			echo -e "${BLUE}${line}${NC}"
 		elif [[ $line == "|E|"* ]]; then
-			echo -e "${RED}${line}${NC}"
-		elif [[ $line == "|W|"* ]]; then
 			echo -e "${RED}${line}${NC}"
 		elif [[ $line == "|W|"* ]]; then
 			echo -e "${YELLOW}${line}${NC}"
