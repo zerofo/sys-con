@@ -9,7 +9,6 @@ class Xbox360WirelessController : public BaseController
 {
 private:
     bool m_is_connected[XBOX360_MAX_INPUTS];
-    uint8_t m_current_controller_idx = 0;
 
     ControllerResult SetLED(uint16_t input_idx, Xbox360LEDValue value);
 
@@ -23,7 +22,7 @@ public:
     ControllerResult OpenInterfaces() override;
     void CloseInterfaces() override;
 
-    ControllerResult ReadRawInput(RawInputData *rawData, uint16_t *input_idx, uint32_t timeout_us) override;
+    virtual ControllerResult ParseData(uint8_t *buffer, size_t size, RawInputData *rawData, uint16_t *input_idx) override;
 
     bool Support(ControllerFeature feature) override;
 

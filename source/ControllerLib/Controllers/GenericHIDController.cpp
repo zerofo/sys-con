@@ -65,20 +65,11 @@ uint16_t GenericHIDController::GetInputCount()
     return std::min((int)m_joystick_count, CONTROLLER_MAX_INPUTS);
 }
 
-ControllerResult GenericHIDController::ReadRawInput(RawInputData *rawData, uint16_t *input_idx, uint32_t timeout_us)
+ControllerResult GenericHIDController::ParseData(uint8_t *buffer, size_t size, RawInputData *rawData, uint16_t *input_idx)
 {
     HIDJoystickData joystick_data;
-    uint8_t input_bytes[CONTROLLER_INPUT_BUFFER_SIZE];
-    size_t size = std::min((size_t)m_inPipe[0]->GetDescriptor()->wMaxPacketSize, sizeof(input_bytes));
 
-    ControllerResult result = m_inPipe[0]->Read(input_bytes, &size, timeout_us);
-    if (result != CONTROLLER_STATUS_SUCCESS)
-        return result;
-
-    if (size == 0)
-        return CONTROLLER_STATUS_NOTHING_TODO;
-
-    if (!m_joystick->parseData(input_bytes, (uint16_t)size, &joystick_data))
+    if (!m_joystick->parseData(buffer, (uint16_t)size, &joystick_data))
     {
         Log(LogLevelError, "GenericHIDController[%04x-%04x] Failed to parse input data (size=%d)", m_device->GetVendor(), m_device->GetProduct(), size);
         return CONTROLLER_STATUS_UNEXPECTED_DATA;
@@ -87,7 +78,12 @@ ControllerResult GenericHIDController::ReadRawInput(RawInputData *rawData, uint1
     if (joystick_data.index >= GetInputCount())
         return CONTROLLER_STATUS_UNEXPECTED_DATA;
 
-    *input_idx = joystick_data.index;
+    /*
+         Special case for generic HID, input_idx might be bigger than 0 in case of multiple interfaces.
+         If this is the case we expect to have 1 input per interface, thus we don't want to overwrite the input index.
+    */
+    if (input_idx != NULL && *input_idx == 0)
+        *input_idx = joystick_data.index;
 
     for (int i = 0; i < MAX_CONTROLLER_BUTTONS; i++)
         rawData->buttons[i] = joystick_data.buttons[i];

@@ -36,21 +36,16 @@ ControllerResult Dualshock3Controller::OpenInterfaces()
     return CONTROLLER_STATUS_SUCCESS;
 }
 
-ControllerResult Dualshock3Controller::ReadRawInput(RawInputData *rawData, uint16_t *input_idx, uint32_t timeout_us)
+ControllerResult Dualshock3Controller::ParseData(uint8_t *buffer, size_t size, RawInputData *rawData, uint16_t *input_idx)
 {
-    uint8_t input_bytes[CONTROLLER_INPUT_BUFFER_SIZE];
-    size_t size = sizeof(input_bytes);
+    (void)input_idx;
+    Dualshock3ButtonData *buttonData = reinterpret_cast<Dualshock3ButtonData *>(buffer);
 
-    ControllerResult result = m_inPipe[0]->Read(input_bytes, &size, timeout_us);
-    if (result != CONTROLLER_STATUS_SUCCESS)
-        return result;
+    if (size < sizeof(Dualshock3ButtonData))
+        return CONTROLLER_STATUS_UNEXPECTED_DATA;
 
-    *input_idx = 0;
-
-    if (input_bytes[0] == Ds3InputPacket_Button)
+    if (buttonData->type == Ds3InputPacket_Button)
     {
-        Dualshock3ButtonData *buttonData = reinterpret_cast<Dualshock3ButtonData *>(input_bytes);
-
         rawData->buttons[1] = buttonData->button1;
         rawData->buttons[2] = buttonData->button2;
         rawData->buttons[3] = buttonData->button3;

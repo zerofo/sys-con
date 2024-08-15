@@ -17,3 +17,12 @@ TEST(BaseController, test_normalize)
     EXPECT_NEAR(BaseController::Normalize(109, 0, 255), -0.14f, 0.01f);
     EXPECT_FLOAT_EQ(BaseController::Normalize(0, 0, 255), -1.0f);
 }
+
+TEST(BaseController, test_normalize_center)
+{
+    EXPECT_FLOAT_EQ(BaseController::Normalize(2000, 400, 3500, 2000), 0.0f);
+    EXPECT_FLOAT_EQ(BaseController::Normalize(400, 400, 3500, 2000), -1.0f);
+    EXPECT_FLOAT_EQ(BaseController::Normalize(3500, 400, 3500, 2000), 1.0f);
+    EXPECT_FLOAT_EQ(BaseController::Normalize(1200, 400, 3500, 2000), -0.5f);
+    EXPECT_FLOAT_EQ(BaseController::Normalize(2750, 400, 3500, 2000), 0.5f);
+}

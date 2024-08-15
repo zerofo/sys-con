@@ -77,7 +77,7 @@ public:
 
     ControllerResult Initialize() override;
 
-    ControllerResult ReadRawInput(RawInputData *rawData, uint16_t *input_idx, uint32_t timeout_us) override;
+    virtual ControllerResult ParseData(uint8_t *buffer, size_t size, RawInputData *rawData, uint16_t *input_idx) override;
 
     bool Support(ControllerFeature feature) override;
 

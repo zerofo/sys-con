@@ -1,8 +1,12 @@
 #include "Controllers/SwitchController.h"
 
+static_assert(CONTROLLER_INPUT_BUFFER_SIZE == 64, "Input byte for switch as to be 64 bytes long");
+
 SwitchController::SwitchController(std::unique_ptr<IUSBDevice> &&device, const ControllerConfig &config, std::unique_ptr<ILogger> &&logger)
     : BaseController(std::move(device), config, std::move(logger))
 {
+    cal_left_x.max = cal_left_y.max = cal_right_x.max = cal_right_y.max = 3400;
+    cal_left_x.min = cal_left_y.min = cal_right_x.min = cal_right_y.min = 600;
 }
 
 SwitchController::~SwitchController()
@@ -31,20 +35,13 @@ ControllerResult SwitchController::Initialize()
     return CONTROLLER_STATUS_SUCCESS;
 }
 
-ControllerResult SwitchController::ReadRawInput(RawInputData *rawData, uint16_t *input_idx, uint32_t timeout_us)
+ControllerResult SwitchController::ParseData(uint8_t *buffer, size_t size, RawInputData *rawData, uint16_t *input_idx)
 {
-    uint8_t input_bytes[CONTROLLER_INPUT_BUFFER_SIZE];
-    size_t size = sizeof(input_bytes);
+    (void)input_idx;
+    SwitchButtonData *buttonData = reinterpret_cast<SwitchButtonData *>(buffer);
 
-    static_assert(sizeof(input_bytes) == 64, "Input byte for switch as to be 64 bytes long");
-
-    ControllerResult result = m_inPipe[0]->Read(input_bytes, &size, timeout_us);
-    if (result != CONTROLLER_STATUS_SUCCESS)
-        return result;
-
-    SwitchButtonData *buttonData = reinterpret_cast<SwitchButtonData *>(input_bytes);
-
-    *input_idx = 0;
+    if (size < sizeof(SwitchButtonData))
+        return CONTROLLER_STATUS_UNEXPECTED_DATA;
 
     if (buttonData->report_id != 0x30)
         return CONTROLLER_STATUS_NOTHING_TODO;
@@ -69,12 +66,33 @@ ControllerResult SwitchController::ReadRawInput(RawInputData *rawData, uint16_t 
     rawData->buttons[18] = buttonData->button18;
     rawData->buttons[19] = buttonData->button19;
 
-    /*
-    rawData->X = BaseController::Normalize(buttonData->stick_left_x, -32768, 32767);
-    rawData->Y = BaseController::Normalize(-buttonData->stick_left_y, -32768, 32767);
-    rawData->Z = BaseController::Normalize(buttonData->stick_right_x, -32768, 32767);
-    rawData->Rz = BaseController::Normalize(-buttonData->stick_right_y, -32768, 32767);
-    */
+    uint16_t left_x = BaseController::ReadBitsLE(buttonData->stick_left, 0, 12);
+    uint16_t left_y = BaseController::ReadBitsLE(buttonData->stick_left, 12, 12);
+    uint16_t right_x = BaseController::ReadBitsLE(buttonData->stick_right, 0, 12);
+    uint16_t right_y = BaseController::ReadBitsLE(buttonData->stick_right, 12, 12);
+
+    cal_left_x.max = std::max(left_x, cal_left_x.max);
+    cal_left_x.min = std::min(left_x, cal_left_x.min);
+    cal_left_y.max = std::max(left_y, cal_left_y.max);
+    cal_left_y.min = std::min(left_y, cal_left_y.min);
+    cal_right_x.max = std::max(right_x, cal_right_x.max);
+    cal_right_x.min = std::min(right_x, cal_right_x.min);
+    cal_right_y.max = std::max(right_y, cal_right_y.max);
+    cal_right_y.min = std::min(right_y, cal_right_y.min);
+
+    Log(LogLevelTrace, "X=%u, Y=%u, Z=%u, Rz=%u (Calib: X=[%u,%u], Y=[%u,%u], Z=[%u,%u], Rz=[%u,%u])",
+        left_x, left_y, right_x, right_y,
+        cal_left_x.min, cal_left_x.max, cal_left_y.min, cal_left_y.max,
+        cal_right_x.min, cal_right_x.max, cal_right_y.min, cal_right_y.max);
+
+    rawData->X = BaseController::Normalize(left_x, cal_left_x.min, cal_left_x.max, 2000);
+    rawData->Y = BaseController::Normalize(left_y, cal_left_y.min, cal_left_y.max, 2000);
+    rawData->Z = BaseController::Normalize(right_x, cal_right_x.min, cal_right_x.max, 2000);
+    rawData->Rz = BaseController::Normalize(right_y, cal_right_y.min, cal_right_y.max, 2000);
+
+    rawData->Y = -rawData->Y;
+    rawData->Rz = -rawData->Rz;
+
     rawData->dpad_up = buttonData->dpad_up;
     rawData->dpad_right = buttonData->dpad_right;
     rawData->dpad_down = buttonData->dpad_down;

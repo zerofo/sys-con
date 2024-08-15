@@ -119,23 +119,16 @@ ControllerResult XboxOneController::Initialize()
     return CONTROLLER_STATUS_SUCCESS;
 }
 
-ControllerResult XboxOneController::ReadRawInput(RawInputData *rawData, uint16_t *input_idx, uint32_t timeout_us)
+ControllerResult XboxOneController::ParseData(uint8_t *buffer, size_t size, RawInputData *rawData, uint16_t *input_idx)
 {
-    uint8_t input_bytes[CONTROLLER_INPUT_BUFFER_SIZE];
-    size_t size = sizeof(input_bytes);
+    (void)input_idx;
+    XboxOneButtonData *buttonData = reinterpret_cast<XboxOneButtonData *>(buffer);
 
-    ControllerResult result = m_inPipe[0]->Read(input_bytes, &size, timeout_us);
-    if (result != CONTROLLER_STATUS_SUCCESS)
-        return result;
+    if (size < sizeof(XboxOneButtonData))
+        return CONTROLLER_STATUS_UNEXPECTED_DATA;
 
-    uint8_t type = input_bytes[0];
-
-    *input_idx = 0;
-
-    if (type == GIP_CMD_INPUT) // Button data
+    if (buttonData->type == GIP_CMD_INPUT) // Button data
     {
-        XboxOneButtonData *buttonData = reinterpret_cast<XboxOneButtonData *>(input_bytes);
-
         m_rawInput.buttons[1] = buttonData->button1;
         m_rawInput.buttons[2] = buttonData->button2;
         m_rawInput.buttons[3] = buttonData->button3;
@@ -165,13 +158,13 @@ ControllerResult XboxOneController::ReadRawInput(RawInputData *rawData, uint16_t
 
         return CONTROLLER_STATUS_SUCCESS;
     }
-    else if (type == GIP_CMD_VIRTUAL_KEY) // Mode button (XBOX center button)
+    else if (buttonData->type == GIP_CMD_VIRTUAL_KEY) // Mode button (XBOX center button)
     {
-        m_rawInput.buttons[12] = input_bytes[4];
+        m_rawInput.buttons[12] = buffer[4];
 
-        if (input_bytes[1] == (GIP_OPT_ACK | GIP_OPT_INTERNAL))
+        if (buffer[1] == (GIP_OPT_ACK | GIP_OPT_INTERNAL))
         {
-            ControllerResult result = WriteAckModeReport(*input_idx, input_bytes[2]);
+            ControllerResult result = WriteAckModeReport(*input_idx, buffer[2]);
             if (result != CONTROLLER_STATUS_SUCCESS)
                 return result;
         }

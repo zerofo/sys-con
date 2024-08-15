@@ -126,18 +126,49 @@ ControllerResult BaseController::SetRumble(uint16_t input_idx, float amp_high, f
     return CONTROLLER_STATUS_NOT_IMPLEMENTED;
 }
 
-static_assert(MAX_PIN_BY_BUTTONS == 2, "You need to update IsPinPressed macro !");
-#define IsPinPressed(rawData, controllerButton) \
-    (rawData.buttons[GetConfig().buttons_pin[controllerButton][0]] || rawData.buttons[GetConfig().buttons_pin[controllerButton][1]]) ? true : false
+ControllerResult BaseController::ReadNextBuffer(uint8_t *buffer, size_t *size, uint16_t *input_idx, uint32_t timeout_us)
+{
+    uint16_t controller_idx = m_current_controller_idx;
+    m_current_controller_idx = (m_current_controller_idx + 1) % m_inPipe.size();
+
+    *size = std::min((size_t)m_inPipe[controller_idx]->GetDescriptor()->wMaxPacketSize, *size);
+
+    ControllerResult result = m_inPipe[controller_idx]->Read(buffer, size, timeout_us);
+    if (result != CONTROLLER_STATUS_SUCCESS)
+        return result;
+
+    if (*size == 0)
+        return CONTROLLER_STATUS_NOTHING_TODO;
+
+    *input_idx = controller_idx;
+
+    return CONTROLLER_STATUS_SUCCESS;
+}
 
 ControllerResult BaseController::ReadInput(NormalizedButtonData *normalData, uint16_t *input_idx, uint32_t timeout_us)
 {
     RawInputData rawData;
+    uint8_t input_bytes[CONTROLLER_INPUT_BUFFER_SIZE];
+    size_t size = sizeof(input_bytes);
 
-    ControllerResult result = ReadRawInput(&rawData, input_idx, timeout_us);
+    ControllerResult result = ReadNextBuffer(input_bytes, &size, input_idx, timeout_us);
     if (result != CONTROLLER_STATUS_SUCCESS)
         return result;
 
+    result = ParseData(input_bytes, size, &rawData, input_idx);
+    if (result != CONTROLLER_STATUS_SUCCESS)
+        return result;
+
+    MapRawInputToNormalized(rawData, normalData);
+    return CONTROLLER_STATUS_SUCCESS;
+}
+
+static_assert(MAX_PIN_BY_BUTTONS == 2, "You need to update IsPinPressed macro !");
+#define IsPinPressed(rawData, controllerButton) \
+    (rawData.buttons[GetConfig().buttons_pin[controllerButton][0]] || rawData.buttons[GetConfig().buttons_pin[controllerButton][1]]) ? true : false
+
+void BaseController::MapRawInputToNormalized(RawInputData &rawData, NormalizedButtonData *normalData)
+{
     Log(LogLevelDebug, "Controller[%04x-%04x] DATA: X=%d%%, Y=%d%%, Z=%d%%, Rz=%d%%, B1=%d, B2=%d, B3=%d, B4=%d, B5=%d, B6=%d, B7=%d, B8=%d, B9=%d, B10=%d",
         m_device->GetVendor(), m_device->GetProduct(),
         (int)(rawData.X * 100.0), (int)(rawData.Y * 100.0), (int)(rawData.Z * 100.0), (int)(rawData.Rz * 100.0),
@@ -282,8 +313,6 @@ ControllerResult BaseController::ReadInput(NormalizedButtonData *normalData, uin
             normalData->buttons[GetConfig().simulateCapture[1]] = false;
         }
     }
-
-    return CONTROLLER_STATUS_SUCCESS;
 }
 
 float BaseController::ApplyDeadzone(uint8_t deadzonePercent, float value)
@@ -303,13 +332,24 @@ float BaseController::ApplyDeadzone(uint8_t deadzonePercent, float value)
 
 float BaseController::Normalize(int32_t value, int32_t min, int32_t max)
 {
-    float range = floor((max - min) / 2.0f);
-    float offset = range;
+    return Normalize(value, min, max, (max + min) / 2);
+}
 
-    if (range == max)
-        offset = 0;
-
-    float ret = (value - offset) / range;
+float BaseController::Normalize(int32_t value, int32_t min, int32_t max, int32_t center)
+{
+    float ret = 0.0f;
+    if (value < center)
+    {
+        float offset = (float)min;
+        float range = (float)(center - min);
+        ret = ((value - offset) / range) - 1.0f;
+    }
+    else
+    {
+        float offset = (float)center;
+        float range = (float)(max - center);
+        ret = (value - offset) / range;
+    }
 
     if (ret > 1.0f)
         ret = 1.0f;
@@ -317,4 +357,32 @@ float BaseController::Normalize(int32_t value, int32_t min, int32_t max)
         ret = -1.0f;
 
     return ret;
+}
+
+uint32_t BaseController::ReadBitsLE(uint8_t *buffer, uint32_t bitOffset, uint32_t bitLength)
+{
+    // Calculate the starting byte index and bit index within that byte
+    uint32_t byteIndex = bitOffset / 8;
+    uint32_t bitIndex = bitOffset % 8; // Little endian, LSB is at index 0
+
+    uint32_t result = 0;
+
+    for (uint32_t i = 0; i < bitLength; ++i)
+    {
+        // Check if we need to move to the next byte
+        if (bitIndex > 7)
+        {
+            ++byteIndex;
+            bitIndex = 0;
+        }
+
+        // Get the bit at the current position and add it to the result
+        uint8_t bit = (buffer[byteIndex] >> bitIndex) & 0x01;
+        result |= (bit << i);
+
+        // Move to the next bit
+        ++bitIndex;
+    }
+
+    return result;
 }

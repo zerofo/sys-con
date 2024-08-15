@@ -6,9 +6,9 @@
 class MockDevice : public IUSBDevice
 {
 public:
-    MOCK_METHOD(ControllerResult, Open, (), (override));
-    MOCK_METHOD(void, Close, (), (override));
-    MOCK_METHOD(void, Reset, (), (override));
+    ControllerResult Open() override { return CONTROLLER_STATUS_SUCCESS; }
+    void Close() override {}
+    void Reset() override {}
 };
 
 class MockLogger : public ILogger
@@ -22,33 +22,16 @@ class MockBaseController : public BaseController
 {
 public:
     MockBaseController(std::unique_ptr<IUSBDevice> &&device, const ControllerConfig &config, std::unique_ptr<ILogger> &&logger) : BaseController(std::move(device), config, std::move(logger)) {}
-    virtual ~MockBaseController() override {}
-
-    MOCK_METHOD(ControllerResult, ReadRawInput, (RawInputData * rawData, uint16_t *input_idx, uint32_t timeout_us), (override));
+    ControllerResult ParseData(uint8_t *buffer, size_t size, RawInputData *rawData, uint16_t *input_idx) override { return CONTROLLER_STATUS_SUCCESS; }
+    using BaseController::MapRawInputToNormalized; // Move protected method to public for testing
 };
-
-NormalizedButtonData TestReadInput(ControllerConfig config, RawInputData inputData)
-{
-    uint16_t input_idx;
-    NormalizedButtonData normalizedData = {0};
-
-    MockBaseController controller(std::make_unique<MockDevice>(), config, std::make_unique<MockLogger>());
-
-    EXPECT_CALL(controller, ReadRawInput(::testing::_, ::testing::_, ::testing::_))
-        .WillOnce(::testing::DoAll(
-            ::testing::SetArgPointee<0>(inputData), // Set the first argument (rawData) to expectedData
-            ::testing::SetArgPointee<1>(0),         // Set the second argument (input_idx) to 0
-            ::testing::Return(ControllerResult::CONTROLLER_STATUS_SUCCESS)));
-
-    controller.ReadInput(&normalizedData, &input_idx, 0);
-
-    return normalizedData;
-}
 
 /* --------------------------- Tests --------------------------- */
 
 TEST(BaseController, test_input_binding_basis)
 {
+    NormalizedButtonData normalizedData = {0};
+
     ControllerConfig config;
     config.buttons_pin[ControllerButton::X][0] = 1;
     config.buttons_pin[ControllerButton::Y][0] = 2;
@@ -65,7 +48,8 @@ TEST(BaseController, test_input_binding_basis)
     inputData.X = 0.5f;
     inputData.Y = -0.5f;
 
-    NormalizedButtonData normalizedData = TestReadInput(config, inputData);
+    MockBaseController controller(std::make_unique<MockDevice>(), config, std::make_unique<MockLogger>());
+    controller.MapRawInputToNormalized(inputData, &normalizedData);
 
     EXPECT_TRUE(normalizedData.buttons[ControllerButton::X]);
     EXPECT_FALSE(normalizedData.buttons[ControllerButton::Y]);
@@ -77,6 +61,8 @@ TEST(BaseController, test_input_binding_basis)
 
 TEST(BaseController, test_input_deadzone)
 {
+    NormalizedButtonData normalizedData = {0};
+
     ControllerConfig config;
     config.stickDeadzonePercent[0] = 10;
     config.stickDeadzonePercent[1] = 5;
@@ -85,7 +71,8 @@ TEST(BaseController, test_input_deadzone)
     inputData.X = 0.1f;
     inputData.Y = 0.1f;
 
-    NormalizedButtonData normalizedData = TestReadInput(config, inputData);
+    MockBaseController controller(std::make_unique<MockDevice>(), config, std::make_unique<MockLogger>());
+    controller.MapRawInputToNormalized(inputData, &normalizedData);
 
     EXPECT_FLOAT_EQ(normalizedData.sticks[0].axis_x, 0.0f);
     EXPECT_FLOAT_EQ(normalizedData.sticks[0].axis_y, 0.0f);
@@ -93,6 +80,8 @@ TEST(BaseController, test_input_deadzone)
 
 TEST(BaseController, test_input_simulate_buttons)
 {
+    NormalizedButtonData normalizedData = {0};
+
     ControllerConfig config;
     config.buttons_pin[ControllerButton::X][0] = 1;
     config.buttons_pin[ControllerButton::Y][0] = 2;
@@ -109,7 +98,8 @@ TEST(BaseController, test_input_simulate_buttons)
     inputData.buttons[3] = true;
     inputData.buttons[4] = true;
 
-    NormalizedButtonData normalizedData = TestReadInput(config, inputData);
+    MockBaseController controller(std::make_unique<MockDevice>(), config, std::make_unique<MockLogger>());
+    controller.MapRawInputToNormalized(inputData, &normalizedData);
 
     EXPECT_FALSE(normalizedData.buttons[ControllerButton::X]);
     EXPECT_FALSE(normalizedData.buttons[ControllerButton::A]);
@@ -121,6 +111,8 @@ TEST(BaseController, test_input_simulate_buttons)
 
 TEST(BaseController, test_input_stick_by_buttons)
 {
+    NormalizedButtonData normalizedData = {0};
+
     ControllerConfig config;
     config.buttons_pin[ControllerButton::LSTICK_LEFT][0] = 1;
     config.buttons_pin[ControllerButton::LSTICK_DOWN][0] = 2;
@@ -135,7 +127,8 @@ TEST(BaseController, test_input_stick_by_buttons)
     inputData.X = 0.0f;
     inputData.Y = 0.0f;
 
-    NormalizedButtonData normalizedData = TestReadInput(config, inputData);
+    MockBaseController controller(std::make_unique<MockDevice>(), config, std::make_unique<MockLogger>());
+    controller.MapRawInputToNormalized(inputData, &normalizedData);
 
     EXPECT_TRUE(normalizedData.buttons[ControllerButton::LSTICK_LEFT]);
     EXPECT_TRUE(normalizedData.buttons[ControllerButton::LSTICK_DOWN]);
@@ -151,13 +144,16 @@ TEST(BaseController, test_input_stick_by_buttons)
 
 TEST(BaseController, test_input_alias)
 {
+    NormalizedButtonData normalizedData = {0};
+
     ControllerConfig config;
     config.buttons_alias[ControllerButton::X] = ControllerButton::DPAD_UP;
 
     RawInputData inputData;
     inputData.dpad_up = true;
 
-    NormalizedButtonData normalizedData = TestReadInput(config, inputData);
+    MockBaseController controller(std::make_unique<MockDevice>(), config, std::make_unique<MockLogger>());
+    controller.MapRawInputToNormalized(inputData, &normalizedData);
 
     EXPECT_TRUE(normalizedData.buttons[ControllerButton::X]);
     EXPECT_FALSE(normalizedData.buttons[ControllerButton::A]);
@@ -170,6 +166,8 @@ TEST(BaseController, test_input_alias)
 
 TEST(BaseController, test_input_multiple_pin)
 {
+    NormalizedButtonData normalizedData = {0};
+
     ControllerConfig config;
     config.buttons_pin[ControllerButton::X][0] = 1;
     config.buttons_pin[ControllerButton::X][1] = 2;
@@ -177,13 +175,16 @@ TEST(BaseController, test_input_multiple_pin)
     RawInputData inputData;
     inputData.buttons[2] = true;
 
-    NormalizedButtonData normalizedData = TestReadInput(config, inputData);
+    MockBaseController controller(std::make_unique<MockDevice>(), config, std::make_unique<MockLogger>());
+    controller.MapRawInputToNormalized(inputData, &normalizedData);
 
     EXPECT_TRUE(normalizedData.buttons[ControllerButton::X]);
 }
 
 TEST(BaseController, test_input_complex_combination)
 {
+    NormalizedButtonData normalizedData = {0};
+
     ControllerConfig config;
     config.stickActivationThreshold = 10;
     config.buttons_pin[ControllerButton::L][0] = 1;
@@ -216,7 +217,8 @@ TEST(BaseController, test_input_complex_combination)
     // LSTICK_LEFT will enable Y
     // X+Y will simulate HOME
 
-    NormalizedButtonData normalizedData = TestReadInput(config, inputData);
+    MockBaseController controller(std::make_unique<MockDevice>(), config, std::make_unique<MockLogger>());
+    controller.MapRawInputToNormalized(inputData, &normalizedData);
 
     EXPECT_FALSE(normalizedData.buttons[ControllerButton::X]);
     EXPECT_FALSE(normalizedData.buttons[ControllerButton::Y]);

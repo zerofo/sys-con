@@ -56,7 +56,7 @@ public:
     XboxController(std::unique_ptr<IUSBDevice> &&device, const ControllerConfig &config, std::unique_ptr<ILogger> &&logger);
     virtual ~XboxController() override;
 
-    virtual ControllerResult ReadRawInput(RawInputData *rawData, uint16_t *input_idx, uint32_t timeout_us) override;
+    virtual ControllerResult ParseData(uint8_t *buffer, size_t size, RawInputData *rawData, uint16_t *input_idx) override;
 
     bool Support(ControllerFeature feature) override;
     ControllerResult SetRumble(uint16_t input_idx, float amp_high, float amp_low) override;

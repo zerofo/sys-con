@@ -22,22 +22,16 @@ ControllerResult Xbox360Controller::Initialize()
     return CONTROLLER_STATUS_SUCCESS;
 }
 
-ControllerResult Xbox360Controller::ReadRawInput(RawInputData *rawData, uint16_t *input_idx, uint32_t timeout_us)
+ControllerResult Xbox360Controller::ParseData(uint8_t *buffer, size_t size, RawInputData *rawData, uint16_t *input_idx)
 {
-    uint8_t input_bytes[CONTROLLER_INPUT_BUFFER_SIZE];
-    size_t size = sizeof(input_bytes);
+    (void)input_idx;
+    Xbox360ButtonData *buttonData = reinterpret_cast<Xbox360ButtonData *>(buffer);
 
-    ControllerResult result = m_inPipe[0]->Read(input_bytes, &size, timeout_us);
-    if (result != CONTROLLER_STATUS_SUCCESS)
-        return result;
-
-    Xbox360ButtonData *buttonData = reinterpret_cast<Xbox360ButtonData *>(input_bytes);
-
-    *input_idx = 0;
+    if (size < sizeof(Xbox360ButtonData))
+        return CONTROLLER_STATUS_UNEXPECTED_DATA;
 
     if (buttonData->type == XBOX360INPUT_BUTTON) // Button data
     {
-
         rawData->buttons[1] = buttonData->button1;
         rawData->buttons[2] = buttonData->button2;
         rawData->buttons[3] = buttonData->button3;

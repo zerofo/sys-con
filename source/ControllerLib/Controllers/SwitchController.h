@@ -40,21 +40,31 @@ struct SwitchButtonData
     bool button18 : 1;
     bool button19 : 1;
 
-    int16_t stick_left_x;
-    int16_t stick_left_y;
-    int16_t stick_right_x;
-    int16_t stick_right_y;
+    uint8_t stick_left[3];
+    uint8_t stick_right[3];
+};
+
+struct SwitchCalibration
+{
+    uint16_t min;
+    uint16_t max;
 };
 
 class SwitchController : public BaseController
 {
+private:
+    SwitchCalibration cal_left_x;
+    SwitchCalibration cal_left_y;
+    SwitchCalibration cal_right_x;
+    SwitchCalibration cal_right_y;
+
 public:
     SwitchController(std::unique_ptr<IUSBDevice> &&device, const ControllerConfig &config, std::unique_ptr<ILogger> &&logger);
     virtual ~SwitchController() override;
 
     ControllerResult Initialize() override;
 
-    virtual ControllerResult ReadRawInput(RawInputData *rawData, uint16_t *input_idx, uint32_t timeout_us) override;
+    virtual ControllerResult ParseData(uint8_t *buffer, size_t size, RawInputData *rawData, uint16_t *input_idx) override;
 
     bool Support(ControllerFeature feature) override;
 };
