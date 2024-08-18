@@ -63,6 +63,8 @@ enum ControllerAnalogBinding
     ControllerAnalogBinding_RZ,
     ControllerAnalogBinding_RX,
     ControllerAnalogBinding_RY,
+    ControllerAnalogBinding_Slider,
+    ControllerAnalogBinding_Dial,
 
     ControllerAnalogBinding_Count
 };

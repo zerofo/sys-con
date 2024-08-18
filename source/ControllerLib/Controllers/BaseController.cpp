@@ -190,7 +190,9 @@ void BaseController::MapRawInputToNormalized(RawInputData &rawData, NormalizedBu
         rawData.Z,
         rawData.Rz,
         rawData.Rx,
-        rawData.Ry};
+        rawData.Ry,
+        rawData.Slider,
+        rawData.Dial};
 
     normalData->triggers[0] = GetConfig().triggerConfig[0].sign * BaseController::ApplyDeadzone(GetConfig().triggerDeadzonePercent[0], bindAnalog[GetConfig().triggerConfig[0].bind]);
     normalData->triggers[1] = GetConfig().triggerConfig[1].sign * BaseController::ApplyDeadzone(GetConfig().triggerDeadzonePercent[1], bindAnalog[GetConfig().triggerConfig[1].bind]);
@@ -229,7 +231,6 @@ void BaseController::MapRawInputToNormalized(RawInputData &rawData, NormalizedBu
         normalData->sticks[1].axis_y = 1.0f;
 
     // Set button state from stick
-
     float stickActivationThreshold = (GetConfig().stickActivationThreshold / 100.0f);
     if (stickActivationThreshold > 0.0f)
     {

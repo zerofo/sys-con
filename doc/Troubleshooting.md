@@ -16,7 +16,7 @@ And especially these 2 values:
 right_stick_x=Z
 right_stick_y=Rz
 ```
-Where right_stick_x and right_stick_y could be: Z, -Z, Rz, -Rz, Rx, -Rx, Ry, -Ry (try all combinations to find the right one)
+Where right_stick_x and right_stick_y could be: Z, -Z, Rz, -Rz, Rx, -Rx, Ry, -Ry, Slider, -Slider, Dial, -Dial (try all combinations to find the right one)
 
 ## My XBOX One S/X controller is not detected
 This usually happens when you try to start the controller (press the XBOX button) when the USB is already connected to the switch.
@@ -56,6 +56,7 @@ In the `/config/sys-con/config.ini`, you need to find your controller (\[VID/PID
  - xbox
  - xboxone
  - dualshock4
+ - switch
 
 Typically, if you know your controller is an xboxone controller, just add
 ```

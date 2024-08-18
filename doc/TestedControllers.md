@@ -34,3 +34,4 @@
 | Y3 Joypad with GAME STICK 4K LITE SEGAM M8 V4.0 | Yes | - | https://aliexpress.com/item/1005002359869263.html |
 | MayFlash N64 Controller Adapter| Yes | - | https://www.amazon.com/dp/B002B9FIUU |
 | Y3 Joypad (Receiver YC5)| No | - | https://aliexpress.com/item/1005005458136372.html |
+| Thrustmaster Dual Analog 4 | Yes | - | - |

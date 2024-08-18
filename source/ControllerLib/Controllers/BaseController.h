@@ -20,6 +20,8 @@ public:
     float Y = 0;
     float Z = 0;
     float Rz = 0;
+    float Slider = 0;
+    float Dial = 0;
 
     bool dpad_up = false;
     bool dpad_right = false;

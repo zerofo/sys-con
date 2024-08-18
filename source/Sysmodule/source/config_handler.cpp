@@ -234,7 +234,10 @@ namespace syscon::config
                 analogCfg.bind = ControllerAnalogBinding::ControllerAnalogBinding_RX;
             else if (stickcfg == "ry")
                 analogCfg.bind = ControllerAnalogBinding::ControllerAnalogBinding_RY;
-
+            else if (stickcfg == "slider")
+                analogCfg.bind = ControllerAnalogBinding::ControllerAnalogBinding_Slider;
+            else if (stickcfg == "dial")
+                analogCfg.bind = ControllerAnalogBinding::ControllerAnalogBinding_Dial;
             return analogCfg;
         }
 

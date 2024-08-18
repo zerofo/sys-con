@@ -95,6 +95,8 @@ ControllerResult GenericHIDController::ParseData(uint8_t *buffer, size_t size, R
     rawData->Y = BaseController::Normalize(joystick_data.Y, -32768, 32767);
     rawData->Z = BaseController::Normalize(joystick_data.Z, -32768, 32767);
     rawData->Rz = BaseController::Normalize(joystick_data.Rz, -32768, 32767);
+    rawData->Slider = BaseController::Normalize(joystick_data.Slider, -32768, 32767);
+    rawData->Dial = BaseController::Normalize(joystick_data.Dial, -32768, 32767);
 
     rawData->dpad_up = joystick_data.hat_switch == HIDJoystickHatSwitch::UP || joystick_data.hat_switch == HIDJoystickHatSwitch::UP_RIGHT || joystick_data.hat_switch == HIDJoystickHatSwitch::UP_LEFT;
     rawData->dpad_right = joystick_data.hat_switch == HIDJoystickHatSwitch::RIGHT || joystick_data.hat_switch == HIDJoystickHatSwitch::UP_RIGHT || joystick_data.hat_switch == HIDJoystickHatSwitch::DOWN_RIGHT;
