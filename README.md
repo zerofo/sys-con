@@ -85,8 +85,8 @@ minus=9
 plus=10
 home=11
 capture=12
-right_stick_x=Z
-right_stick_y=Rz
+rstick_x=Z
+rstick_y=Rz
 ``` 
 Where ButtonName (A, B, Y, X ...) need to be assign to a ButtonID (1,2,3,4,5 ...)
 Now, according to what you found in step 2, you need to match ButtonName with ButtonID.
@@ -120,8 +120,8 @@ minus=9
 plus=10
 home=11
 capture=12
-right_stick_x=Z
-right_stick_y=Rz
+rstick_x=Z
+rstick_y=Rz
 ```
 Where ButtonID (1,2,3,4, ...) is the key ID noted in step 7.
 Note: Depending to the controller, this windows procedure might not works. If the mapping is incorrect, switch to Method 1

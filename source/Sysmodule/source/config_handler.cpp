@@ -309,21 +309,21 @@ namespace syscon::config
                 parseHotKey(value, ini_data->controller_config->simulateCapture);
             else if (nameStr == "stick_activation_threshold")
                 ini_data->controller_config->stickActivationThreshold = atoi(value);
-            else if (nameStr == "left_stick_x")
+            else if (nameStr == "lstick_x")
                 ini_data->controller_config->stickConfig[0].X = stringToAnalogConfig(value);
-            else if (nameStr == "left_stick_y")
+            else if (nameStr == "lstick_y")
                 ini_data->controller_config->stickConfig[0].Y = stringToAnalogConfig(value);
-            else if (nameStr == "right_stick_x")
+            else if (nameStr == "rstick_x")
                 ini_data->controller_config->stickConfig[1].X = stringToAnalogConfig(value);
-            else if (nameStr == "right_stick_y")
+            else if (nameStr == "rstick_y")
                 ini_data->controller_config->stickConfig[1].Y = stringToAnalogConfig(value);
             else if (nameStr == "left_trigger")
                 ini_data->controller_config->triggerConfig[0] = stringToAnalogConfig(value);
             else if (nameStr == "right_trigger")
                 ini_data->controller_config->triggerConfig[1] = stringToAnalogConfig(value);
-            else if (nameStr == "left_stick_deadzone")
+            else if (nameStr == "lstick_deadzone")
                 ini_data->controller_config->stickDeadzonePercent[0] = atoi(value);
-            else if (nameStr == "right_stick_deadzone")
+            else if (nameStr == "rstick_deadzone")
                 ini_data->controller_config->stickDeadzonePercent[1] = atoi(value);
             else if (nameStr == "left_trigger_deadzone")
                 ini_data->controller_config->triggerDeadzonePercent[0] = atoi(value);

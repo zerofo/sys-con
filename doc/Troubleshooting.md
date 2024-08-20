@@ -13,10 +13,10 @@ See the [README](https://github.com/o0Zz/sys-con?tab=readme-ov-file#configure-a-
 And especially these 2 values:
 ```
 [vid-pid]
-right_stick_x=Z
-right_stick_y=Rz
+rstick_x=Z
+rstick_y=Rz
 ```
-Where right_stick_x and right_stick_y could be: Z, -Z, Rz, -Rz, Rx, -Rx, Ry, -Ry, Slider, -Slider, Dial, -Dial (try all combinations to find the right one)
+Where rstick_x and rstick_y could be: Z, -Z, Rz, -Rz, Rx, -Rx, Ry, -Ry, Slider, -Slider, Dial, -Dial (try all combinations to find the right one)
 
 ## My XBOX One S/X controller is not detected
 This usually happens when you try to start the controller (press the XBOX button) when the USB is already connected to the switch.
