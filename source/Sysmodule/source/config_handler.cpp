@@ -155,6 +155,8 @@ namespace syscon::config
                 analogCfg->bind = ControllerAnalogBinding::ControllerAnalogBinding_Slider;
             else if (stickcfg == "dial")
                 analogCfg->bind = ControllerAnalogBinding::ControllerAnalogBinding_Dial;
+            else if (stickcfg == "none")
+                analogCfg->bind = ControllerAnalogBinding::ControllerAnalogBinding_Unknown;
             else
                 return false;
 
