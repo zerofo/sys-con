@@ -60,18 +60,17 @@ ControllerResult Dualshock3Controller::ParseData(uint8_t *buffer, size_t size, R
         rawData->buttons[12] = buttonData->button12;
         rawData->buttons[13] = buttonData->button13;
 
-        rawData->Rx = BaseController::Normalize(buttonData->Rx, 0, 255);
-        rawData->Ry = BaseController::Normalize(buttonData->Ry, 0, 255);
+        rawData->analog[ControllerAnalogType_Rx] = BaseController::Normalize(buttonData->Rx, 0, 255);
+        rawData->analog[ControllerAnalogType_Ry] = BaseController::Normalize(buttonData->Ry, 0, 255);
+        rawData->analog[ControllerAnalogType_X] = BaseController::Normalize(buttonData->X, 0, 255);
+        rawData->analog[ControllerAnalogType_Y] = BaseController::Normalize(buttonData->Y, 0, 255);
+        rawData->analog[ControllerAnalogType_Z] = BaseController::Normalize(buttonData->Z, 0, 255);
+        rawData->analog[ControllerAnalogType_Rz] = BaseController::Normalize(buttonData->Rz, 0, 255);
 
-        rawData->X = BaseController::Normalize(buttonData->X, 0, 255);
-        rawData->Y = BaseController::Normalize(buttonData->Y, 0, 255);
-        rawData->Z = BaseController::Normalize(buttonData->Z, 0, 255);
-        rawData->Rz = BaseController::Normalize(buttonData->Rz, 0, 255);
-
-        rawData->dpad_up = buttonData->dpad_up;
-        rawData->dpad_right = buttonData->dpad_right;
-        rawData->dpad_down = buttonData->dpad_down;
-        rawData->dpad_left = buttonData->dpad_left;
+        rawData->buttons[DPAD_UP_BUTTON_ID] = buttonData->dpad_up;
+        rawData->buttons[DPAD_RIGHT_BUTTON_ID] = buttonData->dpad_right;
+        rawData->buttons[DPAD_DOWN_BUTTON_ID] = buttonData->dpad_down;
+        rawData->buttons[DPAD_LEFT_BUTTON_ID] = buttonData->dpad_left;
 
         return CONTROLLER_STATUS_SUCCESS;
     }

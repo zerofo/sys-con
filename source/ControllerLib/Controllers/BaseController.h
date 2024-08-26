@@ -3,6 +3,21 @@
 #include "IController.h"
 #include <vector>
 
+enum ControllerAnalogType
+{
+    ControllerAnalogType_Unknown = 0,
+    ControllerAnalogType_X,
+    ControllerAnalogType_Y,
+    ControllerAnalogType_Z,
+    ControllerAnalogType_Rz,
+    ControllerAnalogType_Rx,
+    ControllerAnalogType_Ry,
+    ControllerAnalogType_Slider,
+    ControllerAnalogType_Dial,
+
+    ControllerAnalogType_Count
+};
+
 class RawInputData
 {
 public:
@@ -13,20 +28,7 @@ public:
     }
 
     bool buttons[MAX_CONTROLLER_BUTTONS];
-
-    float Rx = 0;
-    float Ry = 0;
-    float X = 0;
-    float Y = 0;
-    float Z = 0;
-    float Rz = 0;
-    float Slider = 0;
-    float Dial = 0;
-
-    bool dpad_up = false;
-    bool dpad_right = false;
-    bool dpad_down = false;
-    bool dpad_left = false;
+    float analog[ControllerAnalogType_Count];
 };
 
 class BaseController : public IController

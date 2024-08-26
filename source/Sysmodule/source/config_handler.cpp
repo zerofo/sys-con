@@ -129,6 +129,38 @@ namespace syscon::config
             return color;
         }
 
+        bool stringToAnalogConfig(const std::string &cfg, ControllerAnalogConfig *analogCfg)
+        {
+            std::string stickcfg = convertToLowercase(cfg);
+
+            analogCfg->bind = ControllerAnalogBinding::ControllerAnalogBinding_Unknown;
+            analogCfg->sign = stickcfg[0] == '-' ? -1.0 : 1.0;
+
+            if (stickcfg[0] == '-' || stickcfg[0] == '+')
+                stickcfg = stickcfg.substr(1);
+
+            if (stickcfg == "x")
+                analogCfg->bind = ControllerAnalogBinding::ControllerAnalogBinding_X;
+            else if (stickcfg == "y")
+                analogCfg->bind = ControllerAnalogBinding::ControllerAnalogBinding_Y;
+            else if (stickcfg == "z")
+                analogCfg->bind = ControllerAnalogBinding::ControllerAnalogBinding_Z;
+            else if (stickcfg == "rz")
+                analogCfg->bind = ControllerAnalogBinding::ControllerAnalogBinding_Rz;
+            else if (stickcfg == "rx")
+                analogCfg->bind = ControllerAnalogBinding::ControllerAnalogBinding_Rx;
+            else if (stickcfg == "ry")
+                analogCfg->bind = ControllerAnalogBinding::ControllerAnalogBinding_Ry;
+            else if (stickcfg == "slider")
+                analogCfg->bind = ControllerAnalogBinding::ControllerAnalogBinding_Slider;
+            else if (stickcfg == "dial")
+                analogCfg->bind = ControllerAnalogBinding::ControllerAnalogBinding_Dial;
+            else
+                return false;
+
+            return true;
+        }
+
         void parseHotKey(const char *value, ControllerButton hotkeys[2])
         {
             char *tok = strtok(const_cast<char *>(value), "+");
@@ -151,7 +183,7 @@ namespace syscon::config
             return !s.empty() && it == s.end();
         }
 
-        void parseBinding(const char *value, uint8_t button_pin[MAX_PIN_BY_BUTTONS], ControllerButton *button_alias)
+        void parseBinding(const char *value, uint8_t button_pin[MAX_PIN_BY_BUTTONS], ControllerAnalogConfig *analogCfg)
         {
             int button_pin_idx = 0;
             char *tok = strtok(const_cast<char *>(value), ",");
@@ -174,7 +206,8 @@ namespace syscon::config
                 }
                 else
                 {
-                    *button_alias = stringToButton(tok);
+                    if (!stringToAnalogConfig(tok, analogCfg))
+                        syscon::logger::LogError("Invalid button/axis: %s (Ignoring it) !", tok);
                 }
 
                 tok = strtok(NULL, ",");
@@ -209,36 +242,6 @@ namespace syscon::config
                 return ControllerType_Famicom;
 
             return ControllerType_Unknown;
-        }
-
-        ControllerAnalogConfig stringToAnalogConfig(const std::string &cfg)
-        {
-            ControllerAnalogConfig analogCfg;
-            std::string stickcfg = convertToLowercase(cfg);
-
-            analogCfg.bind = ControllerAnalogBinding::ControllerAnalogBinding_Unknown;
-            analogCfg.sign = stickcfg[0] == '-' ? -1.0 : 1.0;
-
-            if (stickcfg[0] == '-' || stickcfg[0] == '+')
-                stickcfg = stickcfg.substr(1);
-
-            if (stickcfg == "x")
-                analogCfg.bind = ControllerAnalogBinding::ControllerAnalogBinding_X;
-            else if (stickcfg == "y")
-                analogCfg.bind = ControllerAnalogBinding::ControllerAnalogBinding_Y;
-            else if (stickcfg == "z")
-                analogCfg.bind = ControllerAnalogBinding::ControllerAnalogBinding_Z;
-            else if (stickcfg == "rz")
-                analogCfg.bind = ControllerAnalogBinding::ControllerAnalogBinding_RZ;
-            else if (stickcfg == "rx")
-                analogCfg.bind = ControllerAnalogBinding::ControllerAnalogBinding_RX;
-            else if (stickcfg == "ry")
-                analogCfg.bind = ControllerAnalogBinding::ControllerAnalogBinding_RY;
-            else if (stickcfg == "slider")
-                analogCfg.bind = ControllerAnalogBinding::ControllerAnalogBinding_Slider;
-            else if (stickcfg == "dial")
-                analogCfg.bind = ControllerAnalogBinding::ControllerAnalogBinding_Dial;
-            return analogCfg;
         }
 
         int ParseGlobalConfigLine(void *data, const char *section, const char *name, const char *value)
@@ -292,7 +295,7 @@ namespace syscon::config
 
             ControllerButton buttonId = stringToButton(nameStr.c_str());
             if (buttonId != ControllerButton::NONE)
-                parseBinding(value, ini_data->controller_config->buttons_pin[buttonId], &ini_data->controller_config->buttons_alias[buttonId]);
+                parseBinding(value, ini_data->controller_config->buttonsPin[buttonId], &ini_data->controller_config->buttonsAnalog[buttonId]);
             else if (nameStr == "driver")
                 ini_data->controller_config->driver = convertToLowercase(value);
             else if (nameStr == "profile")
@@ -307,28 +310,22 @@ namespace syscon::config
                 parseHotKey(value, ini_data->controller_config->simulateHome);
             else if (nameStr == "simulate_capture")
                 parseHotKey(value, ini_data->controller_config->simulateCapture);
-            else if (nameStr == "stick_activation_threshold")
-                ini_data->controller_config->stickActivationThreshold = atoi(value);
-            else if (nameStr == "lstick_x")
-                ini_data->controller_config->stickConfig[0].X = stringToAnalogConfig(value);
-            else if (nameStr == "lstick_y")
-                ini_data->controller_config->stickConfig[0].Y = stringToAnalogConfig(value);
-            else if (nameStr == "rstick_x")
-                ini_data->controller_config->stickConfig[1].X = stringToAnalogConfig(value);
-            else if (nameStr == "rstick_y")
-                ini_data->controller_config->stickConfig[1].Y = stringToAnalogConfig(value);
-            else if (nameStr == "left_trigger")
-                ini_data->controller_config->triggerConfig[0] = stringToAnalogConfig(value);
-            else if (nameStr == "right_trigger")
-                ini_data->controller_config->triggerConfig[1] = stringToAnalogConfig(value);
-            else if (nameStr == "lstick_deadzone")
-                ini_data->controller_config->stickDeadzonePercent[0] = atoi(value);
-            else if (nameStr == "rstick_deadzone")
-                ini_data->controller_config->stickDeadzonePercent[1] = atoi(value);
-            else if (nameStr == "left_trigger_deadzone")
-                ini_data->controller_config->triggerDeadzonePercent[0] = atoi(value);
-            else if (nameStr == "right_trigger_deadzone")
-                ini_data->controller_config->triggerDeadzonePercent[1] = atoi(value);
+            else if (nameStr == "deadzone_x")
+                ini_data->controller_config->analogDeadzonePercent[ControllerAnalogBinding::ControllerAnalogBinding_X] = atoi(value);
+            else if (nameStr == "deadzone_y")
+                ini_data->controller_config->analogDeadzonePercent[ControllerAnalogBinding::ControllerAnalogBinding_Y] = atoi(value);
+            else if (nameStr == "deadzone_z")
+                ini_data->controller_config->analogDeadzonePercent[ControllerAnalogBinding::ControllerAnalogBinding_Z] = atoi(value);
+            else if (nameStr == "deadzone_rz")
+                ini_data->controller_config->analogDeadzonePercent[ControllerAnalogBinding::ControllerAnalogBinding_Rz] = atoi(value);
+            else if (nameStr == "deadzone_rx")
+                ini_data->controller_config->analogDeadzonePercent[ControllerAnalogBinding::ControllerAnalogBinding_Rx] = atoi(value);
+            else if (nameStr == "deadzone_ry")
+                ini_data->controller_config->analogDeadzonePercent[ControllerAnalogBinding::ControllerAnalogBinding_Ry] = atoi(value);
+            else if (nameStr == "deadzone_slider")
+                ini_data->controller_config->analogDeadzonePercent[ControllerAnalogBinding::ControllerAnalogBinding_Slider] = atoi(value);
+            else if (nameStr == "deadzone_dial")
+                ini_data->controller_config->analogDeadzonePercent[ControllerAnalogBinding::ControllerAnalogBinding_Dial] = atoi(value);
             else if (nameStr == "color_body")
                 ini_data->controller_config->bodyColor = hexStringColorToRGBA(value);
             else if (nameStr == "color_buttons")
@@ -468,24 +465,10 @@ namespace syscon::config
             R_TRY(ReadFromConfig(CONFIG_FULLPATH, ParseControllerConfigLine, &cfg_controller));
         }
 
-        if (config->stickConfig[0].X.bind == ControllerAnalogBinding_Unknown)
-            config->stickConfig[0].X.bind = ControllerAnalogBinding_X;
-        if (config->stickConfig[0].Y.bind == ControllerAnalogBinding_Unknown)
-            config->stickConfig[0].Y.bind = ControllerAnalogBinding_Y;
-        if (config->stickConfig[1].X.bind == ControllerAnalogBinding_Unknown)
-            config->stickConfig[1].X.bind = ControllerAnalogBinding_RZ;
-        if (config->stickConfig[1].Y.bind == ControllerAnalogBinding_Unknown)
-            config->stickConfig[1].Y.bind = ControllerAnalogBinding_Z;
-
-        if (config->triggerConfig[0].bind == ControllerAnalogBinding_Unknown)
-            config->triggerConfig[0].bind = ControllerAnalogBinding_RX;
-        if (config->triggerConfig[1].bind == ControllerAnalogBinding_Unknown)
-            config->triggerConfig[1].bind = ControllerAnalogBinding_RY;
-
-        if (config->buttons_pin[ControllerButton::B][0] == 0 && config->buttons_pin[ControllerButton::A][0] == 0 && config->buttons_pin[ControllerButton::Y][0] == 0 && config->buttons_pin[ControllerButton::X][0] == 0)
+        if (config->buttonsPin[ControllerButton::B][0] == 0 && config->buttonsPin[ControllerButton::A][0] == 0 && config->buttonsPin[ControllerButton::Y][0] == 0 && config->buttonsPin[ControllerButton::X][0] == 0)
             syscon::logger::LogError("No buttons configured for this controller [%04x-%04x] - Stick might works but buttons will not work (https://github.com/o0Zz/sys-con/blob/master/doc/Troubleshooting.md)", vendor_id, product_id);
         else
-            syscon::logger::LogInfo("Controller successfully loaded (B=%d, A=%d, Y=%d, X=%d, ...) !", config->buttons_pin[ControllerButton::B][0], config->buttons_pin[ControllerButton::A][0], config->buttons_pin[ControllerButton::Y][0], config->buttons_pin[ControllerButton::X][0]);
+            syscon::logger::LogInfo("Controller successfully loaded (B=%d, A=%d, Y=%d, X=%d, ...) !", config->buttonsPin[ControllerButton::B][0], config->buttonsPin[ControllerButton::A][0], config->buttonsPin[ControllerButton::Y][0], config->buttonsPin[ControllerButton::X][0]);
 
         R_SUCCEED();
     }

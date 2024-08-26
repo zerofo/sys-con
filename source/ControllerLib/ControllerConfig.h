@@ -3,10 +3,16 @@
 #include <string>
 
 #define MAX_JOYSTICKS      2
-#define MAX_TRIGGERS       2
 #define MAX_PIN_BY_BUTTONS 2
 
-#define MAX_CONTROLLER_BUTTONS 32
+#define MAX_HID_CONTROLLER_BUTTONS 32
+
+#define DPAD_UP_BUTTON_ID    MAX_HID_CONTROLLER_BUTTONS + 0
+#define DPAD_DOWN_BUTTON_ID  MAX_HID_CONTROLLER_BUTTONS + 1
+#define DPAD_LEFT_BUTTON_ID  MAX_HID_CONTROLLER_BUTTONS + 2
+#define DPAD_RIGHT_BUTTON_ID MAX_HID_CONTROLLER_BUTTONS + 3
+
+#define MAX_CONTROLLER_BUTTONS 36
 
 enum ControllerButton
 {
@@ -60,9 +66,9 @@ enum ControllerAnalogBinding
     ControllerAnalogBinding_X,
     ControllerAnalogBinding_Y,
     ControllerAnalogBinding_Z,
-    ControllerAnalogBinding_RZ,
-    ControllerAnalogBinding_RX,
-    ControllerAnalogBinding_RY,
+    ControllerAnalogBinding_Rz,
+    ControllerAnalogBinding_Rx,
+    ControllerAnalogBinding_Ry,
     ControllerAnalogBinding_Slider,
     ControllerAnalogBinding_Dial,
 
@@ -91,12 +97,6 @@ struct ControllerAnalogConfig
     ControllerAnalogBinding bind{ControllerAnalogBinding::ControllerAnalogBinding_Unknown};
 };
 
-struct ControllerStickConfig
-{
-    ControllerAnalogConfig X;
-    ControllerAnalogConfig Y;
-};
-
 class ControllerConfig
 {
 public:
@@ -107,16 +107,10 @@ public:
     uint32_t outputMaxPacketSize{0};
 
     ControllerType controllerType{ControllerType_Pro};
+    uint8_t analogDeadzonePercent[ControllerAnalogBinding_Count]{0};
 
-    uint8_t stickActivationThreshold{0};
-    uint8_t stickDeadzonePercent[MAX_JOYSTICKS]{0};
-    uint8_t triggerDeadzonePercent[MAX_TRIGGERS]{0};
-
-    uint8_t buttons_pin[MAX_CONTROLLER_BUTTONS][MAX_PIN_BY_BUTTONS]{0};
-    ControllerButton buttons_alias[MAX_CONTROLLER_BUTTONS]{ControllerButton::NONE};
-
-    ControllerStickConfig stickConfig[MAX_JOYSTICKS];
-    ControllerAnalogConfig triggerConfig[MAX_TRIGGERS];
+    uint8_t buttonsPin[ControllerButton::COUNT][MAX_PIN_BY_BUTTONS]{0};
+    ControllerAnalogConfig buttonsAnalog[ControllerButton::COUNT]{0};
 
     ControllerButton simulateHome[2]{ControllerButton::NONE};
     ControllerButton simulateCapture[2]{ControllerButton::NONE};

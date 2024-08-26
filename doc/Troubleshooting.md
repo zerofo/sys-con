@@ -13,10 +13,12 @@ See the [README](https://github.com/o0Zz/sys-con?tab=readme-ov-file#configure-a-
 And especially these 2 values:
 ```
 [vid-pid]
-rstick_x=Z
-rstick_y=Rz
+rstick_left=-Z
+rstick_right=+Z
+rstick_up=+Rz
+rstick_down=-Rz
 ```
-Where rstick_x and rstick_y could be: Z, -Z, Rz, -Rz, Rx, -Rx, Ry, -Ry, Slider, -Slider, Dial, -Dial (try all combinations to find the right one)
+Where rstick_xxxx could be: Z, -Z, Rz, -Rz, Rx, -Rx, Ry, -Ry, Slider, -Slider, Dial, -Dial (try all combinations to find the right one)
 
 ## My XBOX One S/X controller is not detected
 This usually happens when you try to start the controller (press the XBOX button) when the USB is already connected to the switch.
@@ -47,6 +49,12 @@ simulate_capture=plus+L
 simulate_home=plus+dpad_up
 simulate_capture=plus+dpad_down
 ```
+
+## My XBOX360 wireless controller with USB cable is not detected 
+The Xbox 360 Wireless Controller USB cable supplies power to the controller, not USB data.
+That's why it's not detected. It will behave the same way on your PC.
+To use an XBOX360 wireless controller with the switch, you need to buy this adapter (or equivalent)
+https://www.amazon.com/Mcbazel-Wireless-Receiver-Microsoft-Xbox-360/dp/B076GZFLR3/
 
 ## My controller don't works at all
 This probably means that your controller is not configure with the correct driver.
@@ -90,18 +98,26 @@ x=13,2
 ```
 
 ## I want to bind a button to dpad or stick
-It's possible to map a button (Example: X) to dpad/sticks/... (Example: dpad_up, rstick_up):
+It's possible to map a button (Example: X) to dpad/sticks/...
 
 ```
 [vid-pid]
-x=dpad_up
+a=32
 ```
-
-It's also possible to combinate alias and controller button:
+Note: 32 is a magic value representing dpad_up
 
 ```
 [vid-pid]
-x=13,2,dpad_up
+zr=X
+zl=-X
+```
+Note: The button is considered pressed only on positive value.
+
+It's also possible to combinate analog and controller button:
+
+```
+[vid-pid]
+x=13,2,+X
 ```
 
 ## My controller is not working or not discovered. I don't know what todo
