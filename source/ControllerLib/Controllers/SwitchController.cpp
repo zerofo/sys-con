@@ -25,8 +25,21 @@ ControllerResult SwitchController::Initialize()
         return CONTROLLER_STATUS_INVALID_ENDPOINT;
     }
 
+    // Flush the input buffer
+    uint8_t buffer[64]{0x00};
+    do
+    {
+        size_t size = sizeof(buffer);
+        result = m_inPipe[0]->Read(buffer, &size, 100 * 1000 /*timeout_us*/);
+    } while (result == CONTROLLER_STATUS_SUCCESS);
+
+    // Send the initialization packet
     uint8_t initPacket1[64]{0x80, 0x02};
     m_outPipe[0]->Write(initPacket1, sizeof(initPacket1));
+
+    // Read the response
+    size_t size = sizeof(buffer);
+    (void)m_inPipe[0]->Read(buffer, &size, 500 * 1000 /*timeout_us*/);
 
     // Forces the Joy-Con or Pro Controller to only talk over USB HID without any timeouts.
     uint8_t initPacket2_ForceToUSB[64]{0x80, 0x04};
