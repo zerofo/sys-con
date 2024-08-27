@@ -190,6 +190,12 @@ namespace syscon::config
             int button_pin_idx = 0;
             char *tok = strtok(const_cast<char *>(value), ",");
 
+            // Reset binding when a new one is found
+            analogCfg->bind = ControllerAnalogBinding::ControllerAnalogBinding_Unknown;
+            analogCfg->sign = 0.0;
+            for (int i = 0; i < MAX_PIN_BY_BUTTONS; i++)
+                button_pin[i] = 0;
+
             while (tok != NULL)
             {
                 if (is_number(tok))
