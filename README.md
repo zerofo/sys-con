@@ -166,9 +166,9 @@ simulate_capture=
 
 List of possible values:
 
-**1 to 31**: Represent the Button ID of the controller
-**Z, -Z, Rz, -Rz, Rx, -Rx, Ry, -Ry, Slider, -Slider, Dial, -Dial**: Repesent the analog part of the controller (Joystick, ...)
-**32 to 35**: Represent the hat switch of the controller (Most of the time equivalent to dpad) - 32, 33, 34, 35 represent dpad_up, dpad_down, dpad_left, dpad_right
+ - **1 to 31**: Represent the Button ID of the controller
+ - **Z, -Z, Rz, -Rz, Rx, -Rx, Ry, -Ry, Slider, -Slider, Dial, -Dial**: Repesent the analog part of the controller (Joystick, ...)
+ - **32 to 35**: Represent the hat switch of the controller (Most of the time equivalent to dpad) - 32, 33, 34, 35 represent dpad_up, dpad_down, dpad_left, dpad_right
 
 ### Deadzone
 
