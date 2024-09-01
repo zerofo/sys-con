@@ -8,7 +8,7 @@ Sys-con is a Nintendo Switch module that adds support for all HID and XID joysti
 Only **USB** connection is supported (For Bluetooth connection prefer to use ndeadly's [MissionControl](https://github.com/ndeadly/MissionControl))
 
 ## Installation
-Download the latest zip from the [releases page](https://github.com/o0zz/sys-con/releases). Extract it to your SD card and boot/reboot your switch.
+Download the latest zip from the [releases page](https://github.com/o0zz/sys-con/releases). Extract it to your SD card root folder and boot/reboot your switch.
 
 ## Configuration
 sys-con comes with a configuration folder located in `/config/sys-con/`. It contains configuration for controllers (Button mappings, sticks configuration, triggers configuration, deadzones...).
@@ -60,7 +60,7 @@ A complete list of tested controller is available
 
 ## Configure a controller
 When a new controller is connected, sys-con tries to determine the best profile for this new controller.
-In most cases the arrows and joystick will work fine, the buttons may not be mapped correctly by default (and in rare cases the right stick may be reversed). If this is the case, you will need to map the buttons yourself using the procedure below:
+In most cases the dpad and joystick will work fine, the buttons may not be mapped correctly by default (and in rare cases the right stick may be reversed or not working). If this is the case, you will need to map the buttons yourself using the procedure below:
 
 ### Method 1 (Directly from the switch)
 
@@ -165,11 +165,10 @@ simulate_capture=
 ```
 
 List of possible values:
-```
-1 to 31: Pin ID of the controller
-Z, -Z, Rz, -Rz, Rx, -Rx, Ry, -Ry, Slider, -Slider, Dial, -Dial: which repesent the analog part of your controller
-32 to 35: Represent the hat switch on your controller (Most of the time equivalent to dpad) - 32, 33, 34, 35 represent dpad_up, dpad_down, dpad_left, dpad_right
-```
+
+**1 to 31**: Represent the Button ID of the controller
+**Z, -Z, Rz, -Rz, Rx, -Rx, Ry, -Ry, Slider, -Slider, Dial, -Dial**: Repesent the analog part of the controller (Joystick, ...)
+**32 to 35**: Represent the hat switch of the controller (Most of the time equivalent to dpad) - 32, 33, 34, 35 represent dpad_up, dpad_down, dpad_left, dpad_right
 
 ### Deadzone
 

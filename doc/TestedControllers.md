@@ -8,7 +8,7 @@
 | Xbox 360 Controller | Yes | - | - |
 | Xbox 360 Wireless adapter (Up to 4 controller) | Yes | - | - |
 | Xbox One X/S Controller | Yes | - | - |
-| 8BitDo Ultimate C 2.4g Wireless Controller  | No | - | - |
+| 8BitDo Ultimate C 2.4g Wireless Controller  | Not yet | - | - |
 | Cosmic Byte Xbox360 | Yes | discovery_mode=1 | - |
 | Phantom White DPD Xbox One | Yes | - | - |
 | Wave Afterglow PDP Xbox Series | Yes | - | - |
@@ -18,9 +18,9 @@
 | Y3 Arcade Fighter Stick with GAME STICK 4K LITE SEGAM M8 V7.0 | Yes | - | https://aliexpress.com/item/1005006369969745.html |
 | Activbb X6-34U Controller | Yes | - | - |
 | Foyu Controller | Yes | - | - |
-| Gamecube adapter HS-WU025 | Yes | PC Mode | - |
-| Gamecube adapter BX-W201C | Yes | PC Mode | - |
-| Gamecube adapter WUP-028 | Yes | Switch Mode | discovery_mode=1 |
+| Gamecube adapter HS-WU025 | Yes | - | PC Mode |
+| Gamecube adapter BX-W201C | Yes | - | PC Mode |
+| Gamecube adapter WUP-028 | Yes | discovery_mode=1 | Switch Mode |
 | Chinese wired SNES Controller | Yes | - | - |
 | Xinmotek XM-10 (Arcade controller) | Yes | - | https://aliexpress.com/item/32785870354.html |
 | Logitech Driving Force GT (Wheel) | Yes | - | - |
@@ -34,5 +34,5 @@
 | Y3 Joypad with Receiver no-name | Yes | - | https://aliexpress.com/item/1005002359869263.html |
 | Y3 Joypad with GAME STICK 4K LITE SEGAM M8 V4.0 | Yes | - | https://aliexpress.com/item/1005002359869263.html |
 | MayFlash N64 Controller Adapter| Yes | - | https://www.amazon.com/dp/B002B9FIUU |
-| Y3 Joypad (Receiver YC5)| No | - | https://aliexpress.com/item/1005005458136372.html |
+| Y3 Joypad (Receiver YC5)| Not yet | - | https://aliexpress.com/item/1005005458136372.html |
 | Thrustmaster Dual Analog 4 | Yes | - | - |
