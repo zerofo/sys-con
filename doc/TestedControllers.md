@@ -18,9 +18,8 @@
 | Y3 Arcade Fighter Stick with GAME STICK 4K LITE SEGAM M8 V7.0 | Yes | - | https://aliexpress.com/item/1005006369969745.html |
 | Activbb X6-34U Controller | Yes | - | - |
 | Foyu Controller | Yes | - | - |
-| Gamecube adapter HS-WU025 | Yes | - | PC Mode |
-| Gamecube adapter BX-W201C | Yes | - | PC Mode |
-| Gamecube adapter WUP-028 | Yes | discovery_mode=1 | Switch Mode |
+| Gamecube adapter (HS-WU025, BX-W201C, WUP-028, [057e-0337] ...)  | Yes | - | PC Mode |
+| Gamecube adapter (HS-WU025, BX-W201C, WUP-028, [057e-0337] ...)  | Yes | discovery_mode=1 | Switch Mode |
 | Chinese wired SNES Controller | Yes | - | - |
 | Xinmotek XM-10 (Arcade controller) | Yes | - | https://aliexpress.com/item/32785870354.html |
 | Logitech Driving Force GT (Wheel) | Yes | - | - |
