@@ -21,15 +21,15 @@ ControllerResult SwitchUSBEndpoint::Open(int maxPacketSize)
 
     maxPacketSize = maxPacketSize != 0 ? maxPacketSize : m_descriptor->wMaxPacketSize;
 
-    ::syscon::logger::LogDebug("SwitchUSBEndpoint Opening 0x%x (Pkt size: %d)...", m_descriptor->bEndpointAddress, maxPacketSize);
+    ::syscon::logger::LogDebug("SwitchUSBEndpoint[0x%02X] Opening (Pkt size: %d)...", m_descriptor->bEndpointAddress, maxPacketSize);
 
     if (R_FAILED(usbHsIfOpenUsbEp(m_ifSession, &m_epSession, 1, maxPacketSize, m_descriptor)))
     {
-        ::syscon::logger::LogError("SwitchUSBEndpoint failed to open! (0x%x)", m_descriptor->bEndpointAddress);
+        ::syscon::logger::LogError("SwitchUSBEndpoint[0x%02X] Failed to open !", m_descriptor->bEndpointAddress);
         return CONTROLLER_STATUS_USB_ENDPOINT_OPEN;
     }
 
-    ::syscon::logger::LogDebug("SwitchUSBEndpoint successfully opened!");
+    ::syscon::logger::LogDebug("SwitchUSBEndpoint[0x%02X] Successfully opened !", m_descriptor->bEndpointAddress);
 
     return CONTROLLER_STATUS_SUCCESS;
 }
@@ -50,15 +50,15 @@ ControllerResult SwitchUSBEndpoint::Write(const uint8_t *inBuffer, size_t buffer
     memcpy(m_usb_buffer_out, inBuffer, bufferSize);
 
     if (GetDirection() == USB_ENDPOINT_IN)
-        ::syscon::logger::LogError("SwitchUSBEndpoint:: Trying to write an INPUT endpoint!");
+        ::syscon::logger::LogError("SwitchUSBEndpoint[0x%02X] Trying to write an INPUT endpoint!", m_descriptor->bEndpointAddress);
 
-    ::syscon::logger::LogTrace("SwitchUSBEndpoint: Write %d bytes", bufferSize);
+    ::syscon::logger::LogTrace("SwitchUSBEndpoint[0x%02X] Write %d bytes", m_descriptor->bEndpointAddress, bufferSize);
     ::syscon::logger::LogBuffer(LOG_LEVEL_TRACE, m_usb_buffer_out, bufferSize);
 
     ams::Result rc = usbHsEpPostBuffer(&m_epSession, m_usb_buffer_out, bufferSize, &transferredSize);
     if (R_FAILED(rc))
     {
-        ::syscon::logger::LogError("SwitchUSBEndpoint: Write failed: %08X", rc);
+        ::syscon::logger::LogError("SwitchUSBEndpoint[0x%02X] Write failed: 0x%08X", m_descriptor->bEndpointAddress, rc);
         return CONTROLLER_STATUS_WRITE_FAILED;
     }
 
@@ -72,7 +72,7 @@ ControllerResult SwitchUSBEndpoint::Read(uint8_t *outBuffer, size_t *bufferSizeI
     SwitchUSBLock usbLock;
 
     if (GetDirection() == USB_ENDPOINT_OUT)
-        ::syscon::logger::LogError("SwitchUSBEndpoint: Trying to read an OUTPUT endpoint!");
+        ::syscon::logger::LogError("SwitchUSBEndpoint[0x%02X] Trying to read an OUTPUT endpoint!", m_descriptor->bEndpointAddress);
 
     if (aTimeoutUs == UINT64_MAX)
     {
@@ -81,7 +81,7 @@ ControllerResult SwitchUSBEndpoint::Read(uint8_t *outBuffer, size_t *bufferSizeI
         ams::Result rc = usbHsEpPostBuffer(&m_epSession, m_usb_buffer_in, *bufferSizeInOut, &transferredSize);
         if (R_FAILED(rc))
         {
-            ::syscon::logger::LogError("SwitchUSBEndpoint: Read failed: %08X", rc);
+            ::syscon::logger::LogError("SwitchUSBEndpoint[0x%02X] Read failed: 0x%08X", m_descriptor->bEndpointAddress, rc);
             return CONTROLLER_STATUS_READ_FAILED;
         }
 
@@ -90,11 +90,11 @@ ControllerResult SwitchUSBEndpoint::Read(uint8_t *outBuffer, size_t *bufferSizeI
 
         if (transferredSize == 0)
         {
-            ::syscon::logger::LogError("SwitchUSBEndpoint: Read returned no data !");
+            ::syscon::logger::LogError("SwitchUSBEndpoint[0x%02X] Read returned no data !", m_descriptor->bEndpointAddress);
             return CONTROLLER_STATUS_NO_DATA_AVAILABLE;
         }
 
-        ::syscon::logger::LogTrace("SwitchUSBEndpoint: Read %d bytes", *bufferSizeInOut);
+        ::syscon::logger::LogTrace("SwitchUSBEndpoint[0x%02X] Read %d bytes", m_descriptor->bEndpointAddress, *bufferSizeInOut);
         ::syscon::logger::LogBuffer(LOG_LEVEL_TRACE, outBuffer, *bufferSizeInOut);
 
         return CONTROLLER_STATUS_SUCCESS;
@@ -111,7 +111,7 @@ ControllerResult SwitchUSBEndpoint::Read(uint8_t *outBuffer, size_t *bufferSizeI
             rc = usbHsEpPostBufferAsync(&m_epSession, m_usb_buffer_in, *bufferSizeInOut, 0, &m_xferIdRead);
             if (R_FAILED(rc))
             {
-                ::syscon::logger::LogError("SwitchUSBEndpoint: ReadAsync failed: %08X", rc);
+                ::syscon::logger::LogError("SwitchUSBEndpoint[0x%02X] ReadAsync failed: 0x%08X", m_descriptor->bEndpointAddress, rc);
                 return CONTROLLER_STATUS_READ_FAILED;
             }
         }
@@ -128,13 +128,13 @@ ControllerResult SwitchUSBEndpoint::Read(uint8_t *outBuffer, size_t *bufferSizeI
         rc = usbHsEpGetXferReport(&m_epSession, &report, 1, &count);
         if (R_FAILED(rc))
         {
-            ::syscon::logger::LogError("SwitchUSBEndpoint: ReadAsync failed: %08X", rc);
+            ::syscon::logger::LogError("SwitchUSBEndpoint[0x%02X] ReadAsync failed: 0x%08X", m_descriptor->bEndpointAddress, rc);
             return CONTROLLER_STATUS_READ_FAILED;
         }
 
         if ((count <= 0) || (tmpXcferId != report.xferId))
         {
-            ::syscon::logger::LogError("SwitchUSBEndpoint: ReadAsync failed (Invalid XFerId or NoData returned - Count: %d, xferId %d/%d)", count, tmpXcferId, report.xferId);
+            ::syscon::logger::LogError("SwitchUSBEndpoint[0x%02X] ReadAsync failed (Invalid XFerId or NoData returned - Count: %d, xferId %d/%d)", m_descriptor->bEndpointAddress, count, tmpXcferId, report.xferId);
             return CONTROLLER_STATUS_NO_DATA_AVAILABLE;
         }
 
@@ -144,12 +144,12 @@ ControllerResult SwitchUSBEndpoint::Read(uint8_t *outBuffer, size_t *bufferSizeI
         if (report.transferredSize == 0)
             return CONTROLLER_STATUS_NO_DATA_AVAILABLE;
 
-        ::syscon::logger::LogTrace("SwitchUSBEndpoint: ReadAsync %d bytes", *bufferSizeInOut);
+        ::syscon::logger::LogTrace("SwitchUSBEndpoint[0x%02X] ReadAsync %d bytes", m_descriptor->bEndpointAddress, *bufferSizeInOut);
         ::syscon::logger::LogBuffer(LOG_LEVEL_TRACE, outBuffer, *bufferSizeInOut);
 
         if (R_FAILED(report.res))
         {
-            ::syscon::logger::LogError("SwitchUSBEndpoint: ReadAsync failed: %08X", report.res);
+            ::syscon::logger::LogError("SwitchUSBEndpoint[0x%02X] ReadAsync failed: 0x%08X", m_descriptor->bEndpointAddress, report.res);
             return CONTROLLER_STATUS_READ_FAILED;
         }
 

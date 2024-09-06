@@ -45,11 +45,6 @@ void Xbox360WirelessController::CloseInterfaces()
 
 ControllerResult Xbox360WirelessController::ParseData(uint8_t *buffer, size_t size, RawInputData *rawData, uint16_t *input_idx)
 {
-    Xbox360ButtonData *buttonData = reinterpret_cast<Xbox360ButtonData *>(buffer);
-
-    if (size < sizeof(Xbox360ButtonData))
-        return CONTROLLER_STATUS_UNEXPECTED_DATA;
-
     // https://github.com/xboxdrv/xboxdrv/blob/stable/src/xbox360_controller.cpp
     // https://github.com/felis/USB_Host_Shield_2.0/blob/master/XBOXRECV.cpp
 
@@ -64,10 +59,15 @@ ControllerResult Xbox360WirelessController::ParseData(uint8_t *buffer, size_t si
             else
                 OnControllerDisconnect(*input_idx);
         }
+
+        return CONTROLLER_STATUS_NOTHING_TODO;
     }
-    else if (buffer[0] == 0x00 && buffer[1] == 0x01 && buffer[2] == 0x00 && buffer[3] == 0xf0)
+
+    if (buffer[0] == 0x00 && buffer[1] == 0x01 && buffer[2] == 0x00 && buffer[3] == 0xf0) // Controller Data
     {
-        buttonData = reinterpret_cast<Xbox360ButtonData *>(buffer + 4);
+        Xbox360ButtonData *buttonData = reinterpret_cast<Xbox360ButtonData *>(buffer + 4);
+        if (size < sizeof(Xbox360ButtonData))
+            return CONTROLLER_STATUS_UNEXPECTED_DATA;
 
         if (buttonData->type == XBOX360INPUT_BUTTON) // Button data
         {
