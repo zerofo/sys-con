@@ -41,7 +41,6 @@ TEST(BaseController, test_input_binding_basis)
     config.buttonsAnalog[ControllerButton::LSTICK_LEFT].sign = -1.0f;
     config.buttonsAnalog[ControllerButton::LSTICK_RIGHT].bind = ControllerAnalogBinding_X;
     config.buttonsAnalog[ControllerButton::LSTICK_RIGHT].sign = +1.0f;
-
     config.buttonsAnalog[ControllerButton::LSTICK_UP].bind = ControllerAnalogBinding_Y;
     config.buttonsAnalog[ControllerButton::LSTICK_UP].sign = +1.0f;
     config.buttonsAnalog[ControllerButton::LSTICK_DOWN].bind = ControllerAnalogBinding_Y;
@@ -69,18 +68,55 @@ TEST(BaseController, test_input_deadzone)
     NormalizedButtonData normalizedData = {0};
 
     ControllerConfig config;
+    config.buttonsAnalog[ControllerButton::LSTICK_LEFT].bind = ControllerAnalogBinding_X;
+    config.buttonsAnalog[ControllerButton::LSTICK_LEFT].sign = -1.0f;
+    config.buttonsAnalog[ControllerButton::LSTICK_RIGHT].bind = ControllerAnalogBinding_X;
+    config.buttonsAnalog[ControllerButton::LSTICK_RIGHT].sign = +1.0f;
+    config.buttonsAnalog[ControllerButton::LSTICK_UP].bind = ControllerAnalogBinding_Y;
+    config.buttonsAnalog[ControllerButton::LSTICK_UP].sign = +1.0f;
+    config.buttonsAnalog[ControllerButton::LSTICK_DOWN].bind = ControllerAnalogBinding_Y;
+    config.buttonsAnalog[ControllerButton::LSTICK_DOWN].sign = -1.0f;
+
     config.analogDeadzonePercent[ControllerAnalogBinding_X] = 10;
-    config.analogDeadzonePercent[ControllerAnalogBinding_Y] = 5;
+    config.analogDeadzonePercent[ControllerAnalogBinding_Y] = 10;
 
     RawInputData inputData;
     inputData.analog[ControllerAnalogType_X] = 0.1f;
-    inputData.analog[ControllerAnalogType_Y] = 0.1f;
+    inputData.analog[ControllerAnalogType_Y] = 0.2f;
 
     MockBaseController controller(std::make_unique<MockDevice>(), config, std::make_unique<MockLogger>());
     controller.MapRawInputToNormalized(inputData, &normalizedData);
 
     EXPECT_FLOAT_EQ(normalizedData.sticks[0].axis_x, 0.0f);
-    EXPECT_FLOAT_EQ(normalizedData.sticks[0].axis_y, 0.0f);
+    EXPECT_NEAR(normalizedData.sticks[0].axis_y, 0.11f, 0.01f, 0.01f);
+}
+
+TEST(BaseController, test_input_factor)
+{
+    NormalizedButtonData normalizedData = {0};
+
+    ControllerConfig config;
+    config.buttonsAnalog[ControllerButton::LSTICK_LEFT].bind = ControllerAnalogBinding_X;
+    config.buttonsAnalog[ControllerButton::LSTICK_LEFT].sign = -1.0f;
+    config.buttonsAnalog[ControllerButton::LSTICK_RIGHT].bind = ControllerAnalogBinding_X;
+    config.buttonsAnalog[ControllerButton::LSTICK_RIGHT].sign = +1.0f;
+    config.buttonsAnalog[ControllerButton::LSTICK_UP].bind = ControllerAnalogBinding_Y;
+    config.buttonsAnalog[ControllerButton::LSTICK_UP].sign = +1.0f;
+    config.buttonsAnalog[ControllerButton::LSTICK_DOWN].bind = ControllerAnalogBinding_Y;
+    config.buttonsAnalog[ControllerButton::LSTICK_DOWN].sign = -1.0f;
+
+    config.analogFactorPercent[ControllerAnalogBinding_X] = 110;
+    config.analogFactorPercent[ControllerAnalogBinding_Y] = 120;
+
+    RawInputData inputData;
+    inputData.analog[ControllerAnalogType_X] = 0.9f;
+    inputData.analog[ControllerAnalogType_Y] = 0.9f;
+
+    MockBaseController controller(std::make_unique<MockDevice>(), config, std::make_unique<MockLogger>());
+    controller.MapRawInputToNormalized(inputData, &normalizedData);
+
+    EXPECT_NEAR(normalizedData.sticks[0].axis_x, 0.99f, 0.01f, 0.01f);
+    EXPECT_FLOAT_EQ(normalizedData.sticks[0].axis_y, 1.0f);
 }
 
 TEST(BaseController, test_input_simulate_buttons)

@@ -108,6 +108,7 @@ public:
 
     ControllerType controllerType{ControllerType_Pro};
     uint8_t analogDeadzonePercent[ControllerAnalogBinding_Count]{0};
+    uint8_t analogFactorPercent[ControllerAnalogBinding_Count]{100};
 
     uint8_t buttonsPin[ControllerButton::COUNT][MAX_PIN_BY_BUTTONS]{0};
     ControllerAnalogConfig buttonsAnalog[ControllerButton::COUNT]{0};
@@ -119,4 +120,15 @@ public:
     RGBAColor buttonsColor{0, 0, 0, 255};
     RGBAColor leftGripColor{0, 0, 0, 255};
     RGBAColor rightGripColor{0, 0, 0, 255};
+
+    ControllerConfig()
+    {
+        for (int i = 0; i < ControllerAnalogBinding_Count; i++)
+        {
+            analogDeadzonePercent[i] = 0;
+            analogFactorPercent[i] = 100;
+        }
+
+        memset(buttonsPin, 0, sizeof(buttonsPin));
+    }
 };

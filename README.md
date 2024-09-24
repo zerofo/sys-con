@@ -170,9 +170,12 @@ List of possible values:
  - **Z, -Z, Rz, -Rz, Rx, -Rx, Ry, -Ry, Slider, -Slider, Dial, -Dial**: Repesent the analog part of the controller (Joystick, ...)
  - **32 to 35**: Represent the hat switch of the controller (Most of the time equivalent to dpad) - 32, 33, 34, 35 represent dpad_up, dpad_down, dpad_left, dpad_right
 
-### Deadzone
+### Deadzone & Factor
 
-Additionnaly to these mappings, you can configure deadzone for every analog: 
+Additionnaly, you can configure deadzone and/or factor for every analog.
+ - Deadzone increases the area around the neutral position of your analog stick where any movement is ignored. This helps prevent unintentional input, ensuring only deliberate movements are registered by the controller.
+ - Factor adjusts the scaling of the analog stick's input. It can be increased or reduced to compensate if your controller isn't reaching its full range of motion (e.g., setting it to 110 means the controller will report 110% of its actual range).
+
 ```
 deadzone_x=20
 deadzone_y=20
@@ -182,8 +185,20 @@ deadzone_rx=5
 deadzone_ry=5
 deadzone_slider=20
 deadzone_dial=20
+
+factor_x=100
+factor_y=100
+factor_z=100
+factor_rz=100
+factor_rx=100
+factor_ry=100
+factor_slider=100
+factor_dial=100
 ```
-All values are in percentages
+
+All these values are in percentages
+Typical deadzone range: 0% to 30%
+Typical Factor range: 100% to 150%
 
 ## Troubleshooting
 For common issues a troubleshooting guide is available: [Troubleshooting](https://github.com/o0Zz/sys-con/blob/master/doc/Troubleshooting.md)

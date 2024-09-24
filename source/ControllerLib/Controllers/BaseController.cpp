@@ -215,11 +215,13 @@ void BaseController::MapRawInputToNormalized(RawInputData &rawData, NormalizedBu
     for (auto &&stick : sticks_list)
     {
         ControllerAnalogConfig analogCfg = GetConfig().buttonsAnalog[stick.button];
-        float value = analogCfg.sign * rawData.analog[analogCfg.bind];
+        float value = (analogCfg.sign * rawData.analog[analogCfg.bind]) * (GetConfig().analogFactorPercent[analogCfg.bind] / 100.0f);
+        if (value > 1.0f)
+            value = 1.0f;
 
         if (rawData.buttons[GetConfig().buttonsPin[stick.button][0]] || rawData.buttons[GetConfig().buttonsPin[stick.button][1]])
             *stick.value_addr = stick.sign * 1.0f;
-        else if (value > 0.0f)
+        else if (value > 0.0f) // Is positive
             *stick.value_addr = stick.sign * value;
     }
 

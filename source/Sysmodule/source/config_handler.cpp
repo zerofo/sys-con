@@ -334,6 +334,22 @@ namespace syscon::config
                 ini_data->controller_config->analogDeadzonePercent[ControllerAnalogBinding::ControllerAnalogBinding_Slider] = atoi(value);
             else if (nameStr == "deadzone_dial")
                 ini_data->controller_config->analogDeadzonePercent[ControllerAnalogBinding::ControllerAnalogBinding_Dial] = atoi(value);
+            else if (nameStr == "factor_x")
+                ini_data->controller_config->analogFactorPercent[ControllerAnalogBinding::ControllerAnalogBinding_X] = atoi(value);
+            else if (nameStr == "factor_y")
+                ini_data->controller_config->analogFactorPercent[ControllerAnalogBinding::ControllerAnalogBinding_Y] = atoi(value);
+            else if (nameStr == "factor_z")
+                ini_data->controller_config->analogFactorPercent[ControllerAnalogBinding::ControllerAnalogBinding_Z] = atoi(value);
+            else if (nameStr == "factor_rz")
+                ini_data->controller_config->analogFactorPercent[ControllerAnalogBinding::ControllerAnalogBinding_Rz] = atoi(value);
+            else if (nameStr == "factor_rx")
+                ini_data->controller_config->analogFactorPercent[ControllerAnalogBinding::ControllerAnalogBinding_Rx] = atoi(value);
+            else if (nameStr == "factor_ry")
+                ini_data->controller_config->analogFactorPercent[ControllerAnalogBinding::ControllerAnalogBinding_Ry] = atoi(value);
+            else if (nameStr == "factor_slider")
+                ini_data->controller_config->analogFactorPercent[ControllerAnalogBinding::ControllerAnalogBinding_Slider] = atoi(value);
+            else if (nameStr == "factor_dial")
+                ini_data->controller_config->analogFactorPercent[ControllerAnalogBinding::ControllerAnalogBinding_Dial] = atoi(value);
             else if (nameStr == "color_body")
                 ini_data->controller_config->bodyColor = hexStringColorToRGBA(value);
             else if (nameStr == "color_buttons")
