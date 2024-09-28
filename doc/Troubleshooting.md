@@ -121,8 +121,10 @@ It's also possible to combinate analog and controller button:
 x=13,2,+X
 ```
 
-## My controller is not working or not discovered. I don't know what todo
-Enable logs in Trace mode (https://github.com/o0Zz/sys-con?tab=readme-ov-file#logs) and looks at the logs.
+## My Controller isn't working or detected — What should I do?
+1) Use a Direct USB-C OTG Connection: Connect your controller directly to the Switch using a USB-C OTG cable, bypassing the Dock. Some controllers may not works when connected through a USB hub, such as the Switch Dock.
+2) Test with another officially supported controller: Try using a different controller that is officially supported. This will help you determine whether the issue is with your Switch setup or your controller.
+3) Enable and check logs: Turn on logging in Trace mode by following the instructions [here](https://github.com/o0Zz/sys-con?tab=readme-ov-file#logs). Carefully review the logs for any errors or clues about what might be causing the problem.
 
 A typically working flow will look like:
 
