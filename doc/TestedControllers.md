@@ -1,6 +1,6 @@
 # List of controller tested with sys-con
-| Controller name         | Supported | Special configuration | Link |
-|-------------------------|-----------|-----------------------|------|
+| Controller name         | Supported | Comment | Link |
+|-------------------------|-----------|---------|------|
 | Dualshock 4 | Yes | - | - |
 | Dualshock 3 | Yes | - | - |
 | Dualsense (PS5) | Yes | - | - |
@@ -35,3 +35,4 @@
 | MayFlash N64 Controller Adapter| Yes | - | https://www.amazon.com/dp/B002B9FIUU |
 | Y3 Joypad (Receiver YC5)| Not yet | - | https://aliexpress.com/item/1005005458136372.html |
 | Thrustmaster Dual Analog 4 | Yes | - | - |
+| Playstation classic controller | Yes | Do not works with Dock or USB hub. Only works with direct USB-C OTG cable | - |
