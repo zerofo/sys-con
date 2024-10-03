@@ -1,7 +1,7 @@
-#Introduction
+# Introduction
 This document aims to reverse-engineer the USB discovery process on the Switch, in order to better understand why certain controllers are not detected by the system.
 
-#Investigations
+# Investigations
 
 ## Windows discovery sequence
 Below is the ordered list of steps involved in the Windows USB discovery process.
@@ -55,7 +55,7 @@ Below is the ordered list of steps involved in the Switch USB discovery process.
 8106002200000002 GET_DESCRIPTOR Request HID report
 ```
 
-##How to decode USB packet
+## How to decode USB packet
 
 End of the file: https://github.com/obdev/v-usb/blob/master/usbdrv/usbdrv.h
 
