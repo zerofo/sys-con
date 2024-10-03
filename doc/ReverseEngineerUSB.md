@@ -63,11 +63,11 @@ End of the file: https://github.com/obdev/v-usb/blob/master/usbdrv/usbdrv.h
 
 We aimed to verify the following scenarios:
 
-1. **Controller not responding to requests: **
+1. **Controller not responding to requests**
 We tested whether the switch discovery process still functions when the controller does not respond to a specific request: GET_DESCRIPTOR with Index=00 (Idx 0) and STRING=03.
 The switch perfectly works event if we do not reply.
 
-2. **Controller response timing: **
+2. **Controller response timing**
 We compared the performance of a slow controller to a non-working one. The results showed that the switch works even with the slowest controller. Therefore, it seems that latency is not the issue.
 
 # Conclusion
