@@ -59,6 +59,10 @@ Below is the ordered list of steps involved in the Switch USB discovery process.
 
 End of the file: https://github.com/obdev/v-usb/blob/master/usbdrv/usbdrv.h
 
+https://www.beyondlogic.org/usbnutshell/usb5.shtml
+
+https://www.beyondlogic.org/usbnutshell/usb6.shtml
+
 # Understand the different
 
 We aimed to verify the following scenarios:
