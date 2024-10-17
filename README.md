@@ -216,7 +216,7 @@ Like all other switch projects, you will need [devkitA64](https://switchbrew.org
 ### Setup your environment on windows:
 Full procedure here: https://devkitpro.org/wiki/devkitPro_pacman
 
-1) Before anything add to your environement system this:
+1) Add these variables to your environement system
 ```
 DEVKITPRO=/opt/devkitpro
 DEVKITARM=/opt/devkitpro/devkitARM
@@ -244,18 +244,24 @@ Open MSYS2 console from devkitA64 and type below commands:
 pacman -S make
 pacman -S git
 pacman -S switch-libjpeg-turbo
+pacman -S zip
 make -C lib/libnx install
 ```
 
 ### Build the project with Visual Studio Code
-If you have **Visual Studio Code**, you can open the project as a folder and run the build tasks from inside the program. 
-It also has Intellisense configured for switch development, if you have DEVKITPRO correctly defined in your environment variables.
 
 You need to select msys as default terminal in VSCode:
 ```
-CTRL + SHIFT + P
-Type "Terminal: Select default profile"
+CTRL+SHIFT+P
+Select "Terminal: Select default profile"
 Select "msys2"
+```
+
+Then build:
+```
+CTRL+SHIFT+P
+Select "Tasks: Run tasks"
+Select "Build Release"
 ```
 
 ### Build the project directly from MSYS
