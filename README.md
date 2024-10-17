@@ -212,23 +212,58 @@ Don't download the project as ZIP as it will not copy submodules properly, prefe
 `git clone --recurse-submodules -j8 https://github.com/o0Zz/sys-con.git`
 
 Like all other switch projects, you will need [devkitA64](https://switchbrew.org/wiki/Setting_up_Development_Environment) set up on your system.
-(Direct link for windows https://github.com/devkitPro/installer/releases/tag/v3.0.3)
 
-### Install dependencies
+### Setup your environment on windows:
+Full procedure here: https://devkitpro.org/wiki/devkitPro_pacman
+
+1) Before anything add to your environement system this:
+```
+DEVKITPRO=/opt/devkitpro
+DEVKITARM=/opt/devkitpro/devkitARM
+DEVKITPPC=/opt/devkitpro/devkitPPC
+```
+
+2) Download and install msys64: https://www.msys2.org/#installation
+3) Open msys and type:
+```
+pacman-key --recv BC26F752D25B92CE272E0F44F7FD5492264BB9D0 --keyserver keyserver.ubuntu.com
+pacman-key --lsign BC26F752D25B92CE272E0F44F7FD5492264BB9D0
+wget https://pkg.devkitpro.org/devkitpro-keyring.pkg.tar.xz
+pacman -U devkitpro-keyring.pkg.tar.xz
+echo "[dkp-libs]" >> /etc/pacman.conf
+echo "Server = https://pkg.devkitpro.org/packages" >> /etc/pacman.conf
+echo "[dkp-windows]" >> /etc/pacman.conf
+echo "Server = https://pkg.devkitpro.org/packages/windows/$arch/" >> /etc/pacman.conf
+pacman -Syu
+pacman -S switch-dev
+```
+
+### Install extra dependencies for sys-con
 Open MSYS2 console from devkitA64 and type below commands:
 ```
+pacman -S make
+pacman -S git
 pacman -S switch-libjpeg-turbo
 make -C lib/libnx install
 ```
 
-### Build the project
+### Build the project with Visual Studio Code
 If you have **Visual Studio Code**, you can open the project as a folder and run the build tasks from inside the program. 
 It also has Intellisense configured for switch development, if you have DEVKITPRO correctly defined in your environment variables.
 
-Otherwise, you can open the console inside the project directory and use one of the following commands:
+You need to select msys as default terminal in VSCode:
+```
+CTRL + SHIFT + P
+Type "Terminal: Select default profile"
+Select "msys2"
+```
+
+### Build the project directly from MSYS
+Open MSYS console, move to the project root directory and use one of the following commands:
 - `make -j8`: Build the project
 - `make clean`: Cleans the project files (but not the dependencies).
 - `make mrproper`: Cleans the project files and the dependencies.
+- `syscon.sh build`: Build and package sys-con (Similar to github release packages)
 
 Output folder will be there: `out/`
 For an in-depth explanation of how sys-con works, see [here](source).

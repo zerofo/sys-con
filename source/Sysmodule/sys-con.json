@@ -1,24 +1,31 @@
 {
-	"name":	"sys-con",
-	"title_id":	"0x690000000000000D",
-	"title_id_range_min":	"0x690000000000000D",
-	"title_id_range_max":	"0x690000000000000D",
-	"main_thread_stack_size":	"0x4000",
-	"main_thread_priority":	44,
-	"default_cpu_id":	3,
-	"process_category":	0,
-	"is_retail":	true,
-	"pool_partition":	2,
-	"is_64_bit":	true,
-	"address_space_type":	1,
-	"system_resource_size": "0",
+	"name": "sys-con",
+	"program_id": "0x690000000000000D",
+	"program_id_range_min": "0x690000000000000D",
+	"program_id_range_max": "0x690000000000000D",
+	"main_thread_stack_size": "0x4000",
+	"main_thread_priority": 44,
+	"default_cpu_id": 3,
+	"version": "0",
+	"is_retail": true,
+	"pool_partition": 2,
+	"is_64_bit": true,
+	"signature_key_generation": 0,
+	"address_space_type": 1,
+	"optimize_memory_allocation": false,
 	"disable_device_address_space_merge": true,
-	"filesystem_access":	{
-		"permissions":	"0xffffffffffffffff"
+	"system_resource_size": "0",
+	"filesystem_access": {
+		"permissions": "0xffffffffffffffff"
 	},
-	"service_access":	["*"],
-	"service_host":	["*"],
-	"kernel_capabilities":	[{
+    "service_access": [
+        "*"
+    ],
+    "service_host": [
+        "*"
+    ],
+	"kernel_capabilities":	[
+		{
 			"type":	"kernel_flags",
 			"value":	{
 				"highest_thread_priority":	63,
@@ -26,9 +33,11 @@
 				"lowest_cpu_id":	3,
 				"highest_cpu_id":	3
 			}
-		}, {
+		}, 
+		{
 			"type":	"syscalls",
-			"value":	{
+			"value":	
+			{
 				"svcUnknown":	"0x00",
 				"svcSetHeapSize":	"0x01",
 				"svcSetMemoryPermission":	"0x02",
@@ -158,17 +167,14 @@
 				"svcSetResourceLimitLimitValue":	"0x7e",
 				"svcCallSecureMonitor":	"0x7f"
 			}
-		}, {
+		}, 
+		{
 			"type":	"min_kernel_version",
 			"value":	"0x0030"
-		}, {
+		}, 
+		{
 			"type":	"handle_table_size",
 			"value":	1023
-		}, {
-			"type":	"debug_flags",
-			"value":	{
-				"allow_debug":	false,
-				"force_debug":	true
-			}
-		}]
+		}
+	]
 }

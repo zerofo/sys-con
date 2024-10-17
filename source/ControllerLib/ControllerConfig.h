@@ -1,5 +1,6 @@
 #pragma once
 #include <cstdint>
+#include <string.h>
 #include <string>
 
 #define MAX_JOYSTICKS      2

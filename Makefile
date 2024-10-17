@@ -39,16 +39,16 @@ mrproper: clean
 dist: clean all
 	cd $(OUT_DIR)/ && zip -r ../$(OUT_ZIP) .
 
-atmosphere_1.6.x:
+atmosphere_1.5.x-1.6.x:
 	cd lib/Atmosphere-libs && \
 	git reset --hard && \
 	git checkout a55e74aec3ff24112c981e8e2f677113df045b4c
 	
-atmosphere_1.7.x:
+atmosphere_1.7.x-1.8.x:
 	cd lib/Atmosphere-libs && \
 	git reset --hard && \
-	git checkout bb767869105d0eb5c38425f54bf20614639a078d && \
-	git revert --no-edit 087f682571631d5d8734dd994b6caa3e96b8e07c
+	git checkout 989fb7be0c68bf229fe6789428b6c448b6de142a && \
+	sed -i 's/static_assert/\/\/static_assert/' libstratosphere/source/ldr/ldr_pm_api.os.horizon.cpp
 	
 distclean: mrproper atmosphere_$(ATMOSPHERE_VERSION) all
 	cd $(OUT_DIR)/ && zip -r ../$(OUT_ZIP) .
