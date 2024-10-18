@@ -88,7 +88,7 @@ TEST(BaseController, test_input_deadzone)
     controller.MapRawInputToNormalized(inputData, &normalizedData);
 
     EXPECT_FLOAT_EQ(normalizedData.sticks[0].axis_x, 0.0f);
-    EXPECT_NEAR(normalizedData.sticks[0].axis_y, 0.11f, 0.01f, 0.01f);
+    EXPECT_NEAR(normalizedData.sticks[0].axis_y, 0.11f, 0.01f);
 }
 
 TEST(BaseController, test_input_factor)
@@ -115,7 +115,7 @@ TEST(BaseController, test_input_factor)
     MockBaseController controller(std::make_unique<MockDevice>(), config, std::make_unique<MockLogger>());
     controller.MapRawInputToNormalized(inputData, &normalizedData);
 
-    EXPECT_NEAR(normalizedData.sticks[0].axis_x, 0.99f, 0.01f, 0.01f);
+    EXPECT_NEAR(normalizedData.sticks[0].axis_x, 0.99f, 0.01f);
     EXPECT_FLOAT_EQ(normalizedData.sticks[0].axis_y, 1.0f);
 }
 

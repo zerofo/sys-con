@@ -12,7 +12,7 @@ FetchContent_Declare(
 )
 
 set(BUILD_GMOCK ON CACHE BOOL "" FORCE)
-#set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
 #set(gtest_disable_pthreads ON CACHE BOOL "" FORCE)
 
 FetchContent_MakeAvailable(googletest_1_15_0)
@@ -23,8 +23,8 @@ file(GLOB TEST_FILES ${PROJECT_SOURCE_DIR}/*.cpp)
 
 add_executable(SysConTests ${TEST_FILES}) # add this executable
 
-target_link_libraries(SysConTests PRIVATE gmock_main )
-target_link_libraries(SysConTests PRIVATE SysConControllerLib) # link google test to this executable
+target_link_libraries(SysConTests PRIVATE GTest::gmock_main) # link google test to this executable
+target_link_libraries(SysConTests PRIVATE SysConControllerLib) # link google test \to this executable
 
 include(GoogleTest)
 gtest_discover_tests(SysConTests) # discovers tests by asking the compiled test executable to enumerate its tests
