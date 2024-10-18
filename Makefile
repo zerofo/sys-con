@@ -43,7 +43,8 @@ atmosphere_1.5.x-1.6.x:
 	cd lib/Atmosphere-libs && \
 	git reset --hard && \
 	git checkout a55e74aec3ff24112c981e8e2f677113df045b4c && \
-	sed -i 's/Order != Order/false/' libvapours/include/vapours/util/arch/arm64/util_atomic.hpp
+	sed -i 's/Order != Order/false/' libvapours/include/vapours/util/arch/arm64/util_atomic.hpp && \
+	sed -i 's/TransferMode != TransferMode/false/' libstratosphere/include/stratosphere/sf/sf_buffers.hpp
 	
 atmosphere_1.7.x-1.8.x:
 	cd lib/Atmosphere-libs && \
