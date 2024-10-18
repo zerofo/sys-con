@@ -124,11 +124,14 @@ ControllerResult XboxOneController::ParseData(uint8_t *buffer, size_t size, RawI
     (void)input_idx;
     XboxOneButtonData *buttonData = reinterpret_cast<XboxOneButtonData *>(buffer);
 
-    if (size < sizeof(XboxOneButtonData))
-        return CONTROLLER_STATUS_UNEXPECTED_DATA;
-
     if (buttonData->type == GIP_CMD_INPUT) // Button data
     {
+        if (size < sizeof(XboxOneButtonData))
+        {
+            Log(LogLevelError, "XboxOneController[%04x-%04x] Unexpected data size (%d < %d)", m_device->GetVendor(), m_device->GetProduct(), size, sizeof(XboxOneButtonData));
+            return CONTROLLER_STATUS_UNEXPECTED_DATA;
+        }
+
         m_rawInput.buttons[1] = buttonData->button1;
         m_rawInput.buttons[2] = buttonData->button2;
         m_rawInput.buttons[3] = buttonData->button3;
@@ -160,6 +163,12 @@ ControllerResult XboxOneController::ParseData(uint8_t *buffer, size_t size, RawI
     }
     else if (buttonData->type == GIP_CMD_VIRTUAL_KEY) // Mode button (XBOX center button)
     {
+        if (size < 6)
+        {
+            Log(LogLevelError, "XboxOneController[%04x-%04x] Unexpected data size (%d < %d)", m_device->GetVendor(), m_device->GetProduct(), size, sizeof(XboxOneButtonData));
+            return CONTROLLER_STATUS_UNEXPECTED_DATA;
+        }
+
         m_rawInput.buttons[12] = buffer[4];
 
         if (buffer[1] == (GIP_OPT_ACK | GIP_OPT_INTERNAL))

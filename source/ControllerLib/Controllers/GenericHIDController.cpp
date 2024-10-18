@@ -76,7 +76,10 @@ ControllerResult GenericHIDController::ParseData(uint8_t *buffer, size_t size, R
     }
 
     if (joystick_data.index >= GetInputCount())
+    {
+        Log(LogLevelError, "GenericHIDController[%04x-%04x] Unexpected input index %d/%d", m_device->GetVendor(), m_device->GetProduct(), joystick_data.index, GetInputCount());
         return CONTROLLER_STATUS_UNEXPECTED_DATA;
+    }
 
     /*
          Special case for generic HID, input_idx might be bigger than 0 in case of multiple interfaces.
