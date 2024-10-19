@@ -48,10 +48,10 @@ static const uint8_t extra_input_packet_init[] = {
 static const uint8_t xboxone_pdp_led_on[] = {
     GIP_CMD_LED, GIP_OPT_INTERNAL, GIP_SEQ(3), GIP_PL_LEN(3), 0x00, GIP_LED_ON, 0x14};
 
-static const uint8_t xboxone_pdp_auth1[] = { // This one is need for 0e6f:02de and 0e6f:0316 and maybe some others ?
+static const uint8_t xboxone_pdp_auth0[] = { // This one is need for 0e6f:02de and 0e6f:0316 and maybe some others ?
     GIP_CMD_AUTHENTICATE, 0xa0, GIP_SEQ(4), 0x00, 0x92, 0x02};
 
-static const uint8_t xboxone_pdp_auth2[] = {
+static const uint8_t xboxone_pdp_8bit_auth[] = {
     GIP_CMD_AUTHENTICATE, GIP_OPT_INTERNAL, GIP_SEQ(5), GIP_PL_LEN(2), 0x01, 0x00};
 
 // Seq on rumble can be reset to 1
@@ -87,8 +87,9 @@ static const struct xboxone_init_packet xboxone_init_packets[] = {
     XBOXONE_INIT_PKT(0x045e, 0x0b00, xboxone_s_init),
     XBOXONE_INIT_PKT(0x045e, 0x0b00, extra_input_packet_init),
     XBOXONE_INIT_PKT(0x0e6f, 0x0000, xboxone_pdp_led_on),
-    XBOXONE_INIT_PKT(0x0e6f, 0x0000, xboxone_pdp_auth1), // This one is not in the linux driver but it is needed for 0e6f:02de and 0e6f:0316 - We send it everytime, we will see if it break something
-    XBOXONE_INIT_PKT(0x0e6f, 0x0000, xboxone_pdp_auth2),
+    XBOXONE_INIT_PKT(0x0e6f, 0x0000, xboxone_pdp_auth0), // 0e6f-02de and 0e6f-0316
+    XBOXONE_INIT_PKT(0x0e6f, 0x0000, xboxone_pdp_8bit_auth),
+    XBOXONE_INIT_PKT(0x2dc8, 0x0000, xboxone_pdp_8bit_auth), // 2dc8-2008
     XBOXONE_INIT_PKT(0x24c6, 0x541a, xboxone_rumblebegin_init),
     XBOXONE_INIT_PKT(0x24c6, 0x542a, xboxone_rumblebegin_init),
     XBOXONE_INIT_PKT(0x24c6, 0x543a, xboxone_rumblebegin_init),

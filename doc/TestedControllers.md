@@ -6,9 +6,8 @@
 | Dualsense (PS5) | Yes | - | - |
 | Xbox Original | Yes | - | - |
 | Xbox 360 Controller | Yes | - | - |
-| Xbox 360 Wireless adapter (Up to 4 controller) | Yes | - | - |
+| Xbox 360 Wireless adapter (Up to 4 controller) (045e-0291, 045e-0719) | Yes | - | - |
 | Xbox One X/S Controller | Yes | - | - |
-| 8BitDo Ultimate C 2.4g Wireless Controller  | Not yet | - | - |
 | Cosmic Byte Xbox360 | Yes | discovery_mode=1 | - |
 | Phantom White DPD Xbox One | Yes | - | - |
 | Wave Afterglow PDP Xbox Series | Yes | - | - |
@@ -33,7 +32,11 @@
 | Y3 Joypad with Receiver no-name | Yes | - | https://aliexpress.com/item/1005002359869263.html |
 | Y3 Joypad with GAME STICK 4K LITE SEGAM M8 V4.0 | Yes | - | https://aliexpress.com/item/1005002359869263.html |
 | MayFlash N64 Controller Adapter| Yes | - | https://www.amazon.com/dp/B002B9FIUU |
-| Y3 Joypad (Receiver YC5)| Not yet | - | https://aliexpress.com/item/1005005458136372.html |
 | Thrustmaster Dual Analog 4 | Yes | - | - |
 | Playstation classic controller | Yes | Do not works with Dock or USB hub. Only works with direct USB-C OTG cable | - |
 | Hyperkin N64 Adapter | Yes | - | https://www.amazon.com.au/Hyperkin-Controller-Adapter-Compatible-Nintendo/dp/B082N7K8QS |
+| 8BitDo Ultimate 2C | Yes | - | - |
+| BipBop 2.4g usb wireless | Yes | - | - |
+| 8BitDo Ultimate C 2.4g Wireless Controller  | No | Not detected: #21 | - |
+| Xbox 360 Wireless Receiver (045e-02aa) | No | Not detected: #42 | - |
+| Y3 Joypad (Receiver YC5)| No | Not detected: #30 | https://aliexpress.com/item/1005005458136372.html |
