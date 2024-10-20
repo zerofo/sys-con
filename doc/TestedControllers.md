@@ -38,5 +38,4 @@
 | 8BitDo Ultimate 2C | Yes | - | - |
 | BipBop 2.4g usb wireless | Yes | - | - |
 | 8BitDo Ultimate C 2.4g Wireless Controller  | No | Not detected: #21 | - |
-| Xbox 360 Wireless Receiver (045e-02aa) | No | Not detected: #42 | - |
 | Y3 Joypad (Receiver YC5)| No | Not detected: #30 | https://aliexpress.com/item/1005005458136372.html |
