@@ -121,6 +121,22 @@ It's also possible to combinate analog and controller button:
 x=13,2,+X
 ```
 
+## I don't see any logs in /config/sys-con/log.log
+If you don't see any logs in /config/sys-con/log.log, it indicates that sys-con isn't loading correctly. Sys-con should automatically generate a log entry upon boot, similar to the following:
+```
+|I|00:00:08.383|5E953330| SYS-CON started 1.3.0+6-411aff0 (Build date: Aug 26 2024 22:22:53)
+```
+
+1. Verify Installation Files: Ensure that the following files are installed correctly:
+```
+atmosphere\contents\690000000000000D\toolbox.json
+atmosphere\contents\690000000000000D\exefs.nsp
+atmosphere\contents\690000000000000D\flags\boot2.flag
+```
+2. Check for Conflicting Tools: Confirm that no other tool is blocking sys-con from running.
+
+**Important Note:** During an upgrade, you may need to disable sysmodules. If you have disabled them, remember to re-enable sys-con using [ovl-sysmodules](https://github.com/WerWolv/ovl-sysmodules).
+
 ## My Controller isn't working or detected — What should I do?
 1) Use a Direct USB-C OTG Connection: Connect your controller directly to the Switch using a USB-C OTG cable, bypassing the Dock. Some controllers may not works when connected through a USB hub, such as the Switch Dock.
 2) Test with another officially supported controller: Try using a different controller that is officially supported. This will help you determine whether the issue is with your Switch setup (Broken USB-C, ...) or your controller.
