@@ -19,8 +19,8 @@ static uint32_t GetHidNpadMask()
     return HidNpadMask;
 }
 
-SwitchHDLHandler::SwitchHDLHandler(std::unique_ptr<IController> &&controller, int polling_frequency_ms)
-    : SwitchVirtualGamepadHandler(std::move(controller), polling_frequency_ms)
+SwitchHDLHandler::SwitchHDLHandler(std::unique_ptr<IController> &&controller, s32 polling_frequency_ms, s8 thread_priority)
+    : SwitchVirtualGamepadHandler(std::move(controller), polling_frequency_ms, thread_priority)
 {
     for (int i = 0; i < CONTROLLER_MAX_INPUTS; i++)
         m_controllerData[i].m_is_sync = true;

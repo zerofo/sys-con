@@ -1,9 +1,10 @@
 #include "SwitchVirtualGamepadHandler.h"
 #include "SwitchLogger.h"
 
-SwitchVirtualGamepadHandler::SwitchVirtualGamepadHandler(std::unique_ptr<IController> &&controller, s32 polling_frequency_ms)
+SwitchVirtualGamepadHandler::SwitchVirtualGamepadHandler(std::unique_ptr<IController> &&controller, s32 polling_frequency_ms, s8 thread_priority)
     : m_controller(std::move(controller)),
-      m_polling_frequency_ms(std::max(1, polling_frequency_ms))
+      m_polling_frequency_ms(std::max(1, polling_frequency_ms)),
+      m_polling_thread_priority(thread_priority)
 {
 }
 
@@ -40,10 +41,8 @@ void SwitchVirtualGamepadHandler::onRun()
 
         s64 execution_time_us = (ams::os::ConvertToTimeSpan(ams::os::GetSystemTick()) - startTimer).GetMicroSeconds();
 
-        /*
-        if ((execution_time_us - m_read_input_timeout_us) > 1000)
+        if ((execution_time_us - m_read_input_timeout_us) > 10000) // 10ms
             ::syscon::logger::LogError("SwitchVirtualGamepadHandler UpdateInputOutput took: %d us !", execution_time_us);
-        */
 
         if (execution_time_us < m_read_input_timeout_us)
             svcSleepThread((m_read_input_timeout_us - execution_time_us) * 1000);
@@ -61,7 +60,7 @@ void SwitchVirtualGamepadHandlerThreadFunc(void *handler)
 ams::Result SwitchVirtualGamepadHandler::InitThread()
 {
     m_ThreadIsRunning = true;
-    R_ABORT_UNLESS(threadCreate(&m_Thread, &SwitchVirtualGamepadHandlerThreadFunc, this, thread_stack, sizeof(thread_stack), 0x30, -2));
+    R_ABORT_UNLESS(threadCreate(&m_Thread, &SwitchVirtualGamepadHandlerThreadFunc, this, thread_stack, sizeof(thread_stack), m_polling_thread_priority, -2));
     R_ABORT_UNLESS(threadStart(&m_Thread));
     return 0;
 }

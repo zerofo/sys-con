@@ -10,7 +10,7 @@ namespace syscon::controllers
     ams::Result Insert(std::unique_ptr<IController> &&controllerPtr);
     void RemoveIfNotPlugged(std::vector<s32> interfaceIDsPlugged);
 
-    void SetPollingFrequency(int polling_frequency_ms);
+    void SetPollingParameters(s32 _polling_frequency_ms, s8 _thread_priority);
 
     void Initialize();
     void Clear();

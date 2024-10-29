@@ -1,5 +1,6 @@
 #include "Controllers/BaseController.h"
 #include <cmath>
+#include <chrono>
 
 // https://www.usb.org/sites/default/files/documents/hid1_11.pdf  p55
 
@@ -151,15 +152,27 @@ ControllerResult BaseController::ReadInput(NormalizedButtonData *normalData, uin
     uint8_t input_bytes[CONTROLLER_INPUT_BUFFER_SIZE];
     size_t size = sizeof(input_bytes);
 
+    auto read_start = std::chrono::high_resolution_clock::now();
     ControllerResult result = ReadNextBuffer(input_bytes, &size, input_idx, timeout_us);
     if (result != CONTROLLER_STATUS_SUCCESS)
         return result;
 
+    auto parse_start = std::chrono::high_resolution_clock::now();
     result = ParseData(input_bytes, size, &rawData, input_idx);
     if (result != CONTROLLER_STATUS_SUCCESS)
         return result;
 
+    auto map_start = std::chrono::high_resolution_clock::now();
     MapRawInputToNormalized(rawData, normalData);
+
+    auto end = std::chrono::high_resolution_clock::now();
+    Log(LogLevelPerf, "Controller[%04x-%04x] Reading: %dms, Parsing: %dms, Mapping: %dms",
+        m_device->GetVendor(),
+        m_device->GetProduct(),
+        std::chrono::duration_cast<std::chrono::milliseconds>(parse_start - read_start).count(),
+        std::chrono::duration_cast<std::chrono::milliseconds>(map_start - parse_start).count(),
+        std::chrono::duration_cast<std::chrono::milliseconds>(end - map_start).count());
+
     return CONTROLLER_STATUS_SUCCESS;
 }
 

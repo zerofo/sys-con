@@ -265,6 +265,8 @@ namespace syscon::config
 
             if (nameStr == "polling_frequency_ms")
                 ini_data->global_config->polling_frequency_ms = atoi(value);
+            else if (nameStr == "polling_thread_priority")
+                ini_data->global_config->polling_thread_priority = atoi(value);
             else if (nameStr == "log_level")
                 ini_data->global_config->log_level = atoi(value);
             else if (nameStr == "discovery_mode")

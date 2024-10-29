@@ -14,7 +14,9 @@ namespace syscon::controllers
         constexpr size_t MaxControllerHandlersSize = 10;
         std::vector<std::unique_ptr<SwitchVirtualGamepadHandler>> controllerHandlers;
         ams::os::Mutex controllerMutex(false);
-        int polling_frequency_ms = 0;
+        s32 polling_frequency_ms = 0;
+        s8 polling_thread_priority = 0x30;
+
     } // namespace
 
     bool IsAtControllerLimit()
@@ -25,7 +27,7 @@ namespace syscon::controllers
 
     ams::Result Insert(std::unique_ptr<IController> &&controllerPtr)
     {
-        std::unique_ptr<SwitchVirtualGamepadHandler> switchHandler = std::make_unique<SwitchHDLHandler>(std::move(controllerPtr), polling_frequency_ms);
+        std::unique_ptr<SwitchVirtualGamepadHandler> switchHandler = std::make_unique<SwitchHDLHandler>(std::move(controllerPtr), polling_frequency_ms, polling_thread_priority);
 
         ams::Result rc = switchHandler->Initialize();
         if (R_SUCCEEDED(rc))
@@ -72,9 +74,10 @@ namespace syscon::controllers
         }
     }
 
-    void SetPollingFrequency(int _polling_frequency_ms)
+    void SetPollingParameters(s32 _polling_frequency_ms, s8 _polling_thread_priority)
     {
         polling_frequency_ms = _polling_frequency_ms;
+        polling_thread_priority = _polling_thread_priority;
     }
 
     void Initialize()

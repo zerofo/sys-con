@@ -42,7 +42,7 @@ private:
 
 public:
     // Initialize the class with specified controller
-    SwitchHDLHandler(std::unique_ptr<IController> &&controller, int polling_frequency_ms);
+    SwitchHDLHandler(std::unique_ptr<IController> &&controller, s32 polling_frequency_ms, s8 thread_priority);
     ~SwitchHDLHandler();
 
     // Initialize controller handler, HDL state

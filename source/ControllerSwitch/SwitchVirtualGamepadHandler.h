@@ -11,6 +11,7 @@ class SwitchVirtualGamepadHandler
 protected:
     std::unique_ptr<IController> m_controller;
     s32 m_polling_frequency_ms;
+    s32 m_polling_thread_priority;
     s32 m_read_input_timeout_us;
 
     alignas(ams::os::ThreadStackAlignment) u8 thread_stack[0x1000];
@@ -20,7 +21,8 @@ protected:
     void onRun();
 
 public:
-    SwitchVirtualGamepadHandler(std::unique_ptr<IController> &&controller, s32 polling_frequency_ms);
+    // thread_priority (0x00~0x3F); 0x2C is the usual priority of the main thread, 0x3B is a special priority on cores 0..2 that enables preemptive multithreading (0x3F on core 3).
+    SwitchVirtualGamepadHandler(std::unique_ptr<IController> &&controller, s32 polling_frequency_ms, s8 thread_priority = 0x30);
     virtual ~SwitchVirtualGamepadHandler();
 
     // Override this if you want a custom init procedure

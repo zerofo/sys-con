@@ -136,7 +136,7 @@ namespace ams
             globalConfig.polling_frequency_ms = 100;
 
         ::syscon::logger::LogDebug("Polling frequency: %d ms", globalConfig.polling_frequency_ms);
-        ::syscon::controllers::SetPollingFrequency(globalConfig.polling_frequency_ms);
+        ::syscon::controllers::SetPollingParameters(globalConfig.polling_frequency_ms, globalConfig.polling_thread_priority);
 
         ::syscon::logger::LogDebug("Initializing USB stack ...");
         ::syscon::usb::Initialize(globalConfig.discovery_mode, globalConfig.discovery_vidpid, globalConfig.auto_add_controller);

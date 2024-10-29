@@ -6,10 +6,11 @@
 
 #define LOG_LEVEL_TRACE   0
 #define LOG_LEVEL_DEBUG   1
-#define LOG_LEVEL_INFO    2
-#define LOG_LEVEL_WARNING 3
-#define LOG_LEVEL_ERROR   4
-#define LOG_LEVEL_COUNT   5
+#define LOG_LEVEL_PERF    2
+#define LOG_LEVEL_INFO    3
+#define LOG_LEVEL_WARNING 4
+#define LOG_LEVEL_ERROR   5
+#define LOG_LEVEL_COUNT   6
 
 namespace syscon::logger
 {
