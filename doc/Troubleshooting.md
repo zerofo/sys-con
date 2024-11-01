@@ -5,7 +5,7 @@ It's expected, you need to map the buttons by yourself - There are thousands of 
 This means, if you see that your controller works partially (stick/joystick works) but the buttons are not mapped correctly, you need to update the button mapping yourself.
 See the [README](https://github.com/o0Zz/sys-con?tab=readme-ov-file#configure-a-controller) for more details.
 
-## My controller right sticks axis are reversed. (X and Y are reversed)
+## My controller right sticks axis are reversed (Or don't works at all)
 If your right joystick doesn't behave as it should (for example, you press up and it goes right) - Or don't works at all.
 This means you need to map your joystick as well.
 See the [README](https://github.com/o0Zz/sys-con?tab=readme-ov-file#configure-a-controller) 
@@ -57,7 +57,7 @@ That's why it's not detected. It will behave the same way on your PC.
 To use an XBOX360 wireless controller with the switch, you need to buy this adapter (or equivalent)
 https://www.amazon.com/Mcbazel-Wireless-Receiver-Microsoft-Xbox-360/dp/B076GZFLR3/
 
-## My controller don't works at all
+## My controller is detected but don't works at all
 This probably means that your controller is not configure with the correct driver.
 In the `/config/sys-con/config.ini`, you need to find your controller (\[VID/PID\]) and edit the `driver=` key with one of the following:
  - generic (default if nothing is set)
@@ -183,7 +183,7 @@ Search for logs starting with `|E|`, If you find one, this is an error and it mi
 
 ## How to attach a logs to a ticket ?
 - Edit `/config/sys-con/config.ini`
-- change `log_level=2` to `log_level=0`
+- change `log_level=` to `log_level=0`
 - Reboot your console
 - Wait for the console to boot
 - Connect your controllers

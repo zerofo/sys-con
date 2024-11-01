@@ -1,4 +1,4 @@
-# List of controller tested with sys-con
+# List of controllers tested with sys-con
 | Controller name         | Supported | Comment | Link |
 |-------------------------|-----------|---------|------|
 | Dualshock 4 | Yes | - | - |
