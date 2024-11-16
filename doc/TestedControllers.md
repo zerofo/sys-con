@@ -37,5 +37,7 @@
 | Hyperkin N64 Adapter | Yes | - | https://www.amazon.com.au/Hyperkin-Controller-Adapter-Compatible-Nintendo/dp/B082N7K8QS |
 | 8BitDo Ultimate 2C | Yes | - | - |
 | BipBop 2.4g usb wireless | Yes | - | - |
+| Double Shock Fighter USB 2.0 Dazz| Yes | DInput mode | - |
 | 8BitDo Ultimate C 2.4g Wireless Controller  | No | Not detected: #21 | - |
 | Y3 Joypad (Receiver YC5)| No | Not detected: #30 | https://aliexpress.com/item/1005005458136372.html |
+| Buffalo iBuffalo Classic USB | Yes | - | https://www.amazon.com/Buffalo-iBuffalo-Classic-USB-Gamepad/dp/B002B9XB0E |
