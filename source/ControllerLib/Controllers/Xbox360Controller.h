@@ -37,7 +37,7 @@ struct Xbox360ButtonData
     int16_t Y;
     int16_t Z;
     int16_t Rz;
-};
+} _PACKED;
 
 enum Xbox360InputPacketType : uint8_t
 {

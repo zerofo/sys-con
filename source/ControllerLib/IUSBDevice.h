@@ -4,6 +4,14 @@
 #include <cstdio>
 #include <vector>
 
+#ifndef _PACKED
+    #if WIN32
+        #define _PACKED
+    #else
+        #define _PACKED __attribute__((packed))
+    #endif
+#endif
+
 class IUSBDevice
 {
 protected:

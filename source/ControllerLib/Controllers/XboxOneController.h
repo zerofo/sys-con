@@ -39,7 +39,7 @@ struct XboxOneButtonData
     int16_t stick_left_y;
     int16_t stick_right_x;
     int16_t stick_right_y;
-};
+} _PACKED;
 
 class XboxOneController : public BaseController
 {

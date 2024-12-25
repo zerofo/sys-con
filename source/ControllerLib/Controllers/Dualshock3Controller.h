@@ -92,7 +92,7 @@ struct Dualshock3ButtonData
     uint16_t accelerometer_y;
     uint16_t accelerometer_z;
     uint16_t gyroscope;
-};
+} _PACKED;
 
 enum Dualshock3LEDValue : uint8_t
 {

@@ -38,7 +38,7 @@ struct XboxButtonData
     int16_t stick_left_y;
     int16_t stick_right_x;
     int16_t stick_right_y;
-};
+} _PACKED;
 
 struct XboxRumbleData
 {
@@ -48,7 +48,7 @@ struct XboxRumbleData
     uint8_t big;
     uint8_t dummy2;
     uint8_t little;
-};
+} _PACKED;
 
 class XboxController : public BaseController
 {
