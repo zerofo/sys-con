@@ -15,7 +15,7 @@ namespace syscon::logger
     char logBuffer[1024];
     std::string logPath;
     int logLevel = LOG_LEVEL_INFO;
-    char logLevelStr[LOG_LEVEL_COUNT] = {'T', 'D', 'I', 'W', 'E'};
+    char logLevelStr[LOG_LEVEL_COUNT] = {'T', 'D', 'P', 'I', 'W', 'E'};
 
     ams::Result Initialize(const char *log)
     {
