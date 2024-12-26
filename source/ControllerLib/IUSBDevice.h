@@ -5,10 +5,12 @@
 #include <vector>
 
 #ifndef _PACKED
-    #if WIN32
-        #define _PACKED
-    #else
-        #define _PACKED __attribute__((packed))
+    #ifdef __GNUC__
+        #define _PACKED(x) x __attribute__((__packed__))
+    #endif
+
+    #ifdef _MSC_VER
+        #define _PACKED(x) __pragma(pack(push, 1)) x __pragma(pack(pop))
     #endif
 #endif
 

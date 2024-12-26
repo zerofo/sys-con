@@ -5,8 +5,7 @@
 // References used:
 // https://github.com/felis/USB_Host_Shield_2.0/blob/master/XBOXOLD.cpp
 
-struct XboxButtonData
-{
+_PACKED(struct XboxButtonData {
     uint8_t type;
     uint8_t length;
 
@@ -38,17 +37,16 @@ struct XboxButtonData
     int16_t stick_left_y;
     int16_t stick_right_x;
     int16_t stick_right_y;
-} _PACKED;
+});
 
-struct XboxRumbleData
-{
+_PACKED(struct XboxRumbleData {
     uint8_t command;
     uint8_t size;
     uint8_t dummy1;
     uint8_t big;
     uint8_t dummy2;
     uint8_t little;
-} _PACKED;
+});
 
 class XboxController : public BaseController
 {

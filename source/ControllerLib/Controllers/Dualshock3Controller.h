@@ -19,8 +19,7 @@ enum Dualshock3InputPacketType : uint8_t
     Ds3InputPacket_Button = 0x01,
 };
 
-struct Dualshock3ButtonData
-{
+_PACKED(struct Dualshock3ButtonData {
     // byte0
     uint8_t type;
     // byte1
@@ -92,7 +91,7 @@ struct Dualshock3ButtonData
     uint16_t accelerometer_y;
     uint16_t accelerometer_z;
     uint16_t gyroscope;
-} _PACKED;
+});
 
 enum Dualshock3LEDValue : uint8_t
 {

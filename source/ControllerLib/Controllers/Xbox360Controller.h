@@ -5,8 +5,7 @@
 // References used:
 // https://cs.chromium.org/chromium/src/device/gamepad/xbox_controller_mac.mm
 
-struct Xbox360ButtonData
-{
+_PACKED(struct Xbox360ButtonData {
     uint8_t type;
     uint8_t length;
 
@@ -37,7 +36,7 @@ struct Xbox360ButtonData
     int16_t Y;
     int16_t Z;
     int16_t Rz;
-} _PACKED;
+});
 
 enum Xbox360InputPacketType : uint8_t
 {

@@ -1,24 +1,7 @@
 #include <gtest/gtest.h>
 #include "Controllers/SwitchController.h"
-
-/* --------------------------- Test setup --------------------------- */
-
-class MockDevice : public IUSBDevice
-{
-public:
-    ControllerResult Open() override { return CONTROLLER_STATUS_SUCCESS; }
-    void Close() override {}
-    void Reset() override {}
-};
-
-class MockLogger : public ILogger
-{
-public:
-    void Log(LogLevel aLogLevel, const char *format, ::std::va_list vl) override {}
-    void LogBuffer(LogLevel aLogLevel, const uint8_t *buffer, size_t size) override {}
-};
-
-/* --------------------------- Tests --------------------------- */
+#include "mocks/Device.h"
+#include "mocks/Logger.h"
 
 TEST(Controller, test_switch_button1)
 {

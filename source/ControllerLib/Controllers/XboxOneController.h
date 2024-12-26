@@ -6,8 +6,7 @@
 // https://github.com/quantus/xbox-one-controller-protocol
 // https://cs.chromium.org/chromium/src/device/gamepad/xbox_controller_mac.mm
 
-struct XboxOneButtonData
-{
+_PACKED(struct XboxOneButtonData {
     uint8_t type;
     uint8_t const_0;
     uint16_t id;
@@ -39,7 +38,7 @@ struct XboxOneButtonData
     int16_t stick_left_y;
     int16_t stick_right_x;
     int16_t stick_right_y;
-} _PACKED;
+});
 
 class XboxOneController : public BaseController
 {

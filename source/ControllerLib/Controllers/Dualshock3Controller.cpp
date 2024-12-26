@@ -2,6 +2,8 @@
 
 #define LED_PERMANENT 0xff, 0x27, 0x00, 0x00, 0x32
 
+static_assert(sizeof(Dualshock3ButtonData) == 49);
+
 Dualshock3Controller::Dualshock3Controller(std::unique_ptr<IUSBDevice> &&device, const ControllerConfig &config, std::unique_ptr<ILogger> &&logger)
     : BaseController(std::move(device), config, std::move(logger))
 {
