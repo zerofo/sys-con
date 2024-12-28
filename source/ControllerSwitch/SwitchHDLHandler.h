@@ -32,8 +32,8 @@ class SwitchHDLHandler : public SwitchVirtualGamepadHandler
 private:
     SwitchHDLHandlerData m_controllerData[CONTROLLER_MAX_INPUTS];
 
-    ams::Result Detach(uint16_t input_idx);
-    ams::Result Attach(uint16_t input_idx);
+    Result Detach(uint16_t input_idx);
+    Result Attach(uint16_t input_idx);
 
 public:
     // Initialize the class with specified controller
@@ -41,7 +41,7 @@ public:
     ~SwitchHDLHandler();
 
     // Initialize controller handler, HDL state
-    virtual ams::Result Initialize() override;
+    virtual Result Initialize() override;
     virtual void Exit() override;
 
     // This will be called periodically by the input threads
@@ -50,13 +50,13 @@ public:
     virtual void UpdateOutput() override;
 
     // Separately init and close the HDL state
-    ams::Result InitHdlState();
-    ams::Result UninitHdlState();
+    Result InitHdlState();
+    Result UninitHdlState();
 
     bool IsVirtualDeviceAttached(uint16_t input_idx);
 
     // Fills out the HDL state with the specified button data and passes it to HID
-    ams::Result UpdateHdlState(const NormalizedButtonData &data, uint16_t input_idx);
+    Result UpdateHdlState(const NormalizedButtonData &data, uint16_t input_idx);
 
     static HiddbgHdlsSessionId &GetHdlsSessionId();
 };

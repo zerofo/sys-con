@@ -84,11 +84,6 @@ namespace ams
             if (hosversionAtLeast(7, 0, 0))
                 R_ABORT_UNLESS(hiddbgAttachHdlsWorkBuffer(&SwitchHDLHandler::GetHdlsSessionId(), g_hdls_buffer, sizeof(g_hdls_buffer)));
 
-            R_ABORT_UNLESS(hidInitialize());
-            hidInitializeNpad();
-            // R_ABORT_UNLESS(hidSetSupportedNpadIdType(NpadIdTypes, NumNpadIdTypes));
-            // R_ABORT_UNLESS(hidSetSupportedNpadStyleSet(HidNpadStyleSet_NpadStandard | HidNpadStyleTag_NpadSystemExt));
-
             ams::time::Initialize();
 
             R_ABORT_UNLESS(fs::MountSdCard("sdmc"));
@@ -96,7 +91,9 @@ namespace ams
 
         void FinalizeSystemModule()
         {
-            hiddbgReleaseHdlsWorkBuffer(SwitchHDLHandler::GetHdlsSessionId());
+            if (hosversionAtLeast(7, 0, 0))
+                hiddbgReleaseHdlsWorkBuffer(SwitchHDLHandler::GetHdlsSessionId());
+
             hiddbgExit();
             usbHsExit();
             pscmExit();
@@ -144,11 +141,12 @@ namespace ams
         ::syscon::logger::LogDebug("Initializing power supply managment ...");
         ::syscon::psc::Initialize();
 
-        while (true)
+        while ((::syscon::psc::IsRunning()))
         {
             svcSleepThread(1e+8L);
         }
 
+        ::syscon::logger::LogDebug("Shutting down sys-con ...");
         ::syscon::psc::Exit();
         ::syscon::usb::Exit();
         ::syscon::controllers::Exit();

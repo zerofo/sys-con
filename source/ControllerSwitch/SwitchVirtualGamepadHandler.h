@@ -1,7 +1,6 @@
 #pragma once
 #include "switch.h"
 #include "IController.h"
-#include <stratosphere.hpp>
 
 // This class is a base class for SwitchHDLHandler and SwitchAbstractedPaadHandler.
 class SwitchVirtualGamepadHandler
@@ -14,7 +13,7 @@ protected:
     s32 m_polling_thread_priority;
     s32 m_read_input_timeout_us;
 
-    alignas(ams::os::ThreadStackAlignment) u8 thread_stack[0x1000];
+    alignas(0x1000) u8 thread_stack[0x1000];
     Thread m_Thread;
     bool m_ThreadIsRunning = false;
 
@@ -26,12 +25,12 @@ public:
     virtual ~SwitchVirtualGamepadHandler();
 
     // Override this if you want a custom init procedure
-    virtual ams::Result Initialize();
+    virtual Result Initialize();
     // Override this if you want a custom exit procedure
     virtual void Exit();
 
     // Separately init the input-reading thread
-    ams::Result InitThread();
+    Result InitThread();
     // Separately close the input-reading thread
     void ExitThread();
 

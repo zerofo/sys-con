@@ -367,41 +367,44 @@ namespace syscon::config
             return 1; // Success
         }
 
-        ams::Result ReadFromConfig(const char *path, ams::util::ini::Handler h, void *config)
+        Result ReadFromConfig(const char *path, ams::util::ini::Handler h, void *config)
         {
             ams::fs::FileHandle file;
 
-            if (R_FAILED(ams::fs::OpenFile(std::addressof(file), path, ams::fs::OpenMode_Read)))
+            Result rc = ams::fs::OpenFile(std::addressof(file), path, ams::fs::OpenMode_Read).GetValue();
+            if (R_FAILED(rc))
             {
                 syscon::logger::LogError("Unable to open configuration file: '%s' !", path);
-                return 1;
+                return rc;
             }
             ON_SCOPE_EXIT { ams::fs::CloseFile(file); };
 
             /* Parse the config. */
-            Result rc = ams::util::ini::ParseFile(file, config, h);
+            rc = ams::util::ini::ParseFile(file, config, h);
             if (R_FAILED(rc))
             {
                 syscon::logger::LogError("Failed to parse configuration file: '%s' !", path);
-                return 1;
+                return rc;
             }
 
-            R_SUCCEED();
+            return 0;
         }
     } // namespace
 
-    ams::Result LoadGlobalConfig(GlobalConfig *config)
+    Result LoadGlobalConfig(GlobalConfig *config)
     {
         ConfigINIData cfg("global", config);
 
         syscon::logger::LogDebug("Loading global config: '%s' ...", CONFIG_FULLPATH);
 
-        R_TRY(ReadFromConfig(CONFIG_FULLPATH, ParseGlobalConfigLine, &cfg));
+        Result rc = ReadFromConfig(CONFIG_FULLPATH, ParseGlobalConfigLine, &cfg);
+        if (R_FAILED(rc))
+            return rc;
 
-        R_SUCCEED();
+        return 0;
     }
 
-    ams::Result AddControllerToConfig(const char *path, std::string section, std::string profile)
+    Result AddControllerToConfig(const char *path, std::string section, std::string profile)
     {
         s64 fileOffset = 0;
         std::stringstream ss;
@@ -413,10 +416,11 @@ namespace syscon::config
         ams::time::CalendarTime calendar = ams::time::impl::util::ToCalendarTimeInUtc(time);
 
         /* Open the config file. */
-        if (R_FAILED(ams::fs::OpenFile(std::addressof(file), path, ams::fs::OpenMode_Write | ams::fs::OpenMode_AllowAppend)))
+        Result rc = ams::fs::OpenFile(std::addressof(file), path, ams::fs::OpenMode_Write | ams::fs::OpenMode_AllowAppend).GetValue();
+        if (R_FAILED(rc))
         {
             syscon::logger::LogError("Unable to open configuration file: '%s' !", path);
-            return 1;
+            return rc;
         }
 
         ON_SCOPE_EXIT { ams::fs::CloseFile(file); };
@@ -444,38 +448,52 @@ namespace syscon::config
             ss << "home=12" << std::endl;
         }
 
-        R_TRY(ams::fs::GetFileSize(&fileOffset, file));
+        rc = ams::fs::GetFileSize(&fileOffset, file).GetValue();
+        if (R_FAILED(rc))
+        {
+            syscon::logger::LogError("Failed to get file size of configuration file: '%s' !", path);
+            return rc;
+        }
 
-        ams::Result rc = ams::fs::WriteFile(file, fileOffset, ss.str().c_str(), ss.str().length(), ams::fs::WriteOption::Flush);
+        rc = ams::fs::WriteFile(file, fileOffset, ss.str().c_str(), ss.str().length(), ams::fs::WriteOption::Flush).GetValue();
         if (R_FAILED(rc))
         {
             syscon::logger::LogError("Failed to write configuration file: '%s' !", path);
-            return 1;
+            return rc;
         }
 
-        R_SUCCEED();
+        return 0;
     }
 
-    ams::Result LoadControllerConfig(ControllerConfig *config, uint16_t vendor_id, uint16_t product_id, bool auto_add_controller, const std::string &default_profile)
+    Result LoadControllerConfig(ControllerConfig *config, uint16_t vendor_id, uint16_t product_id, bool auto_add_controller, const std::string &default_profile)
     {
         ControllerVidPid controllerVidPid(vendor_id, product_id);
         ConfigINIData cfg_default("default", config);
         ConfigINIData cfg_controller(controllerVidPid, config);
 
         syscon::logger::LogDebug("Loading controller config: '%s' [default] ...", CONFIG_FULLPATH);
-        R_TRY(ReadFromConfig(CONFIG_FULLPATH, ParseControllerConfigLine, &cfg_default));
+
+        Result rc = ReadFromConfig(CONFIG_FULLPATH, ParseControllerConfigLine, &cfg_default);
+        if (R_FAILED(rc))
+            return rc;
 
         // Override with vendor specific config
         syscon::logger::LogDebug("Loading controller config: '%s' [%s] ...", CONFIG_FULLPATH, std::string(controllerVidPid).c_str());
-        R_TRY(ReadFromConfig(CONFIG_FULLPATH, ParseControllerConfigLine, &cfg_controller));
+        rc = ReadFromConfig(CONFIG_FULLPATH, ParseControllerConfigLine, &cfg_controller);
+        if (R_FAILED(rc))
+            return rc;
 
         if (!cfg_controller.ini_section_found && auto_add_controller)
         {
             syscon::logger::LogDebug("Controller not found in config file, adding it as '%s'...", default_profile.c_str());
-            R_TRY(AddControllerToConfig(CONFIG_FULLPATH, std::string(controllerVidPid), default_profile));
+            rc = AddControllerToConfig(CONFIG_FULLPATH, std::string(controllerVidPid), default_profile);
+            if (R_FAILED(rc))
+                return rc;
 
             syscon::logger::LogDebug("Reloading controller config: '%s' [%s] ...", CONFIG_FULLPATH, std::string(controllerVidPid).c_str());
-            R_TRY(ReadFromConfig(CONFIG_FULLPATH, ParseControllerConfigLine, &cfg_controller));
+            rc = ReadFromConfig(CONFIG_FULLPATH, ParseControllerConfigLine, &cfg_controller);
+            if (R_FAILED(rc))
+                return rc;
         }
 
         // Check if have a "profile"
@@ -483,12 +501,16 @@ namespace syscon::config
         {
             syscon::logger::LogDebug("Loading controller config: '%s' (Profile: [%s]) ... ", CONFIG_FULLPATH, config->profile.c_str());
             ConfigINIData cfg_profile(config->profile, config);
-            R_TRY(ReadFromConfig(CONFIG_FULLPATH, ParseControllerConfigLine, &cfg_profile));
+            rc = ReadFromConfig(CONFIG_FULLPATH, ParseControllerConfigLine, &cfg_profile);
+            if (R_FAILED(rc))
+                return rc;
 
             // Re-Override with vendor specific config
             // We are doing this to allow the profile to be overrided by the vendor specific config
             // In other words we would like to have [default] overrided by [profile] overrided by [vid-pid]
-            R_TRY(ReadFromConfig(CONFIG_FULLPATH, ParseControllerConfigLine, &cfg_controller));
+            rc = ReadFromConfig(CONFIG_FULLPATH, ParseControllerConfigLine, &cfg_controller);
+            if (R_FAILED(rc))
+                return rc;
         }
 
         if (config->buttonsPin[ControllerButton::B][0] == 0 && config->buttonsPin[ControllerButton::A][0] == 0 && config->buttonsPin[ControllerButton::Y][0] == 0 && config->buttonsPin[ControllerButton::X][0] == 0)
@@ -496,6 +518,6 @@ namespace syscon::config
         else
             syscon::logger::LogInfo("Controller successfully loaded (B=%d, A=%d, Y=%d, X=%d, ...) !", config->buttonsPin[ControllerButton::B][0], config->buttonsPin[ControllerButton::A][0], config->buttonsPin[ControllerButton::Y][0], config->buttonsPin[ControllerButton::X][0]);
 
-        R_SUCCEED();
+        return 0;
     }
 } // namespace syscon::config

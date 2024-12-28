@@ -1,13 +1,12 @@
 #pragma once
 
-#include "SwitchVirtualGamepadHandler.h"
-#include <stratosphere.hpp>
+#include "IController.h"
 
 namespace syscon::controllers
 {
     bool IsAtControllerLimit();
 
-    ams::Result Insert(std::unique_ptr<IController> &&controllerPtr);
+    Result Insert(std::unique_ptr<IController> &&controllerPtr);
     void RemoveIfNotPlugged(std::vector<s32> interfaceIDsPlugged);
 
     void SetPollingParameters(s32 _polling_frequency_ms, s8 _thread_priority);

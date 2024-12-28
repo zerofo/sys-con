@@ -1,7 +1,7 @@
 #include "SwitchUSBLock.h"
-#include <stratosphere.hpp>
+#include <mutex>
 
-static ams::os::Mutex usbMutex(true);
+static std::recursive_mutex usbMutex;
 
 SwitchUSBLock::SwitchUSBLock(bool scoped) : m_scoped(scoped)
 {

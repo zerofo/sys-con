@@ -16,19 +16,25 @@ SwitchHDLHandler::~SwitchHDLHandler()
     Exit();
 }
 
-ams::Result SwitchHDLHandler::Initialize()
+Result SwitchHDLHandler::Initialize()
 {
     syscon::logger::LogDebug("SwitchHDLHandler[%04x-%04x] Initializing ...", m_controller->GetDevice()->GetVendor(), m_controller->GetDevice()->GetProduct());
 
-    R_TRY(SwitchVirtualGamepadHandler::Initialize());
+    Result rc = SwitchVirtualGamepadHandler::Initialize();
+    if (R_FAILED(rc))
+        return rc;
 
-    R_TRY(InitHdlState());
+    rc = InitHdlState();
+    if (R_FAILED(rc))
+        return rc;
 
-    R_TRY(InitThread());
+    rc = InitThread();
+    if (R_FAILED(rc))
+        return rc;
 
     syscon::logger::LogInfo("SwitchHDLHandler[%04x-%04x] Initialized !", m_controller->GetDevice()->GetVendor(), m_controller->GetDevice()->GetProduct());
 
-    R_SUCCEED();
+    return 0;
 }
 
 void SwitchHDLHandler::Exit()
@@ -42,31 +48,36 @@ void SwitchHDLHandler::Exit()
     syscon::logger::LogInfo("SwitchHDLHandler[%04x-%04x] Uninitialized !", m_controller->GetDevice()->GetVendor(), m_controller->GetDevice()->GetProduct());
 }
 
-ams::Result SwitchHDLHandler::Attach(uint16_t input_idx)
+Result SwitchHDLHandler::Attach(uint16_t input_idx)
 {
     if (IsVirtualDeviceAttached(input_idx))
-        R_SUCCEED();
+        return 0;
 
     syscon::logger::LogDebug("SwitchHDLHandler[%04x-%04x] Attaching device for input: %d ...", m_controller->GetDevice()->GetVendor(), m_controller->GetDevice()->GetProduct(), input_idx);
 
-    R_TRY(hiddbgAttachHdlsVirtualDevice(&m_controllerData[input_idx].m_hdlHandle, &m_controllerData[input_idx].m_deviceInfo));
+    Result rc = hiddbgAttachHdlsVirtualDevice(&m_controllerData[input_idx].m_hdlHandle, &m_controllerData[input_idx].m_deviceInfo);
+    if (R_FAILED(rc))
+    {
+        syscon::logger::LogError("SwitchHDLHandler[%04x-%04x] Failed to attach device for input: %d (Error: 0x%08X)!", m_controller->GetDevice()->GetVendor(), m_controller->GetDevice()->GetProduct(), input_idx, rc);
+        return rc;
+    }
 
     syscon::logger::LogDebug("SwitchHDLHandler[%04x-%04x] Attach - Idx: %d", m_controller->GetDevice()->GetVendor(), m_controller->GetDevice()->GetProduct(), input_idx);
 
-    R_SUCCEED();
+    return 0;
 }
 
-ams::Result SwitchHDLHandler::Detach(uint16_t input_idx)
+Result SwitchHDLHandler::Detach(uint16_t input_idx)
 {
     if (!IsVirtualDeviceAttached(input_idx))
-        R_SUCCEED();
+        return 0;
 
     syscon::logger::LogDebug("SwitchHDLHandler[%04x-%04x] Detaching device for input: %d ...", m_controller->GetDevice()->GetVendor(), m_controller->GetDevice()->GetProduct(), input_idx);
 
     hiddbgDetachHdlsVirtualDevice(m_controllerData[input_idx].m_hdlHandle);
     m_controllerData[input_idx].m_hdlHandle.handle = 0;
 
-    R_SUCCEED();
+    return 0;
 }
 
 u8 ControllerTypeToDeviceType(ControllerType type)
@@ -97,7 +108,7 @@ u8 ControllerTypeToDeviceType(ControllerType type)
     return HidDeviceType_FullKey15;
 }
 
-ams::Result SwitchHDLHandler::InitHdlState()
+Result SwitchHDLHandler::InitHdlState()
 {
     syscon::logger::LogDebug("SwitchHDLHandler[%04x-%04x] Initializing HDL state ...", m_controller->GetDevice()->GetVendor(), m_controller->GetDevice()->GetProduct());
 
@@ -125,17 +136,17 @@ ams::Result SwitchHDLHandler::InitHdlState()
     }
 
     syscon::logger::LogDebug("SwitchHDLHandler[%04x-%04x] HDL state successfully initialized !", m_controller->GetDevice()->GetVendor(), m_controller->GetDevice()->GetProduct());
-    R_SUCCEED();
+    return 0;
 }
 
-ams::Result SwitchHDLHandler::UninitHdlState()
+Result SwitchHDLHandler::UninitHdlState()
 {
     syscon::logger::LogDebug("SwitchHDLHandler[%04x-%04x] UninitHdlState .. !", m_controller->GetDevice()->GetVendor(), m_controller->GetDevice()->GetProduct());
 
     for (int i = 0; i < m_controller->GetInputCount(); i++)
         Detach(i);
 
-    R_SUCCEED();
+    return 0;
 }
 
 bool SwitchHDLHandler::IsVirtualDeviceAttached(uint16_t input_idx)
@@ -144,7 +155,7 @@ bool SwitchHDLHandler::IsVirtualDeviceAttached(uint16_t input_idx)
 }
 
 // Sets the state of the class's HDL controller to the state stored in class's hdl.state
-ams::Result SwitchHDLHandler::UpdateHdlState(const NormalizedButtonData &data, uint16_t input_idx)
+Result SwitchHDLHandler::UpdateHdlState(const NormalizedButtonData &data, uint16_t input_idx)
 {
     HiddbgHdlsState *hdlState = &m_controllerData[input_idx].m_hdlState;
 
@@ -213,11 +224,11 @@ ams::Result SwitchHDLHandler::UpdateHdlState(const NormalizedButtonData &data, u
             m_controllerData[input_idx].m_is_sync = false;
             Detach(input_idx);
 
-            R_RETURN(rc);
+            return rc;
         }
     }
 
-    R_SUCCEED();
+    return 0;
 }
 
 void SwitchHDLHandler::UpdateInput(s32 timeout_us)
@@ -225,7 +236,7 @@ void SwitchHDLHandler::UpdateInput(s32 timeout_us)
     uint16_t input_idx = 0;
     NormalizedButtonData buttonData = {0};
 
-    ams::Result read_rc = m_controller->ReadInput(&buttonData, &input_idx, timeout_us);
+    Result read_rc = m_controller->ReadInput(&buttonData, &input_idx, timeout_us);
 
     /*
         Note: We must not return here if readInput fail, because it might have change the ControllerConnected state.

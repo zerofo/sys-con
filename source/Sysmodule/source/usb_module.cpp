@@ -2,7 +2,6 @@
 #include "usb_module.h"
 #include "controller_handler.h"
 #include "Controllers.h"
-#include <stratosphere.hpp>
 
 #include "SwitchUSBDevice.h"
 #include "SwitchUSBLock.h"
@@ -23,8 +22,8 @@ namespace syscon::usb
         // Thread that waits on any disconnected usb devices
         void UsbInterfaceChangeThreadFunc(void *arg);
 
-        alignas(ams::os::ThreadStackAlignment) u8 usb_event_thread_stack[0x4000];
-        alignas(ams::os::ThreadStackAlignment) u8 usb_interface_change_thread_stack[0x2000];
+        alignas(0x1000) u8 usb_event_thread_stack[0x4000];
+        alignas(0x1000) u8 usb_interface_change_thread_stack[0x2000];
 
         Thread g_usb_event_thread;
         Thread g_usb_interface_change_thread;
@@ -257,7 +256,7 @@ namespace syscon::usb
 
     } // namespace
 
-    void Initialize(syscon::config::DiscoveryMode discovery_mode, std::vector<syscon::config::ControllerVidPid> &discovery_vidpid, bool auto_add_controller)
+    Result Initialize(syscon::config::DiscoveryMode discovery_mode, std::vector<syscon::config::ControllerVidPid> &discovery_vidpid, bool auto_add_controller)
     {
         g_auto_add_controller = auto_add_controller;
 
@@ -306,12 +305,22 @@ namespace syscon::usb
         }
 
         is_usb_event_thread_running = true;
-        R_ABORT_UNLESS(threadCreate(&g_usb_event_thread, &UsbEventThreadFunc, nullptr, usb_event_thread_stack, sizeof(usb_event_thread_stack), 0x3A, -2));
-        R_ABORT_UNLESS(threadStart(&g_usb_event_thread));
+        Result rc = threadCreate(&g_usb_event_thread, &UsbEventThreadFunc, nullptr, usb_event_thread_stack, sizeof(usb_event_thread_stack), 0x3A, -2);
+        if (R_FAILED(rc))
+            return rc;
+        rc = threadStart(&g_usb_event_thread);
+        if (R_FAILED(rc))
+            return rc;
 
         is_usb_interface_change_thread_running = true;
-        R_ABORT_UNLESS(threadCreate(&g_usb_interface_change_thread, &UsbInterfaceChangeThreadFunc, nullptr, usb_interface_change_thread_stack, sizeof(usb_interface_change_thread_stack), 0x2C, -2));
-        R_ABORT_UNLESS(threadStart(&g_usb_interface_change_thread));
+        rc = threadCreate(&g_usb_interface_change_thread, &UsbInterfaceChangeThreadFunc, nullptr, usb_interface_change_thread_stack, sizeof(usb_interface_change_thread_stack), 0x2C, -2);
+        if (R_FAILED(rc))
+            return rc;
+        rc = threadStart(&g_usb_interface_change_thread);
+        if (R_FAILED(rc))
+            return rc;
+
+        return 0;
     }
 
     void Exit()

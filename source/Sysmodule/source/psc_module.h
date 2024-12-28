@@ -1,9 +1,9 @@
 #pragma once
 #include "switch.h"
-#include "vapours/results/results_common.hpp"
 
 namespace syscon::psc
 {
-    ams::Result Initialize();
+    Result Initialize();
     void Exit();
+    bool IsRunning();
 };

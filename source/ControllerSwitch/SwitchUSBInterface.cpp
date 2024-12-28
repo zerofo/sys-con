@@ -4,7 +4,6 @@
 #include "SwitchLogger.h"
 #include <malloc.h>
 #include <cstring>
-#include <stratosphere.hpp>
 
 SwitchUSBInterface::SwitchUSBInterface(UsbHsInterface &interface)
     : m_interface(interface)
@@ -21,10 +20,10 @@ ControllerResult SwitchUSBInterface::Open()
 
     ::syscon::logger::LogDebug("SwitchUSBInterface[%04x-%04x] Openning ...", m_interface.device_desc.idVendor, m_interface.device_desc.idProduct);
 
-    ams::Result rc = usbHsAcquireUsbIf(&m_session, &m_interface);
+    Result rc = usbHsAcquireUsbIf(&m_session, &m_interface);
     if (R_FAILED(rc))
     {
-        ::syscon::logger::LogError("SwitchUSBInterface[%04x-%04x] Failed to acquire USB interface - Error: 0x%X (Module: 0x%X, Desc: 0x%X) !", m_interface.device_desc.idVendor, m_interface.device_desc.idProduct, rc.GetValue(), R_MODULE(rc.GetValue()), R_DESCRIPTION(rc.GetValue()));
+        ::syscon::logger::LogError("SwitchUSBInterface[%04x-%04x] Failed to acquire USB interface - Error: 0x%X (Module: 0x%X, Desc: 0x%X) !", m_interface.device_desc.idVendor, m_interface.device_desc.idProduct, rc, R_MODULE(rc), R_DESCRIPTION(rc));
         return CONTROLLER_STATUS_USB_INTERFACE_ACQUIRE;
     }
 

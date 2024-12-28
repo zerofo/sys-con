@@ -3,9 +3,9 @@
 #include "ControllerConfig.h"
 #include "logger.h"
 #include <string>
+#include <sstream>
+#include <iomanip>
 #include <vector>
-#include <switch.h>
-#include <stratosphere.hpp>
 
 #define CONFIG_PATH     "sdmc:/config/sys-con/"
 #define CONFIG_FULLPATH CONFIG_PATH "config.ini"
@@ -66,8 +66,8 @@ namespace syscon::config
         bool auto_add_controller{true};
     };
 
-    ams::Result LoadGlobalConfig(GlobalConfig *config);
+    Result LoadGlobalConfig(GlobalConfig *config);
 
-    ams::Result LoadControllerConfig(ControllerConfig *config, uint16_t vendor_id, uint16_t product_id, bool auto_add_controller, const std::string &default_profile);
+    Result LoadControllerConfig(ControllerConfig *config, uint16_t vendor_id, uint16_t product_id, bool auto_add_controller, const std::string &default_profile);
 
 }; // namespace syscon::config

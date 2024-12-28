@@ -5,7 +5,6 @@
 #include <stratosphere.hpp>
 #include <stratosphere/fs/fs_filesystem.hpp>
 #include <stratosphere/fs/fs_file.hpp>
-#include <vapours/util/util_format_string.hpp>
 
 #define LOG_FILE_SIZE_MAX (128 * 1024)
 
@@ -17,7 +16,7 @@ namespace syscon::logger
     int logLevel = LOG_LEVEL_INFO;
     char logLevelStr[LOG_LEVEL_COUNT] = {'T', 'D', 'P', 'I', 'W', 'E'};
 
-    ams::Result Initialize(const char *log)
+    Result Initialize(const char *log)
     {
         std::scoped_lock printLock(printMutex);
         s64 fileOffset = 0;
@@ -45,7 +44,7 @@ namespace syscon::logger
         // Create the log file if it doesn't exist (Or previously deleted)
         ams::fs::CreateFile(logPath.c_str(), 0);
 
-        R_SUCCEED();
+        return 0;
     }
 
     void SetLogLevel(int level)
@@ -53,20 +52,19 @@ namespace syscon::logger
         logLevel = level;
     }
 
-    ams::Result LogWriteToFile(const char *logBuffer)
+    void LogWriteToFile(const char *logBuffer)
     {
         s64 fileOffset;
         ams::fs::FileHandle file;
 
-        R_TRY(ams::fs::OpenFile(std::addressof(file), logPath.c_str(), ams::fs::OpenMode_Write | ams::fs::OpenMode_AllowAppend));
-        ON_SCOPE_EXIT { ams::fs::CloseFile(file); };
+        if (R_FAILED(ams::fs::OpenFile(std::addressof(file), logPath.c_str(), ams::fs::OpenMode_Write | ams::fs::OpenMode_AllowAppend)))
+            return;
 
-        R_TRY(ams::fs::GetFileSize(&fileOffset, file));
+        (void)ams::fs::GetFileSize(&fileOffset, file);
+        (void)ams::fs::WriteFile(file, fileOffset, logBuffer, strlen(logBuffer), ams::fs::WriteOption::Flush);
+        (void)ams::fs::WriteFile(file, fileOffset + strlen(logBuffer), "\n", 1, ams::fs::WriteOption::Flush);
 
-        R_TRY(ams::fs::WriteFile(file, fileOffset, logBuffer, strlen(logBuffer), ams::fs::WriteOption::Flush));
-        R_TRY(ams::fs::WriteFile(file, fileOffset + strlen(logBuffer), "\n", 1, ams::fs::WriteOption::Flush));
-
-        R_SUCCEED();
+        ams::fs::CloseFile(file);
     }
 
     void Log(int lvl, const char *fmt, ::std::va_list vl)
@@ -95,11 +93,11 @@ namespace syscon::logger
 
         ams::TimeSpan ts = ams::os::ConvertToTimeSpan(ams::os::GetSystemTick());
 
-        ams::util::SNPrintf(logBuffer, sizeof(logBuffer), "|%c|%02li:%02li:%02li.%03li|%08X| ", logLevelStr[lvl], ts.GetHours() % 24, ts.GetMinutes() % 60, ts.GetSeconds() % 60, ts.GetMilliSeconds() % 1000, (uint32_t)((uint64_t)threadGetSelf()));
+        snprintf(logBuffer, sizeof(logBuffer), "|%c|%02li:%02li:%02li.%03li|%08X| ", logLevelStr[lvl], ts.GetHours() % 24, ts.GetMinutes() % 60, ts.GetSeconds() % 60, ts.GetMilliSeconds() % 1000, (uint32_t)((uint64_t)threadGetSelf()));
 
         size_t start_offset = strlen(logBuffer);
 
-        ams::util::SNPrintf(&logBuffer[strlen(logBuffer)], ams::util::size(logBuffer) - strlen(logBuffer), "Buffer (%ld): ", size);
+        snprintf(&logBuffer[strlen(logBuffer)], sizeof(logBuffer) - strlen(logBuffer), "Buffer (%ld): ", size);
 
         LogWriteToFile(logBuffer);
 
@@ -107,7 +105,7 @@ namespace syscon::logger
         for (size_t i = 0; i < size; i += 16)
         {
             for (size_t k = 0; k < std::min((size_t)16, size - i); k++)
-                ams::util::SNPrintf(&logBuffer[start_offset + (k * 3)], ams::util::size(logBuffer) - (start_offset + (k * 3)), "%02X ", buffer[i + k]);
+                snprintf(&logBuffer[start_offset + (k * 3)], sizeof(logBuffer) - (start_offset + (k * 3)), "%02X ", buffer[i + k]);
 
             /* Write in the file. */
             LogWriteToFile(logBuffer);

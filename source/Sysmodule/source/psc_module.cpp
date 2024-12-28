@@ -1,5 +1,4 @@
 #include "psc_module.h"
-#include <stratosphere.hpp>
 #include "usb_module.h"
 #include "config_handler.h"
 #include "controller_handler.h"
@@ -16,7 +15,7 @@ namespace syscon::psc
         // Thread to check for psc:pm state change (console waking up/going to sleep)
         void PscThreadFunc(void *arg);
 
-        alignas(ams::os::ThreadStackAlignment) u8 psc_thread_stack[0x1000];
+        alignas(0x1000) u8 psc_thread_stack[0x1000];
         Thread g_psc_thread;
 
         bool is_psc_thread_running = false;
@@ -39,9 +38,12 @@ namespace syscon::psc
                                 ::syscon::logger::LogDebug("Power management: Awake");
                                 break;
                             case PscPmState_ReadySleep:
-                            case PscPmState_ReadyShutdown:
                                 ::syscon::logger::LogDebug("Power management: Sleep");
                                 controllers::Clear();
+                                break;
+                            case PscPmState_ReadyShutdown:
+                                ::syscon::logger::LogDebug("Power management: Shutdown");
+                                is_psc_thread_running = false; // Exit thread
                                 break;
                             default:
                                 break;
@@ -53,14 +55,28 @@ namespace syscon::psc
         }
     } // namespace
 
-    ams::Result Initialize()
+    Result Initialize()
     {
-        R_TRY(pscmGetPmModule(&pscModule, PscPmModuleId(126), dependencies, sizeof(dependencies) / sizeof(uint32_t), true));
+        Result rc = pscmGetPmModule(&pscModule, PscPmModuleId(0xBD), dependencies, sizeof(dependencies) / sizeof(uint32_t), true);
+        if (R_FAILED(rc))
+            return rc;
+
         pscModuleWaiter = waiterForEvent(&pscModule.event);
         is_psc_thread_running = true;
-        R_ABORT_UNLESS(threadCreate(&g_psc_thread, &PscThreadFunc, nullptr, psc_thread_stack, sizeof(psc_thread_stack), 0x2C, -2));
-        R_ABORT_UNLESS(threadStart(&g_psc_thread));
+        rc = threadCreate(&g_psc_thread, &PscThreadFunc, nullptr, psc_thread_stack, sizeof(psc_thread_stack), 0x2C, -2);
+        if (R_FAILED(rc))
+            return rc;
+
+        rc = threadStart(&g_psc_thread);
+        if (R_FAILED(rc))
+            return rc;
+
         return 0;
+    }
+
+    bool IsRunning()
+    {
+        return is_psc_thread_running;
     }
 
     void Exit()

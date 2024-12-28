@@ -1,5 +1,6 @@
 #include "SwitchVirtualGamepadHandler.h"
 #include "SwitchLogger.h"
+#include <stratosphere.hpp>
 
 SwitchVirtualGamepadHandler::SwitchVirtualGamepadHandler(std::unique_ptr<IController> &&controller, s32 polling_frequency_ms, s8 thread_priority)
     : m_controller(std::move(controller)),
@@ -12,13 +13,15 @@ SwitchVirtualGamepadHandler::~SwitchVirtualGamepadHandler()
 {
 }
 
-ams::Result SwitchVirtualGamepadHandler::Initialize()
+Result SwitchVirtualGamepadHandler::Initialize()
 {
-    R_TRY(m_controller->Initialize())
+    Result rc = m_controller->Initialize();
+    if (R_FAILED(rc))
+        return rc;
 
     m_read_input_timeout_us = (m_polling_frequency_ms * 1000) / m_controller->GetInputCount();
 
-    R_SUCCEED();
+    return 0;
 }
 
 void SwitchVirtualGamepadHandler::Exit()
@@ -57,11 +60,17 @@ void SwitchVirtualGamepadHandlerThreadFunc(void *handler)
     static_cast<SwitchVirtualGamepadHandler *>(handler)->onRun();
 }
 
-ams::Result SwitchVirtualGamepadHandler::InitThread()
+Result SwitchVirtualGamepadHandler::InitThread()
 {
     m_ThreadIsRunning = true;
-    R_ABORT_UNLESS(threadCreate(&m_Thread, &SwitchVirtualGamepadHandlerThreadFunc, this, thread_stack, sizeof(thread_stack), m_polling_thread_priority, -2));
-    R_ABORT_UNLESS(threadStart(&m_Thread));
+    Result rc = threadCreate(&m_Thread, &SwitchVirtualGamepadHandlerThreadFunc, this, thread_stack, sizeof(thread_stack), m_polling_thread_priority, -2);
+    if (R_FAILED(rc))
+        return rc;
+        
+    rc = threadStart(&m_Thread);
+    if (R_FAILED(rc))
+        return rc;
+
     return 0;
 }
 

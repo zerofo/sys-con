@@ -2,7 +2,6 @@
 #include <cstdarg>
 #include <string>
 #include "ILogger.h"
-#include "vapours/results/results_common.hpp"
 
 #define LOG_LEVEL_TRACE   0
 #define LOG_LEVEL_DEBUG   1
@@ -14,7 +13,7 @@
 
 namespace syscon::logger
 {
-    ams::Result Initialize(const char *logPath);
+    Result Initialize(const char *logPath);
     void Exit();
 
     void SetLogLevel(int level);

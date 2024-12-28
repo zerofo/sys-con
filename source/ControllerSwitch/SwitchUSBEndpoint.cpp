@@ -3,7 +3,6 @@
 #include "SwitchLogger.h"
 #include <cstring>
 #include <malloc.h>
-#include <stratosphere.hpp>
 
 SwitchUSBEndpoint::SwitchUSBEndpoint(UsbHsClientIfSession &if_session, usb_endpoint_descriptor &desc)
     : m_ifSession(&if_session),
@@ -55,7 +54,7 @@ ControllerResult SwitchUSBEndpoint::Write(const uint8_t *inBuffer, size_t buffer
     ::syscon::logger::LogTrace("SwitchUSBEndpoint[0x%02X] Write %d bytes", m_descriptor->bEndpointAddress, bufferSize);
     ::syscon::logger::LogBuffer(LOG_LEVEL_TRACE, m_usb_buffer_out, bufferSize);
 
-    ams::Result rc = usbHsEpPostBuffer(&m_epSession, m_usb_buffer_out, bufferSize, &transferredSize);
+    Result rc = usbHsEpPostBuffer(&m_epSession, m_usb_buffer_out, bufferSize, &transferredSize);
     if (R_FAILED(rc))
     {
         ::syscon::logger::LogError("SwitchUSBEndpoint[0x%02X] Write failed: 0x%08X", m_descriptor->bEndpointAddress, rc);
@@ -78,7 +77,7 @@ ControllerResult SwitchUSBEndpoint::Read(uint8_t *outBuffer, size_t *bufferSizeI
     {
         u32 transferredSize;
 
-        ams::Result rc = usbHsEpPostBuffer(&m_epSession, m_usb_buffer_in, *bufferSizeInOut, &transferredSize);
+        Result rc = usbHsEpPostBuffer(&m_epSession, m_usb_buffer_in, *bufferSizeInOut, &transferredSize);
         if (R_FAILED(rc))
         {
             ::syscon::logger::LogError("SwitchUSBEndpoint[0x%02X] Read failed: 0x%08X", m_descriptor->bEndpointAddress, rc);
@@ -104,7 +103,7 @@ ControllerResult SwitchUSBEndpoint::Read(uint8_t *outBuffer, size_t *bufferSizeI
         u32 count = 0;
         UsbHsXferReport report;
         u32 tmpXcferId = 0;
-        ams::Result rc;
+        Result rc;
 
         if (m_xferIdRead == 0)
         {

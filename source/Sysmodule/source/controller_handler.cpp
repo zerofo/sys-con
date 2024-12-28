@@ -4,6 +4,7 @@
 #include "SwitchUSBInterface.h"
 #include <algorithm>
 #include <functional>
+#include <mutex>
 
 #include "logger.h"
 
@@ -13,7 +14,7 @@ namespace syscon::controllers
     {
         constexpr size_t MaxControllerHandlersSize = 10;
         std::vector<std::unique_ptr<SwitchVirtualGamepadHandler>> controllerHandlers;
-        ams::os::Mutex controllerMutex(false);
+        std::mutex controllerMutex;
         s32 polling_frequency_ms = 0;
         s8 polling_thread_priority = 0x30;
 
@@ -21,25 +22,25 @@ namespace syscon::controllers
 
     bool IsAtControllerLimit()
     {
-        std::scoped_lock scoped_lock(controllerMutex);
+        std::lock_guard<std::mutex> scoped_lock(controllerMutex);
         return controllerHandlers.size() >= MaxControllerHandlersSize;
     }
 
-    ams::Result Insert(std::unique_ptr<IController> &&controllerPtr)
+    Result Insert(std::unique_ptr<IController> &&controllerPtr)
     {
         std::unique_ptr<SwitchVirtualGamepadHandler> switchHandler = std::make_unique<SwitchHDLHandler>(std::move(controllerPtr), polling_frequency_ms, polling_thread_priority);
 
-        ams::Result rc = switchHandler->Initialize();
+        Result rc = switchHandler->Initialize();
         if (R_SUCCEEDED(rc))
         {
             syscon::logger::LogInfo("Controller[%04x-%04x] plugged !", switchHandler->GetController()->GetDevice()->GetVendor(), switchHandler->GetController()->GetDevice()->GetProduct());
 
-            std::scoped_lock scoped_lock(controllerMutex);
+            std::lock_guard<std::mutex> scoped_lock(controllerMutex);
             controllerHandlers.push_back(std::move(switchHandler));
         }
         else
         {
-            syscon::logger::LogError("Controller[%04x-%04x] Failed to initialize controller: Error: 0x%X (Module: 0x%X, Desc: 0x%X)", switchHandler->GetController()->GetDevice()->GetVendor(), switchHandler->GetController()->GetDevice()->GetProduct(), rc.GetValue(), R_MODULE(rc.GetValue()), R_DESCRIPTION(rc.GetValue()));
+            syscon::logger::LogError("Controller[%04x-%04x] Failed to initialize controller: Error: 0x%X (Module: 0x%X, Desc: 0x%X)", switchHandler->GetController()->GetDevice()->GetVendor(), switchHandler->GetController()->GetDevice()->GetProduct(), rc, R_MODULE(rc), R_DESCRIPTION(rc));
         }
 
         return rc;
@@ -47,7 +48,7 @@ namespace syscon::controllers
 
     void RemoveIfNotPlugged(std::vector<s32> interfaceIDsPlugged)
     {
-        std::scoped_lock scoped_lock(controllerMutex);
+        std::lock_guard<std::mutex> scoped_lock(controllerMutex);
         for (auto it = controllerHandlers.begin(); it != controllerHandlers.end(); it++)
         {
             bool found = false;
@@ -88,7 +89,7 @@ namespace syscon::controllers
     void Clear()
     {
         syscon::logger::LogDebug("Controllers clear (Release all controllers) !");
-        std::scoped_lock scoped_lock(controllerMutex);
+        std::lock_guard<std::mutex> scoped_lock(controllerMutex);
         controllerHandlers.clear();
     }
 
