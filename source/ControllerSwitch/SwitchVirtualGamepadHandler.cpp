@@ -42,7 +42,7 @@ void SwitchVirtualGamepadHandler::onRun()
         s64 execution_time_us = (ams::os::ConvertToTimeSpan(ams::os::GetSystemTick()) - startTimer).GetMicroSeconds();
 
         if ((execution_time_us - m_read_input_timeout_us) > 10000) // 10ms
-            ::syscon::logger::LogError("SwitchVirtualGamepadHandler UpdateInputOutput took: %d us !", execution_time_us);
+            ::syscon::logger::LogWarning("SwitchVirtualGamepadHandler UpdateInputOutput took: %d ms !", execution_time_us / 1000);
 
         if (execution_time_us < m_read_input_timeout_us)
             svcSleepThread((m_read_input_timeout_us - execution_time_us) * 1000);

@@ -15,19 +15,14 @@ class SwitchHDLHandlerData
 public:
     void reset()
     {
-        m_npadId = HidNpadIdType_Other;
         m_hdlHandle.handle = 0;
         memset(&m_deviceInfo, 0, sizeof(m_deviceInfo));
         memset(&m_hdlState, 0, sizeof(m_hdlState));
-        memset(&m_vibrationDeviceHandle, 0, sizeof(m_vibrationDeviceHandle));
     }
 
-    HidNpadIdType m_npadId;
     HiddbgHdlsHandle m_hdlHandle;
     HiddbgHdlsDeviceInfo m_deviceInfo;
     HiddbgHdlsState m_hdlState;
-    HidVibrationDeviceHandle m_vibrationDeviceHandle;
-    HidVibrationValue m_vibrationLastValue;
     bool m_is_connected;
     bool m_is_sync;
 };

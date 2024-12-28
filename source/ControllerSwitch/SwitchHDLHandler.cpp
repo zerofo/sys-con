@@ -4,21 +4,6 @@
 
 static HiddbgHdlsSessionId g_hdlsSessionId;
 
-static uint32_t GetHidNpadMask()
-{
-    uint32_t HidNpadMask = 0;
-    for (HidNpadIdType i = HidNpadIdType_No1; i <= HidNpadIdType_No8; i = (HidNpadIdType)((int)i + 1))
-    {
-        u32 deviceType = hidGetNpadDeviceType(i);
-        if (deviceType == 0)
-            continue;
-
-        HidNpadMask |= 1 << i;
-    }
-
-    return HidNpadMask;
-}
-
 SwitchHDLHandler::SwitchHDLHandler(std::unique_ptr<IController> &&controller, s32 polling_frequency_ms, s8 thread_priority)
     : SwitchVirtualGamepadHandler(std::move(controller), polling_frequency_ms, thread_priority)
 {
@@ -64,33 +49,9 @@ ams::Result SwitchHDLHandler::Attach(uint16_t input_idx)
 
     syscon::logger::LogDebug("SwitchHDLHandler[%04x-%04x] Attaching device for input: %d ...", m_controller->GetDevice()->GetVendor(), m_controller->GetDevice()->GetProduct(), input_idx);
 
-    uint32_t HidNpadBefore = GetHidNpadMask();
     R_TRY(hiddbgAttachHdlsVirtualDevice(&m_controllerData[input_idx].m_hdlHandle, &m_controllerData[input_idx].m_deviceInfo));
 
-    syscon::logger::LogTrace("SwitchHDLHandler[%04x-%04x] Searching for NpadId ...", m_controller->GetDevice()->GetVendor(), m_controller->GetDevice()->GetProduct());
-    // Wait until the controller is attached to a HidNpadIdType_xxx
-    uint32_t HidNpadDiff = 0;
-    for (int i = 0; i < 1000; i++) // Timeout after 1 second
-    {
-        uint32_t HidNpadAfter = GetHidNpadMask();
-        HidNpadDiff = (HidNpadBefore ^ HidNpadAfter);
-        if (HidNpadDiff != 0)
-            break;
-        std::this_thread::sleep_for(std::chrono::milliseconds(1));
-    }
-
-    // Detect which HidNpadIdType_xxx has been assigned to the controller
-    for (HidNpadIdType i = HidNpadIdType_No1; i <= HidNpadIdType_No8; i = (HidNpadIdType)((int)i + 1))
-    {
-        if ((HidNpadDiff & (1 << (int)i)) != 0)
-        {
-            m_controllerData[input_idx].m_npadId = i;
-            break;
-        }
-    }
-
-    syscon::logger::LogDebug("SwitchHDLHandler[%04x-%04x] Attach - Idx: %d [NpadId: %d]", m_controller->GetDevice()->GetVendor(), m_controller->GetDevice()->GetProduct(), input_idx, m_controllerData[input_idx].m_npadId);
-    // R_TRY(hidInitializeVibrationDevices(&m_controllerData[input_idx].m_vibrationDeviceHandle, 1, m_controllerData[input_idx].m_npadId, HidNpadStyleTag_NpadFullKey));
+    syscon::logger::LogDebug("SwitchHDLHandler[%04x-%04x] Attach - Idx: %d", m_controller->GetDevice()->GetVendor(), m_controller->GetDevice()->GetProduct(), input_idx);
 
     R_SUCCEED();
 }
@@ -290,31 +251,7 @@ void SwitchHDLHandler::UpdateInput(s32 timeout_us)
 
 void SwitchHDLHandler::UpdateOutput()
 {
-    // Process rumble values if supported
-    /*if (GetController()->Support(SUPPORTS_RUMBLE))
-    {
-        HidVibrationValue value;
-
-        for (uint16_t input_idx = 0; input_idx < m_controller->GetInputCount(); input_idx++)
-        {
-            if (!IsVirtualDeviceAttached(input_idx))
-                continue;
-
-            if (R_FAILED(hidGetActualVibrationValue(m_controllerData[input_idx].m_vibrationDeviceHandle, &value)))
-            {
-                syscon::logger::LogError("SwitchHDLHandler[%04x-%04x] UpdateOutput - Failed to get vibration value for idx: %d", m_controller->GetDevice()->GetVendor(), m_controller->GetDevice()->GetProduct(), input_idx);
-                continue;
-            }
-
-            if (value.amp_high == m_controllerData[input_idx].m_vibrationLastValue.amp_high && value.amp_low == m_controllerData[input_idx].m_vibrationLastValue.amp_low)
-                continue; // Do nothing if the values are the same
-
-            syscon::logger::LogDebug("SwitchHDLHandler[%04x-%04x] UpdateOutput - Idx: %d [AmpHigh: %d%% AmpLow: %d%%]", m_controller->GetDevice()->GetVendor(), m_controller->GetDevice()->GetProduct(), input_idx, (uint8_t)(value.amp_high * 100), (uint8_t)(value.amp_low * 100));
-            m_controller->SetRumble(input_idx, value.amp_high, value.amp_low);
-
-            m_controllerData[input_idx].m_vibrationLastValue = value;
-        }
-    }*/
+    // Vibrations are not supported with HDL
 }
 
 HiddbgHdlsSessionId &SwitchHDLHandler::GetHdlsSessionId()
