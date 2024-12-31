@@ -27,17 +27,6 @@
             }
         },
         {
-            "label": "Clean only the project files",
-            "type": "shell",
-            "promptOnClose": true,
-            "command": "make clean",
-            "presentation": {
-                "reveal": "always",
-                "panel": "shared"
-            },
-            "problemMatcher": []
-        },
-        {
             "label": "Clean everything",
             "type": "shell",
             "promptOnClose": true,
