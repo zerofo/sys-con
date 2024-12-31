@@ -137,6 +137,15 @@ atmosphere\contents\690000000000000D\flags\boot2.flag
 
 **Important Note:** During an upgrade, you may need to disable sysmodules. If you have disabled them, remember to re-enable sys-con using [ovl-sysmodules](https://github.com/WerWolv/ovl-sysmodules).
 
+## Stopping sys-con with ovl-sysmodule does not restore memory and stops working after 3 attempts
+This is a known limitation of Horizon OS and ovl-sysmodule. 
+The issue arises because ovl-sysmodule terminates the software without allowing it to clean up resources properly. 
+This leads to the following side effects:
+1. **Resource Release Failure:** sys-con is unable to fully release the resources it has allocated.
+2. **System Call Rejection:** After three attempts, Horizon OS rejects the `hiddbgAttachHdlsWorkBuffer` system call, preventing sys-con from loading.
+
+To resolve this issue, you must restart the Switch after three attempts to restore functionality.
+
 ## My Controller isn't working or detected — What should I do?
 1) Use a Direct USB-C OTG Connection: Connect your controller directly to the Switch using a USB-C OTG cable, bypassing the Dock. Some controllers may not works when connected through a USB hub, such as the Switch Dock.
 2) Test with another officially supported controller: Try using a different controller that is officially supported. This will help you determine whether the issue is with your Switch setup (Broken USB-C, ...) or your controller.
