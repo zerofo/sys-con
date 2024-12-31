@@ -82,8 +82,7 @@ fi
 
 if [ "$1" == "build" ]; then
 	rm *.zip
-	make distclean ATMOSPHERE_VERSION=1.5.x-1.6.x
-	make distclean ATMOSPHERE_VERSION=1.7.x-1.8.x
+	make distclean
 fi
 
 usage
