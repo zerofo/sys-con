@@ -1,114 +1,100 @@
-#include "switch.h"
 #include "logger.h"
+#include <string.h>
 #include <algorithm>
 #include <sys/stat.h>
-#include <stratosphere.hpp>
-#include <stratosphere/fs/fs_filesystem.hpp>
-#include <stratosphere/fs/fs_file.hpp>
+#include <mutex>
+#include <fstream>
+#include <filesystem>
+#include <iostream>
 
 #define LOG_FILE_SIZE_MAX (128 * 1024)
 
 namespace syscon::logger
 {
-    static ams::os::Mutex printMutex(false);
-    char logBuffer[1024];
-    std::string logPath;
-    int logLevel = LOG_LEVEL_INFO;
-    char logLevelStr[LOG_LEVEL_COUNT] = {'T', 'D', 'P', 'I', 'W', 'E'};
+    static std::mutex sLogMutex;
 
-    Result Initialize(const char *log)
+    static char sLogBuffer[1024];
+    static std::filesystem::path sLogPath;
+    static int slogLevel = LOG_LEVEL_TRACE;
+
+    const char klogLevelStr[LOG_LEVEL_COUNT] = {'T', 'D', 'P', 'I', 'W', 'E'};
+
+    Result Initialize(const std::string &log)
     {
-        std::scoped_lock printLock(printMutex);
-        s64 fileOffset = 0;
-        ams::fs::FileHandle file;
+        std::lock_guard<std::mutex> printLock(sLogMutex);
 
-        logPath = std::string(log);
+        // Extract the directory from the log path
+        sLogPath = std::filesystem::path(log);
+        std::filesystem::path basePath = sLogPath.parent_path();
 
-        // Create folder if it doesn't exist.
-        std::size_t delimBasePath = logPath.rfind('/');
-        if (delimBasePath != std::string::npos)
+        // Create the directory if it doesn't exist
+        if (!basePath.empty() && !std::filesystem::exists(basePath))
+            std::filesystem::create_directories(basePath);
+
+        // Check the file size if it exists
+        if (std::filesystem::exists(sLogPath))
         {
-            std::string basePath = logPath.substr(0, delimBasePath);
-            ams::fs::CreateDirectory(basePath.c_str());
+            auto fileSize = std::filesystem::file_size(sLogPath);
+            if (fileSize >= LOG_FILE_SIZE_MAX)
+                std::filesystem::remove(sLogPath);
         }
-
-        // Check if the log file is too big, if so, delete it.
-        if (R_SUCCEEDED(ams::fs::OpenFile(std::addressof(file), logPath.c_str(), ams::fs::OpenMode_Read)))
-        {
-            ams::fs::GetFileSize(&fileOffset, file);
-            ams::fs::CloseFile(file);
-        }
-        if (fileOffset >= LOG_FILE_SIZE_MAX)
-            ams::fs::DeleteFile(logPath.c_str());
-
-        // Create the log file if it doesn't exist (Or previously deleted)
-        ams::fs::CreateFile(logPath.c_str(), 0);
 
         return 0;
     }
 
     void SetLogLevel(int level)
     {
-        logLevel = level;
+        slogLevel = level;
     }
 
     void LogWriteToFile(const char *logBuffer)
     {
-        s64 fileOffset;
-        ams::fs::FileHandle file;
-
-        if (R_FAILED(ams::fs::OpenFile(std::addressof(file), logPath.c_str(), ams::fs::OpenMode_Write | ams::fs::OpenMode_AllowAppend)))
+        std::ofstream logFile(sLogPath, std::ios::app);
+        if (!logFile.is_open())
             return;
 
-        (void)ams::fs::GetFileSize(&fileOffset, file);
-        (void)ams::fs::WriteFile(file, fileOffset, logBuffer, strlen(logBuffer), ams::fs::WriteOption::Flush);
-        (void)ams::fs::WriteFile(file, fileOffset + strlen(logBuffer), "\n", 1, ams::fs::WriteOption::Flush);
-
-        ams::fs::CloseFile(file);
+        logFile << logBuffer << "\n";
     }
 
     void Log(int lvl, const char *fmt, ::std::va_list vl)
     {
-        if (lvl < logLevel)
+        if (lvl < slogLevel)
             return; // Don't log if the level is lower than the current log level.
 
-        std::scoped_lock printLock(printMutex);
+        std::lock_guard<std::mutex> printLock(sLogMutex);
 
-        ams::TimeSpan ts = ams::os::ConvertToTimeSpan(ams::os::GetSystemTick());
-
-        /* Format log */
-        ams::util::SNPrintf(logBuffer, sizeof(logBuffer), "|%c|%02li:%02li:%02li.%03li|%08X| ", logLevelStr[lvl], ts.GetHours() % 24, ts.GetMinutes() % 60, ts.GetSeconds() % 60, ts.GetMilliSeconds() % 1000, (uint32_t)((uint64_t)threadGetSelf()));
-        ams::util::VSNPrintf(&logBuffer[strlen(logBuffer)], ams::util::size(logBuffer) - strlen(logBuffer), fmt, vl);
+        u64 current_time_ms = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+        std::snprintf(sLogBuffer, sizeof(sLogBuffer), "|%c|%02li:%02li:%02li.%03li|%08X| ", klogLevelStr[lvl], (current_time_ms / 3600000) % 24, (current_time_ms / 60000) % 60, (current_time_ms / 1000) % 60, current_time_ms % 1000, (uint32_t)((uint64_t)threadGetSelf()));
+        std::vsnprintf(&sLogBuffer[strlen(sLogBuffer)], sizeof(sLogBuffer) - strlen(sLogBuffer), fmt, vl);
 
         /* Write in the file. */
-        LogWriteToFile(logBuffer);
+        LogWriteToFile(sLogBuffer);
     }
 
     void LogBuffer(int lvl, const uint8_t *buffer, size_t size)
     {
-        if (lvl < logLevel)
+        if (lvl < slogLevel)
             return; // Don't log if the level is lower than the current log level.
 
-        std::scoped_lock printLock(printMutex);
+        std::lock_guard<std::mutex> printLock(sLogMutex);
 
-        ams::TimeSpan ts = ams::os::ConvertToTimeSpan(ams::os::GetSystemTick());
+        u64 current_time_ms = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+        std::snprintf(sLogBuffer, sizeof(sLogBuffer), "|%c|%02li:%02li:%02li.%03li|%08X| ", klogLevelStr[lvl], (current_time_ms / 3600000) % 24, (current_time_ms / 60000) % 60, (current_time_ms / 1000) % 60, current_time_ms % 1000, (uint32_t)((uint64_t)threadGetSelf()));
 
-        snprintf(logBuffer, sizeof(logBuffer), "|%c|%02li:%02li:%02li.%03li|%08X| ", logLevelStr[lvl], ts.GetHours() % 24, ts.GetMinutes() % 60, ts.GetSeconds() % 60, ts.GetMilliSeconds() % 1000, (uint32_t)((uint64_t)threadGetSelf()));
+        size_t start_offset = strlen(sLogBuffer);
 
-        size_t start_offset = strlen(logBuffer);
+        std::snprintf(&sLogBuffer[strlen(sLogBuffer)], sizeof(sLogBuffer) - strlen(sLogBuffer), "Buffer (%ld): ", size);
 
-        snprintf(&logBuffer[strlen(logBuffer)], sizeof(logBuffer) - strlen(logBuffer), "Buffer (%ld): ", size);
-
-        LogWriteToFile(logBuffer);
+        LogWriteToFile(sLogBuffer);
 
         /* Format log */
         for (size_t i = 0; i < size; i += 16)
         {
             for (size_t k = 0; k < std::min((size_t)16, size - i); k++)
-                snprintf(&logBuffer[start_offset + (k * 3)], sizeof(logBuffer) - (start_offset + (k * 3)), "%02X ", buffer[i + k]);
+                snprintf(&sLogBuffer[start_offset + (k * 3)], sizeof(sLogBuffer) - (start_offset + (k * 3)), "%02X ", buffer[i + k]);
 
             /* Write in the file. */
-            LogWriteToFile(logBuffer);
+            LogWriteToFile(sLogBuffer);
         }
     }
 

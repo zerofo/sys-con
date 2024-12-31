@@ -1,6 +1,6 @@
 #include "SwitchVirtualGamepadHandler.h"
 #include "SwitchLogger.h"
-#include <stratosphere.hpp>
+#include <chrono>
 
 SwitchVirtualGamepadHandler::SwitchVirtualGamepadHandler(std::unique_ptr<IController> &&controller, s32 polling_frequency_ms, s8 thread_priority)
     : m_controller(std::move(controller)),
@@ -37,12 +37,12 @@ void SwitchVirtualGamepadHandler::onRun()
 
     do
     {
-        ams::TimeSpan startTimer = ams::os::ConvertToTimeSpan(ams::os::GetSystemTick());
+        auto startTimer = std::chrono::steady_clock::now();
 
         UpdateInput(m_read_input_timeout_us);
         UpdateOutput();
 
-        s64 execution_time_us = (ams::os::ConvertToTimeSpan(ams::os::GetSystemTick()) - startTimer).GetMicroSeconds();
+        s64 execution_time_us = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now() - startTimer).count();
 
         if ((execution_time_us - m_read_input_timeout_us) > 10000) // 10ms
             ::syscon::logger::LogWarning("SwitchVirtualGamepadHandler UpdateInputOutput took: %d ms !", execution_time_us / 1000);
@@ -66,7 +66,7 @@ Result SwitchVirtualGamepadHandler::InitThread()
     Result rc = threadCreate(&m_Thread, &SwitchVirtualGamepadHandlerThreadFunc, this, thread_stack, sizeof(thread_stack), m_polling_thread_priority, -2);
     if (R_FAILED(rc))
         return rc;
-        
+
     rc = threadStart(&m_Thread);
     if (R_FAILED(rc))
         return rc;
