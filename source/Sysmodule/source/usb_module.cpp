@@ -70,12 +70,13 @@ namespace syscon::usb
                     SwitchUSBLock usbLock;
                     s32 total_interfaces_hid = 0, total_interfaces_xbox360 = 0, total_interfaces_xboxone = 0, total_interfaces_xbox360w = 0, total_interfaces_xbox = 0;
 
-                    if ((total_interfaces_hid = QueryAvailableInterfacesByClass(interfaces, sizeof(interfaces), USB_CLASS_HID)) > 0 ||                                          // Generic HID
+                    if (
                         (total_interfaces_xbox360 = QueryAvailableInterfacesByClassSubClassProtocol(interfaces, sizeof(interfaces), USB_CLASS_VENDOR_SPEC, 0x5D, 0x01)) > 0 ||  // XBOX360 Wired
-                        (total_interfaces_xboxone = QueryAvailableInterfacesByClassSubClassProtocol(interfaces, sizeof(interfaces), USB_CLASS_VENDOR_SPEC, 0x47, 0xD0)) > 0 ||  // XBOX ONE
                         (total_interfaces_xbox360w = QueryAvailableInterfacesByClassSubClassProtocol(interfaces, sizeof(interfaces), USB_CLASS_VENDOR_SPEC, 0x5D, 0x81)) > 0 || // XBOX360 Wireless
-                        (total_interfaces_xbox = QueryAvailableInterfacesByClassSubClassProtocol(interfaces, sizeof(interfaces), 0x58, 0x42, 0x00)) > 0)                        // XBOX Original
-
+                        (total_interfaces_xboxone = QueryAvailableInterfacesByClassSubClassProtocol(interfaces, sizeof(interfaces), USB_CLASS_VENDOR_SPEC, 0x47, 0xD0)) > 0 ||  // XBOX ONE
+                        (total_interfaces_xbox = QueryAvailableInterfacesByClassSubClassProtocol(interfaces, sizeof(interfaces), 0x58, 0x42, 0x00)) > 0 ||                      // XBOX Original
+                        (total_interfaces_hid = QueryAvailableInterfacesByClass(interfaces, sizeof(interfaces), USB_CLASS_HID)) > 0                                             // Generic HID
+                    )
                     {
                         timeoutNs = MS_TO_NS(1); // Everytime we find a controller we reset the timeout to loop again on next controllers
 

@@ -57,7 +57,7 @@ ControllerResult SwitchUSBEndpoint::Write(const uint8_t *inBuffer, size_t buffer
     Result rc = usbHsEpPostBuffer(&m_epSession, m_usb_buffer_out, bufferSize, &transferredSize);
     if (R_FAILED(rc))
     {
-        ::syscon::logger::LogError("SwitchUSBEndpoint[0x%02X] Write failed: 0x%08X", m_descriptor->bEndpointAddress, rc);
+        ::syscon::logger::LogError("SwitchUSBEndpoint[0x%02X] Write failed: 0x%08X (Module: 0x%X, Desc: 0x%X)", m_descriptor->bEndpointAddress, rc, R_MODULE(rc), R_DESCRIPTION(rc));
         return CONTROLLER_STATUS_WRITE_FAILED;
     }
 

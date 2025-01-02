@@ -40,7 +40,6 @@ uint16_t BaseController::GetInputCount()
 
 ControllerResult BaseController::OpenInterfaces()
 {
-    int interfaceCount = 0;
     Log(LogLevelDebug, "Controller[%04x-%04x] Opening interfaces ...", m_device->GetVendor(), m_device->GetProduct());
 
     ControllerResult result = m_device->Open();
@@ -53,12 +52,12 @@ ControllerResult BaseController::OpenInterfaces()
     std::vector<std::unique_ptr<IUSBInterface>> &interfaces = m_device->GetInterfaces();
     for (auto &&interface : interfaces)
     {
-        Log(LogLevelDebug, "Controller[%04x-%04x] Opening interface idx=%d ...", m_device->GetVendor(), m_device->GetProduct(), interfaceCount++);
+        Log(LogLevelDebug, "Controller[%04x-%04x] Opening interface %d/%d ...", m_device->GetVendor(), m_device->GetProduct(), m_interfaces.size(), interfaces.size());
 
         ControllerResult result = interface->Open();
         if (result != CONTROLLER_STATUS_SUCCESS)
         {
-            Log(LogLevelError, "Controller[%04x-%04x] Failed to open interface %d !", m_device->GetVendor(), m_device->GetProduct(), interfaceCount);
+            Log(LogLevelError, "Controller[%04x-%04x] Failed to open interface !", m_device->GetVendor(), m_device->GetProduct());
             return result;
         }
 
@@ -71,7 +70,7 @@ ControllerResult BaseController::OpenInterfaces()
             ControllerResult result = inEndpoint->Open(GetConfig().inputMaxPacketSize);
             if (result != CONTROLLER_STATUS_SUCCESS)
             {
-                Log(LogLevelError, "Controller[%04x-%04x] Failed to open input endpoint %d !", m_device->GetVendor(), m_device->GetProduct(), idx);
+                Log(LogLevelError, "Controller[%04x-%04x] Failed to open input endpoint idx: %d !", m_device->GetVendor(), m_device->GetProduct(), idx);
                 return result;
             }
 
@@ -87,7 +86,7 @@ ControllerResult BaseController::OpenInterfaces()
             result = outEndpoint->Open(GetConfig().outputMaxPacketSize);
             if (result != CONTROLLER_STATUS_SUCCESS)
             {
-                Log(LogLevelError, "Controller[%04x-%04x] Failed to open output endpoint %d !", m_device->GetVendor(), m_device->GetProduct(), idx);
+                Log(LogLevelError, "Controller[%04x-%04x] Failed to open output endpoint idx: %d !", m_device->GetVendor(), m_device->GetProduct(), idx);
                 return result;
             }
 

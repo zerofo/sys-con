@@ -3,7 +3,7 @@
 #include "BaseController.h"
 
 // References used:
-// https://cs.chromium.org/chromium/src/device/gamepad/xbox_controller_mac.mm
+// https://github.com/paroj/xpad/blob/master/xpad.c
 
 _PACKED(struct Xbox360ButtonData {
     uint8_t type;

@@ -19,65 +19,60 @@
         }                              \
     }
 
+alignas(0x1000) constinit u8 g_hdls_buffer[0x8000]; // 32 KiB
+
 extern "C"
 {
-    // Sysmodules should not use applet*.
     u32 __nx_applet_type = AppletType_None;
-
-    // Sysmodules will normally only want to use one FS session.
     u32 __nx_fs_num_sessions = 1;
 
-    // Newlib heap configuration function (makes malloc/free work).
     void __libnx_initheap(void)
     {
         static u8 inner_heap[INNER_HEAP_SIZE];
         extern void *fake_heap_start;
         extern void *fake_heap_end;
 
-        // Configure the newlib heap.
         fake_heap_start = inner_heap;
         fake_heap_end = inner_heap + sizeof(inner_heap);
     }
-}
 
-alignas(0x1000) constinit u8 g_hdls_buffer[0x8000]; // 32 KiB
+    void __appInit(void)
+    {
+        R_ABORT_UNLESS(smInitialize());
 
-extern "C" void __appInit(void)
-{
-    R_ABORT_UNLESS(smInitialize());
+        // Initialize system firmware version
+        R_ABORT_UNLESS(setsysInitialize());
+        SetSysFirmwareVersion fw;
+        R_ABORT_UNLESS(setsysGetFirmwareVersion(&fw));
+        hosversionSet(MAKEHOSVERSION(fw.major, fw.minor, fw.micro));
+        setsysExit();
 
-    // Initialize system firmware version
-    R_ABORT_UNLESS(setsysInitialize());
-    SetSysFirmwareVersion fw;
-    R_ABORT_UNLESS(setsysGetFirmwareVersion(&fw));
-    hosversionSet(MAKEHOSVERSION(fw.major, fw.minor, fw.micro));
-    setsysExit();
+        R_ABORT_UNLESS(hiddbgInitialize());
+        if (hosversionAtLeast(7, 0, 0))
+            R_ABORT_UNLESS(hiddbgAttachHdlsWorkBuffer(&SwitchHDLHandler::GetHdlsSessionId(), &g_hdls_buffer, sizeof(g_hdls_buffer)));
 
-    R_ABORT_UNLESS(hiddbgInitialize());
-    if (hosversionAtLeast(7, 0, 0))
-        R_ABORT_UNLESS(hiddbgAttachHdlsWorkBuffer(&SwitchHDLHandler::GetHdlsSessionId(), &g_hdls_buffer, sizeof(g_hdls_buffer)));
+        R_ABORT_UNLESS(usbHsInitialize());
+        R_ABORT_UNLESS(pscmInitialize());
+        R_ABORT_UNLESS(fsInitialize());
 
-    R_ABORT_UNLESS(usbHsInitialize());
-    R_ABORT_UNLESS(pscmInitialize());
-    R_ABORT_UNLESS(fsInitialize());
+        smExit();
 
-    smExit();
+        R_ABORT_UNLESS(fsdevMountSdmc());
+    }
 
-    R_ABORT_UNLESS(fsdevMountSdmc());
-}
+    void __appExit(void)
+    {
+        usbHsExit();
+        pscmExit();
 
-extern "C" void __appExit(void)
-{
-    usbHsExit();
-    pscmExit();
+        if (hosversionAtLeast(7, 0, 0))
+            hiddbgReleaseHdlsWorkBuffer(SwitchHDLHandler::GetHdlsSessionId());
 
-    if (hosversionAtLeast(7, 0, 0))
-        hiddbgReleaseHdlsWorkBuffer(SwitchHDLHandler::GetHdlsSessionId());
+        hiddbgExit();
 
-    hiddbgExit();
-
-    fsdevUnmountAll();
-    fsExit();
+        fsdevUnmountAll();
+        fsExit();
+    }
 }
 
 int main(int argc, char *argv[])
@@ -86,7 +81,7 @@ int main(int argc, char *argv[])
 
     u32 version = hosversionGet();
     ::syscon::logger::LogInfo("-----------------------------------------------------");
-    ::syscon::logger::LogInfo("SYS-CON started %s+%d-%s (Build date: %s %s)", ::syscon::version::syscon_tag, ::syscon::version::syscon_commit_count, ::syscon::version::syscon_git_hash, __DATE__, __TIME__);
+    ::syscon::logger::LogInfo("SYS-CON started %s+%d-%s (Build date: %s %s) - https://github.com/o0Zz/sys-con", ::syscon::version::syscon_tag, ::syscon::version::syscon_commit_count, ::syscon::version::syscon_git_hash, __DATE__, __TIME__);
     ::syscon::logger::LogInfo("OS version: %d.%d.%d", HOSVER_MAJOR(version), HOSVER_MINOR(version), HOSVER_MICRO(version));
 
     ::syscon::logger::LogDebug("Initializing configuration ...");
