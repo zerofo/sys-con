@@ -27,6 +27,8 @@ public:
 
     // The data received will be put in the outBuffer array for the length of the specified size.
     virtual ControllerResult Read(uint8_t *outBuffer, size_t *bufferSizeInOut, u64 aTimeoutUs) override;
+    virtual ControllerResult ReadSync(uint8_t *outBuffer, size_t *bufferSizeInOut);
+    virtual ControllerResult ReadAsync(uint8_t *outBuffer, size_t *bufferSizeInOut, u64 aTimeoutUs);
 
     // Gets the direction of this endpoint (IN or OUT)
     virtual IUSBEndpoint::Direction GetDirection() override;
