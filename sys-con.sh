@@ -74,7 +74,7 @@ if [ "$1" == "sd" ]; then
     fi
 	
 	if [ "$2" == "logs" ]; then
-        cp  /d/$LOG_FILE ./log.txt  || exit 1
+        cp  /d/$LOG_FILE ./log.txt || exit 1
         display_logs
 		exit 0
     fi
@@ -82,7 +82,8 @@ fi
 
 if [ "$1" == "build" ]; then
 	rm *.zip
-	make distclean
+	make distclean || exit 1
+	exit 0
 fi
 
 usage
