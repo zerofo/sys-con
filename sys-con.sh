@@ -15,7 +15,7 @@ NSP_FILE=./out/atmosphere/contents/690000000000000D/exefs.nsp
 DST_NSP_FILE=atmosphere/contents/690000000000000D/exefs.nsp
 NRO_FILE=./out/switch/sys-con.nro
 DST_NRO_FILE=switch/sys-con.nro
-LOG_FILE=config/sys-con/log.log
+LOG_FILE=config/sys-con/log.txt
 
 usage () {
   echo "Usage: "

@@ -26,7 +26,7 @@ In other words, the loading order is: `[Default]` `[Profile]` `[VID-PID]`.
 If you want to override a setting for only 1 controller, it's adviced to change the configuration in `[VID-PID]` in order to not impact others controllers
 
 ## Logs
-In case of issue, you can look at the logs in `/config/sys-con/log.log` (On your SDCard).
+In case of issue, you can look at the logs in `/config/sys-con/log.txt` (On your SDCard).
 The logs are automatically created with a log level equal to Info.
 For more verbose logs, edit `/config/sys-con/config.ini` and set:
 
@@ -279,7 +279,7 @@ Output folder will be there: `out/`
 For an in-depth explanation of how sys-con works, see [here](source).
 
 ### Debug the application
-In order to debug the applicaiton, you can directly refer to the logs available there: `/config/sys-con/log.log`.
+In order to debug the applicaiton, you can directly refer to the logs available there: `/config/sys-con/log.txt`.
 
 ## Credits
 **Texita** For his contribution in controllers testings and mappings

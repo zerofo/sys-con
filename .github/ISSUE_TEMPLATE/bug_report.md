@@ -19,7 +19,7 @@ Controller:
 ...
 
 **Logs**
-- Attach your logs /config/sys-con/log.log to the ticket "Trace" mode (https://github.com/o0Zz/sys-con?tab=readme-ov-file#logs)
+- Attach your logs /config/sys-con/log.txt to the ticket "Trace" mode (https://github.com/o0Zz/sys-con?tab=readme-ov-file#logs)
 - Attach your /config/sys-con/config.ini
 
-Note: You will have to **zip** your config.ini and log.log in order to attach them to your ticket
+Note: You will have to **zip** your config.ini and log.txt in order to attach them to your ticket

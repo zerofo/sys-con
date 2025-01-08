@@ -121,8 +121,8 @@ It's also possible to combinate analog and controller button:
 x=13,2,+X
 ```
 
-## I don't see any logs in /config/sys-con/log.log
-If you don't see any logs in /config/sys-con/log.log, it indicates that sys-con isn't loading correctly. Sys-con should automatically generate a log entry upon boot, similar to the following:
+## I don't see any logs in /config/sys-con/log.txt
+If you don't see any logs in /config/sys-con/log.txt, it indicates that sys-con isn't loading correctly. Sys-con should automatically generate a log entry upon boot, similar to the following:
 ```
 |I|00:00:08.383|5E953330| SYS-CON started 1.3.0+6-411aff0 (Build date: Aug 26 2024 22:22:53)
 ```
@@ -197,4 +197,4 @@ Search for logs starting with `|E|`, If you find one, this is an error and it mi
 - Wait for the console to boot
 - Connect your controllers
 - Wait for the issue
-- Download the logs from `/config/sys-con/log.log`
+- Download the logs from `/config/sys-con/log.txt`

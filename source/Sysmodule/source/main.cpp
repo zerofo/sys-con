@@ -77,7 +77,7 @@ extern "C"
 
 int main(int argc, char *argv[])
 {
-    ::syscon::logger::Initialize(CONFIG_PATH "log.log");
+    ::syscon::logger::Initialize(CONFIG_PATH "log.txt");
 
     u32 version = hosversionGet();
     ::syscon::logger::LogInfo("-----------------------------------------------------");
