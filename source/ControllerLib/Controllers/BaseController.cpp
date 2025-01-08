@@ -52,7 +52,7 @@ ControllerResult BaseController::OpenInterfaces()
     std::vector<std::unique_ptr<IUSBInterface>> &interfaces = m_device->GetInterfaces();
     for (auto &&interface : interfaces)
     {
-        Log(LogLevelDebug, "Controller[%04x-%04x] Opening interface %d/%d ...", m_device->GetVendor(), m_device->GetProduct(), m_interfaces.size(), interfaces.size());
+        Log(LogLevelDebug, "Controller[%04x-%04x] Opening interface %d/%d ...", m_device->GetVendor(), m_device->GetProduct(), m_interfaces.size() + 1, interfaces.size());
 
         ControllerResult result = interface->Open();
         if (result != CONTROLLER_STATUS_SUCCESS)
