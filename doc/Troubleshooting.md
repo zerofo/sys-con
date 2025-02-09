@@ -146,10 +146,11 @@ This leads to the following side effects:
 
 To resolve this issue, you must restart the Switch after three attempts to restore functionality.
 
-## My Controller isn't working or detected — What should I do?
+## My Controller isn't detected — What should I do?
 1) Use a Direct USB-C OTG Connection: Connect your controller directly to the Switch using a USB-C OTG cable, bypassing the Dock. Some controllers may not works when connected through a USB hub, such as the Switch Dock.
 2) Test with another officially supported controller: Try using a different controller that is officially supported. This will help you determine whether the issue is with your Switch setup (Broken USB-C, ...) or your controller.
-3) Enable and check logs: Turn on logging in Trace mode by following the instructions [here](https://github.com/o0Zz/sys-con?tab=readme-ov-file#logs). Carefully review the logs for any errors or clues about what might be causing the problem.
+3) Try to use a Powered Hub. Sometimes the switch is not powerfull enough to power-on your controller (Especially with the Dock)
+4) Enable and check logs: Turn on logging in Trace mode by following the instructions [here](https://github.com/o0Zz/sys-con?tab=readme-ov-file#logs). Carefully review the logs for any errors or clues about what might be causing the problem.
 
 A typically working flow will look like:
 
