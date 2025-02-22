@@ -38,6 +38,11 @@ uint16_t BaseController::GetInputCount()
     return 1;
 }
 
+size_t BaseController::GetMaxInputBufferSize()
+{
+    return CONTROLLER_INPUT_BUFFER_SIZE;
+}
+
 ControllerResult BaseController::OpenInterfaces()
 {
     Log(LogLevelDebug, "Controller[%04x-%04x] Opening interfaces ...", m_device->GetVendor(), m_device->GetProduct());
@@ -149,7 +154,7 @@ ControllerResult BaseController::ReadInput(NormalizedButtonData *normalData, uin
 {
     RawInputData rawData;
     uint8_t input_bytes[CONTROLLER_INPUT_BUFFER_SIZE];
-    size_t size = sizeof(input_bytes);
+    size_t size = std::min(sizeof(input_bytes), GetMaxInputBufferSize());
 
     auto read_start = std::chrono::high_resolution_clock::now();
     ControllerResult result = ReadNextBuffer(input_bytes, &size, input_idx, timeout_us);

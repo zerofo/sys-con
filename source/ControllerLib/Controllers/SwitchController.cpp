@@ -1,6 +1,8 @@
 #include "Controllers/SwitchController.h"
 
-static_assert(CONTROLLER_INPUT_BUFFER_SIZE == 64, "Input byte for switch as to be 64 bytes long");
+#define SWITCH_INPUT_BUFFER_SIZE 64
+
+static_assert(SWITCH_INPUT_BUFFER_SIZE == 64, "Input byte for switch as to be 64 bytes long");
 
 SwitchController::SwitchController(std::unique_ptr<IUSBDevice> &&device, const ControllerConfig &config, std::unique_ptr<ILogger> &&logger)
     : BaseController(std::move(device), config, std::move(logger))
@@ -26,7 +28,7 @@ ControllerResult SwitchController::Initialize()
     }
 
     // Flush the input buffer
-    uint8_t buffer[64]{0x00};
+    uint8_t buffer[SWITCH_INPUT_BUFFER_SIZE]{0x00};
     do
     {
         size_t size = sizeof(buffer);
@@ -34,7 +36,7 @@ ControllerResult SwitchController::Initialize()
     } while (result == CONTROLLER_STATUS_SUCCESS);
 
     // Send the initialization packet
-    uint8_t initPacket1[64]{0x80, 0x02};
+    uint8_t initPacket1[SWITCH_INPUT_BUFFER_SIZE]{0x80, 0x02};
     m_outPipe[0]->Write(initPacket1, sizeof(initPacket1));
 
     // Read the response
@@ -42,7 +44,7 @@ ControllerResult SwitchController::Initialize()
     (void)m_inPipe[0]->Read(buffer, &size, 500 * 1000 /*timeout_us*/);
 
     // Forces the Joy-Con or Pro Controller to only talk over USB HID without any timeouts.
-    uint8_t initPacket2_ForceToUSB[64]{0x80, 0x04};
+    uint8_t initPacket2_ForceToUSB[SWITCH_INPUT_BUFFER_SIZE]{0x80, 0x04};
     m_outPipe[0]->Write(initPacket2_ForceToUSB, sizeof(initPacket2_ForceToUSB));
 
     return CONTROLLER_STATUS_SUCCESS;
@@ -115,4 +117,9 @@ bool SwitchController::Support(ControllerFeature feature)
 {
     (void)feature;
     return false;
+}
+
+size_t SwitchController::GetMaxInputBufferSize()
+{
+    return SWITCH_INPUT_BUFFER_SIZE;
 }

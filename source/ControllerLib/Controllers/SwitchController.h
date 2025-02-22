@@ -66,5 +66,7 @@ public:
 
     virtual ControllerResult ParseData(uint8_t *buffer, size_t size, RawInputData *rawData, uint16_t *input_idx) override;
 
+    size_t GetMaxInputBufferSize() override;
+
     bool Support(ControllerFeature feature) override;
 };

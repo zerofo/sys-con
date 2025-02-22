@@ -62,6 +62,8 @@ public:
 
     ControllerResult SetRumble(uint16_t input_idx, float amp_high, float amp_low) override;
 
+    virtual size_t GetMaxInputBufferSize();
+
     // Helper functions
     static float Normalize(int32_t value, int32_t min, int32_t max);
     static float Normalize(int32_t value, int32_t min, int32_t max, int32_t center);
