@@ -95,10 +95,7 @@ int main(int argc, char *argv[])
     ::syscon::controllers::Initialize();
 
     // Reduce polling frequency when we use debug or trace to avoid spamming the logs
-    if (globalConfig.log_level == LOG_LEVEL_TRACE && globalConfig.polling_frequency_ms < 500)
-        globalConfig.polling_frequency_ms = 500;
-
-    if (globalConfig.log_level == LOG_LEVEL_DEBUG && globalConfig.polling_frequency_ms < 100)
+    if ((globalConfig.log_level <= LOG_LEVEL_DEBUG) && globalConfig.polling_frequency_ms < 100)
         globalConfig.polling_frequency_ms = 100;
 
     ::syscon::logger::LogDebug("Polling frequency: %d ms", globalConfig.polling_frequency_ms);

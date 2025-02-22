@@ -37,7 +37,7 @@ log_level=0
 
 Reboot the Nintendo Switch.
 
-**Important note**: If you enable the trace(`log_level=0`) or debug(`log_level=1`) log level, sys-con will automatically increase the polling frequency to 100ms (for debug) and 500ms (for trace). This will add a lot of latency to your controller (this isn't a problem and is expected). So, if you want to press a button, you have to hold it down for 1 second. These log levels (trace and debug) cannot be used to play a game, they are for debugging purposes only.
+**Important note**: If you enable the trace(`log_level=0`) or debug(`log_level=1`) log level, sys-con will automatically increase the polling frequency to 100ms. This will add latency to your controller (this isn't a problem and is expected). So, if you want to press a button, you have to hold it down for 1 second. These log levels (trace and debug) cannot be used to play a game, they are for debugging purposes only.
 
 ## Features
 - [x] HID joystick/gamepad/wheels supported (PC Controller compatible)
