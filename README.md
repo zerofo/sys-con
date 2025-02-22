@@ -198,8 +198,8 @@ factor_dial=100
 ```
 
 All these values are in percentages
-Typical deadzone range: 0% to 30%
-Typical Factor range: 100% to 150%
+- Typical deadzone range: 0% to 30%
+- Typical Factor range: 100% to 150%
 
 ### Home & Capture Shortcuts
 By default, the **HOME** and **CAPTURE** can be triggered by pressing `Minus + DPAD_UP` and `Minus + DPAD_DOWN`, respectively. Minus button is often mapped to the select button.

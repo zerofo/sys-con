@@ -41,4 +41,4 @@
 | 8BitDo Ultimate C 2.4g Wireless Controller  | No | Not detected: #21 | - |
 | Y3 Joypad (Receiver YC5)| No | Not detected: #30 | https://aliexpress.com/item/1005005458136372.html |
 | Buffalo iBuffalo Classic USB | Yes | - | https://www.amazon.com/Buffalo-iBuffalo-Classic-USB-Gamepad/dp/B002B9XB0E |
-| 8BitDo Wireless Bluetooth USB Adapter 2 | Yes | - | You need to use Dinput mode. (See "Manual setting" in https://support.8bitdo.com/Manual/USB-Adapter-2/xbox-switch.html |
+| 8BitDo Wireless Bluetooth USB Adapter 2 | Yes | DInput mode | You need to use Dinput mode. See "Manual setting" in https://support.8bitdo.com/Manual/USB-Adapter-2/xbox-switch.html |
