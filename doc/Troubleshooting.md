@@ -31,7 +31,7 @@ Recommended procedure to ensure proper detection:
  1. Disconnect the controller from the Switch
  2. Power off the controller
  3. Turn the controller back on
- 4. Connect the controller to the Switch (Ensure the Switch is configured to wake when a controller is connected)
+ 4. Connect the controller to the Switch (Ensure the Switch is wakeup)
  5. Wait up to 1 minute for the controller to be recognized
 
 ## I got error: "Failed to acquire USB interface - Error: 0x25A8C ..."
