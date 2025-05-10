@@ -43,13 +43,14 @@ To fix the problem:
 2. Reboot the switch.
 
 ## My controller don't have Home or Capture button, how to simulate home or capture button ?
-In the configuration file, edit your controller and add `simulate_home=` `simulate_capture=` followed by the buttons you want to use to simulate it.
+By default, all controllers are configured to simulate home and capture with following binding: Minus+DPAD_UP for capture and Minus+DPAD_DOWN for home.
+If you want to change it, consider updating the configuration file, edit your controller and add `simulate_home=` `simulate_capture=` followed by the buttons you want to use to simulate it.
 
 Example:
 ```
 [vid-pid]
-simulate_home=minus+plus
-simulate_capture=plus+L
+simulate_capture=minus+dpad_up
+simulate_home=minus+dpad_down
 
 [vid-pid]
 simulate_home=plus+dpad_up

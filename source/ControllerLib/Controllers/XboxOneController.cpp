@@ -28,11 +28,18 @@
 #define GIP_MOTOR_ALL (GIP_MOTOR_R | GIP_MOTOR_L | GIP_MOTOR_RT | GIP_MOTOR_LT)
 
 /*
-    Sequence seems important for some controllers
+How to find correct init sequence ?
+    1. Use wireshark to capture the USB traffic
+    2. Apply filter: "usb.src == host and usb.endpoint_address == 1" to filter the USB traffic 
+	3. Find to correct sequence
+*/
+
+/*
+    Sequence seems important for some controllers (PDP)
     Linux controller hardcode the sequence to 0, however some controller like the PDP (0e6f:02de and 0e6f:0316) need to have an incremental sequence during init.
 */
 
-static const uint8_t xboxone_hori_ack_id[] = {
+static const uint8_t xboxone_hori_pdp_ack_id[] = {
     GIP_CMD_ACK, GIP_OPT_INTERNAL, GIP_SEQ(0), GIP_PL_LEN(9),
     0x00, GIP_CMD_IDENTIFY, GIP_OPT_INTERNAL, 0x3a, 0x00, 0x00, 0x00, 0x80, 0x00};
 
@@ -80,8 +87,8 @@ struct xboxone_init_packet
     }
 
 static const struct xboxone_init_packet xboxone_init_packets[] = {
-    XBOXONE_INIT_PKT(0x0e6f, 0x0165, xboxone_hori_ack_id),
-    XBOXONE_INIT_PKT(0x0f0d, 0x0067, xboxone_hori_ack_id),
+    XBOXONE_INIT_PKT(0x0e6f, 0x0000, xboxone_hori_pdp_ack_id), // 0e6f-02ea and 0e6f-0165
+    XBOXONE_INIT_PKT(0x0f0d, 0x0067, xboxone_hori_pdp_ack_id),
     XBOXONE_INIT_PKT(0x0000, 0x0000, xboxone_power_on),
     XBOXONE_INIT_PKT(0x045e, 0x02ea, xboxone_s_init),
     XBOXONE_INIT_PKT(0x045e, 0x0b00, xboxone_s_init),
