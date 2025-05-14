@@ -2,7 +2,6 @@
 #include "switch.h"
 #include "IUSBDevice.h"
 #include "SwitchUSBInterface.h"
-#include <vector>
 
 class SwitchUSBDevice : public IUSBDevice
 {

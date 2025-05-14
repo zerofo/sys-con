@@ -2,7 +2,6 @@
 #include "SwitchUSBEndpoint.h"
 #include "IUSBInterface.h"
 #include <memory>
-#include <vector>
 
 class IUSBEndpoint;
 
