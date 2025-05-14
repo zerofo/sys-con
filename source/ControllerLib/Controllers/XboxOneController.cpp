@@ -1,15 +1,19 @@
 #include "Controllers/XboxOneController.h"
+#include <vector>
 
 // https://github.com/torvalds/linux/blob/master/drivers/input/joystick/xpad.c
-#define GIP_CMD_ACK          0x01
-#define GIP_CMD_IDENTIFY     0x04
-#define GIP_CMD_POWER        0x05
-#define GIP_CMD_AUTHENTICATE 0x06
-#define GIP_CMD_VIRTUAL_KEY  0x07
-#define GIP_CMD_RUMBLE       0x09
-#define GIP_CMD_LED          0x0a
-#define GIP_CMD_FIRMWARE     0x0c
-#define GIP_CMD_INPUT        0x20
+#define GIP_CMD_ACK           0x01
+#define GIP_CMD_ANNOUNCE      0x02
+#define GIP_CMD_STATUS        0x03
+#define GIP_CMD_IDENTIFY      0x04
+#define GIP_CMD_POWER         0x05
+#define GIP_CMD_AUTHENTICATE  0x06
+#define GIP_CMD_VIRTUAL_KEY   0x07
+#define GIP_CMD_AUDIO_CONTROL 0x08
+#define GIP_CMD_RUMBLE        0x09
+#define GIP_CMD_LED           0x0a
+#define GIP_CMD_FIRMWARE      0x0c
+#define GIP_CMD_INPUT         0x20
 
 #define GIP_SEQ(x) (x)
 
@@ -30,12 +34,12 @@
 /*
 How to find correct init sequence ?
     1. Use wireshark to capture the USB traffic
-    2. Apply filter: "usb.src == host and usb.endpoint_address == 1" to filter the USB traffic 
-	3. Find to correct sequence
+    2. Apply filter: "usb.src == host and usb.endpoint_address == 1" to filter the USB traffic
+    3. Find to correct sequence
 */
 
 /*
-    Sequence seems important for some controllers (PDP)
+    "Sequences" seems important for some controllers (Like PDP)
     Linux controller hardcode the sequence to 0, however some controller like the PDP (0e6f:02de and 0e6f:0316) need to have an incremental sequence during init.
 */
 
@@ -75,7 +79,7 @@ struct xboxone_init_packet
     uint16_t idVendor;
     uint16_t idProduct;
     const uint8_t *data;
-    uint8_t len;
+    int16_t len;
 };
 
 #define XBOXONE_INIT_PKT(_vid, _pid, _data) \
@@ -86,8 +90,16 @@ struct xboxone_init_packet
         .len = sizeof(_data),               \
     }
 
+#define XBOXONE_INIT_PKT_STR(_vid, _pid, _data) \
+    {                                           \
+        .idVendor = (_vid),                     \
+        .idProduct = (_pid),                    \
+        .data = (const uint8_t *)(_data),       \
+        .len = -1,                              \
+    }
+
 static const struct xboxone_init_packet xboxone_init_packets[] = {
-    XBOXONE_INIT_PKT(0x0e6f, 0x0000, xboxone_hori_pdp_ack_id), // 0e6f-02ea and 0e6f-0165
+    XBOXONE_INIT_PKT(0x0e6f, 0x0165, xboxone_hori_pdp_ack_id), // 0e6f-0165
     XBOXONE_INIT_PKT(0x0f0d, 0x0067, xboxone_hori_pdp_ack_id),
     XBOXONE_INIT_PKT(0x0000, 0x0000, xboxone_power_on),
     XBOXONE_INIT_PKT(0x045e, 0x02ea, xboxone_s_init),
@@ -104,6 +116,54 @@ static const struct xboxone_init_packet xboxone_init_packets[] = {
     XBOXONE_INIT_PKT(0x24c6, 0x542a, xboxone_rumbleend_init),
     XBOXONE_INIT_PKT(0x24c6, 0x543a, xboxone_rumbleend_init),
 };
+/*
+static const struct xboxone_init_packet xboxone_init_packets[] = {
+    XBOXONE_INIT_PKT_STR(0x0000, 0x0000, "04200100"),
+    XBOXONE_INIT_PKT_STR(0x0000, 0x0000, "012002090004203a000000fa00"),
+    XBOXONE_INIT_PKT_STR(0x0000, 0x0000, "01200209000420220100001200"),
+    XBOXONE_INIT_PKT_STR(0x0000, 0x0000, "01200209000420340100000000"),
+    XBOXONE_INIT_PKT_STR(0x0000, 0x0000, "0520020f060000000000005553000000000000"),
+    XBOXONE_INIT_PKT_STR(0x0000, 0x0000, "0520030100"),
+    XBOXONE_INIT_PKT_STR(0x0000, 0x0000, "0a200403000114"),
+    XBOXONE_INIT_PKT_STR(0x0000, 0x0000, "0630013a00410001002c01010028f1eda4453a6adb2e2108b8eb084c05352e64e5c6267d330ba435765c76fd7ad000000000457bafe90000000000000000"),
+    XBOXONE_INIT_PKT_STR(0x0000, 0x0000, "01200109000620060000000000"),
+    XBOXONE_INIT_PKT_STR(0x0000, 0x0000, "0630020e0042000200540000000000000000"),
+    XBOXONE_INIT_PKT_STR(0x0000, 0x0000, "012002090006203a0000002000"),
+    XBOXONE_INIT_PKT_STR(0x0000, 0x0000, "012002090006205a0000000000"),
+    XBOXONE_INIT_PKT_STR(0x0000, 0x0000, "0630030e0042000304040000000000000000"),
+    XBOXONE_INIT_PKT_STR(0x0000, 0x0000, "012003090006203a000000ff02"),
+    XBOXONE_INIT_PKT_STR(0x0000, 0x0000, "01200309000620220100001702"),
+    XBOXONE_INIT_PKT_STR(0x0000, 0x0000, "0120030900062044020000f500"),
+    XBOXONE_INIT_PKT_STR(0x0000, 0x0000, "01200309000620390300000000"),
+    XBOXONE_INIT_PKT_STR(0x0000, 0x0000, "06f0043a920200410005010405010100af711ffa412e24f08692f328f6668d77c17f89dc5515b5ec2e14f857453675c40225d9321081d653332e9d4df828e474"),
+    XBOXONE_INIT_PKT_STR(0x0000, 0x0000, "06a004ba003a2b5f6d5ecb24a98c1855c33957fccd197e2892368c2b65f4cabd1777e0942732addc03308578d94bccb956d196a4434bfa618e730977fd35b22b"),
+    XBOXONE_INIT_PKT_STR(0x0000, 0x0000, "06a004ba007441bf4884ae4fd21685634c2e07b8eec79d0636ecb58f6c509f1abfbf60f3fc410220430d612bf9be0481d6d8bff856ec3636e9eee6a3deb3dad3"),
+    XBOXONE_INIT_PKT_STR(0x0000, 0x0000, "06a0043aae01bf427024fc6f76ca92f981226ac1f5b1d70702902e13dfdc9feec72b6f898a44ea6ea26f9ada85100c733a96fce928bd790c1b86abd1c1ff74be"),
+    XBOXONE_INIT_PKT_STR(0x0000, 0x0000, "06b0042ae801f2e2886657a218bde99a1caf11ec54d4a245ddddeb182d356ac3af48af9ef17429380000000000000000"),
+    XBOXONE_INIT_PKT_STR(0x0000, 0x0000, "06a004009202"),
+    XBOXONE_INIT_PKT_STR(0x0000, 0x0000, "01200409000620060000000000"),
+    XBOXONE_INIT_PKT_STR(0x0000, 0x0000, "0630053200410007002407010020676b579cb3467e514a3c4204319ae919b6c29614fcec7c8950b306e37fd003b10000000000000000"),
+    XBOXONE_INIT_PKT_STR(0x0000, 0x0000, "01200509000620060000000000"),
+    XBOXONE_INIT_PKT_STR(0x0000, 0x0000, "0630060e0042000800440000000000000000"),
+    XBOXONE_INIT_PKT_STR(0x0000, 0x0000, "012006090006203a0000001000"),
+    XBOXONE_INIT_PKT_STR(0x0000, 0x0000, "012006090006204a0000000000"),
+    XBOXONE_INIT_PKT_STR(0x0000, 0x0000, "062007020100"),
+    XBOXONE_INIT_PKT_STR(0x0000, 0x0000, "09000109000f00000000ff00eb"),
+    XBOXONE_INIT_PKT_STR(0x0000, 0x0000, "09000209000f00000000ff00eb"),
+    XBOXONE_INIT_PKT_STR(0x0000, 0x0000, "09000309000f00000000ff00eb"),
+};
+*/
+static std::vector<uint8_t> strToByteArray(const std::string &str)
+{
+    std::vector<uint8_t> byteArray;
+    for (size_t i = 0; i < str.size(); i += 2)
+    {
+        std::string byteStr = str.substr(i, 2);
+        uint8_t byte = static_cast<uint8_t>(std::stoi(byteStr, nullptr, 16));
+        byteArray.push_back(byte);
+    }
+    return byteArray;
+}
 
 XboxOneController::XboxOneController(std::unique_ptr<IUSBDevice> &&device, const ControllerConfig &config, std::unique_ptr<ILogger> &&logger)
     : BaseController(std::move(device), std::move(config), std::move(logger))
@@ -199,18 +259,26 @@ ControllerResult XboxOneController::SendInitBytes(uint16_t input_idx)
     if (m_outPipe.size() <= input_idx)
         return CONTROLLER_STATUS_SUCCESS;
 
-    uint16_t vendor = m_device->GetVendor();
-    uint16_t product = m_device->GetProduct();
     for (size_t i = 0; i < sizeof(xboxone_init_packets) / sizeof(struct xboxone_init_packet); i++)
     {
-        if (xboxone_init_packets[i].idVendor != 0 && xboxone_init_packets[i].idVendor != vendor)
+        if (xboxone_init_packets[i].idVendor != 0 && xboxone_init_packets[i].idVendor != m_device->GetVendor())
             continue;
-        if (xboxone_init_packets[i].idProduct != 0 && xboxone_init_packets[i].idProduct != product)
+        if (xboxone_init_packets[i].idProduct != 0 && xboxone_init_packets[i].idProduct != m_device->GetProduct())
             continue;
 
-        ControllerResult result = m_outPipe[input_idx]->Write(xboxone_init_packets[i].data, xboxone_init_packets[i].len);
-        if (result != CONTROLLER_STATUS_SUCCESS)
-            return result;
+        if (xboxone_init_packets[i].len == -1)
+        {
+            std::vector<uint8_t> buffer = strToByteArray(reinterpret_cast<const char *>(xboxone_init_packets[i].data));
+            ControllerResult result = m_outPipe[input_idx]->Write(buffer.data(), buffer.size());
+            if (result != CONTROLLER_STATUS_SUCCESS)
+                return result;
+        }
+        else
+        {
+            ControllerResult result = m_outPipe[input_idx]->Write(xboxone_init_packets[i].data, xboxone_init_packets[i].len);
+            if (result != CONTROLLER_STATUS_SUCCESS)
+                return result;
+        }
 
         /*
         // Keep this part of the code, it seems not needed to read while sending init bytes however it can be useful for debugging
