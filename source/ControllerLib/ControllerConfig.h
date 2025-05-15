@@ -14,6 +14,7 @@
 #define DPAD_RIGHT_BUTTON_ID MAX_HID_CONTROLLER_BUTTONS + 3
 
 #define MAX_CONTROLLER_BUTTONS 36
+#define MAX_CONTROLLER_COMBO   16
 
 enum ControllerButton
 {
@@ -98,6 +99,12 @@ struct ControllerAnalogConfig
     ControllerAnalogBinding bind{ControllerAnalogBinding::ControllerAnalogBinding_Unknown};
 };
 
+struct ControllerComboConfig
+{
+    ControllerButton buttonSimulated{ControllerButton::NONE};
+    ControllerButton buttons[2];
+};
+
 class ControllerConfig
 {
 public:
@@ -114,8 +121,7 @@ public:
     uint8_t buttonsPin[ControllerButton::COUNT][MAX_PIN_BY_BUTTONS]{0};
     ControllerAnalogConfig buttonsAnalog[ControllerButton::COUNT]{0};
 
-    ControllerButton simulateHome[2]{ControllerButton::NONE};
-    ControllerButton simulateCapture[2]{ControllerButton::NONE};
+    ControllerComboConfig simulateCombos[MAX_CONTROLLER_COMBO];
 
     RGBAColor bodyColor{0, 0, 0, 255};
     RGBAColor buttonsColor{0, 0, 0, 255};

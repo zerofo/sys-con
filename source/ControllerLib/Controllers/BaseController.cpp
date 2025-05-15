@@ -272,23 +272,17 @@ void BaseController::MapRawInputToNormalized(RawInputData &rawData, NormalizedBu
     normalData->buttons[ControllerButton::DPAD_LEFT] = IsButtonPressed(rawData, ControllerButton::DPAD_LEFT);
 
     // Simulate buttons
-    if (GetConfig().simulateHome[0] != ControllerButton::NONE && GetConfig().simulateHome[1] != ControllerButton::NONE)
+    for (int i = 0; i < MAX_CONTROLLER_COMBO; i++)
     {
-        if (normalData->buttons[GetConfig().simulateHome[0]] && normalData->buttons[GetConfig().simulateHome[1]])
-        {
-            normalData->buttons[ControllerButton::HOME] = true;
-            normalData->buttons[GetConfig().simulateHome[0]] = false;
-            normalData->buttons[GetConfig().simulateHome[1]] = false;
-        }
-    }
+        const ControllerComboConfig *combo = &GetConfig().simulateCombos[i];
+        if (combo->buttonSimulated == ControllerButton::NONE)
+            break; // Stop at the first empty combo
 
-    if (GetConfig().simulateCapture[0] != ControllerButton::NONE && GetConfig().simulateCapture[1] != ControllerButton::NONE)
-    {
-        if (normalData->buttons[GetConfig().simulateCapture[0]] && normalData->buttons[GetConfig().simulateCapture[1]])
+        if (normalData->buttons[combo->buttons[0]] && normalData->buttons[combo->buttons[1]])
         {
-            normalData->buttons[ControllerButton::CAPTURE] = true;
-            normalData->buttons[GetConfig().simulateCapture[0]] = false;
-            normalData->buttons[GetConfig().simulateCapture[1]] = false;
+            normalData->buttons[combo->buttonSimulated] = true;
+            normalData->buttons[combo->buttons[0]] = false;
+            normalData->buttons[combo->buttons[1]] = false;
         }
     }
 }

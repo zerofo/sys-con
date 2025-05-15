@@ -1,4 +1,3 @@
-#include "switch.h"
 #include "config_handler.h"
 #include "Controllers.h"
 #include "ControllerConfig.h"
@@ -321,10 +320,23 @@ namespace syscon::config
                 ini_data->controller_config->outputMaxPacketSize = atoi(value);
             else if (nameStr == "controller_type")
                 ini_data->controller_config->controllerType = stringToControllerType(value);
-            else if (nameStr == "simulate_home")
-                parseHotKey(value, ini_data->controller_config->simulateHome);
-            else if (nameStr == "simulate_capture")
-                parseHotKey(value, ini_data->controller_config->simulateCapture);
+            else if (nameStr.starts_with("simulate_"))
+            {
+                ControllerButton btn = stringToButton(nameStr.substr(9).c_str());
+                if (btn != ControllerButton::NONE && btn < ControllerButton::COUNT)
+                {
+                    for (int i = 0; i < MAX_CONTROLLER_COMBO; i++)
+                    {
+                        if (ini_data->controller_config->simulateCombos[i].buttonSimulated != ControllerButton::NONE)
+                            continue; // Search for a free slot
+
+                        ini_data->controller_config->simulateCombos[i].buttonSimulated = btn;
+                        parseHotKey(value, ini_data->controller_config->simulateCombos[i].buttons);
+                    }
+                }
+                else
+                    syscon::logger::LogError("Unknown key: %s, continue anyway ...", nameStr.c_str());
+            }
             else if (nameStr == "deadzone_x")
                 ini_data->controller_config->analogDeadzonePercent[ControllerAnalogBinding::ControllerAnalogBinding_X] = atoi(value);
             else if (nameStr == "deadzone_y")

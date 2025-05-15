@@ -133,7 +133,7 @@ Note: Depending to the controller, this windows procedure might not works. If th
 
 ### Button mapping
 
-List of possible mappable switch buttons:
+The following is the complete list of mappable buttons for the Switch controller:
 ```
 lstick_left=
 lstick_right=
@@ -161,21 +161,24 @@ dpad_left=
 dpad_right=
 capture=
 home=
-simulate_home=
-simulate_capture=
+simulate_<BUTTON>=
 ```
 
-List of possible values:
+**Possible Values:**
 
  - **1 to 31**: Represent the Button ID of the controller
- - **Z, -Z, Rz, -Rz, Rx, -Rx, Ry, -Ry, Slider, -Slider, Dial, -Dial**: Repesent the analog part of the controller (Joystick, ...)
- - **32 to 35**: Represent the hat switch of the controller (Most of the time equivalent to dpad) - 32, 33, 34, 35 represent dpad_up, dpad_down, dpad_left, dpad_right
+ - **Z, -Z, Rz, -Rz, Rx, -Rx, Ry, -Ry, Slider, -Slider, Dial, -Dial**: Represents the analog inputs (e.g., joystick, slider).
+ - **32 to 35**:  Represents the hat switch (D-Pad) directions:
+   - `32` — `dpad_up`
+   - `33` — `dpad_down`
+   - `34` — `dpad_left`
+   - `35` — `dpad_right`
 
-### Deadzone & Factor
+### Deadzone & Factor configuration
 
-Additionnaly, you can configure deadzone and/or factor for every analog.
- - Deadzone increases the area around the neutral position of your analog stick where any movement is ignored. This helps prevent unintentional input, ensuring only deliberate movements are registered by the controller.
- - Factor adjusts the scaling of the analog stick's input. It can be increased or reduced to compensate if your controller isn't reaching its full range of motion (e.g., setting it to 110 means the controller will report 110% of its actual range).
+You can adjust the deadzone and factor for each analog input to fine-tune the controller response.
+ - **Deadzone:** Defines a region around the neutral position of an analog stick where inputs are ignored, preventing unintended movements.
+ - **Factor:** Adjusts the input scaling, allowing for compensation if the controller isn't reaching its full range of motion.
 
 ```
 deadzone_x=20
@@ -201,8 +204,18 @@ All these values are in percentages
 - Typical deadzone range: 0% to 30%
 - Typical Factor range: 100% to 150%
 
-### Home & Capture Shortcuts
+### Home & Capture shortcuts
 By default, the **HOME** and **CAPTURE** can be triggered by pressing `Minus + DPAD_UP` and `Minus + DPAD_DOWN`, respectively. Minus button is often mapped to the select button.
+
+### Simulating buttons
+You can simulate buttons by combining multiple button presses.
+For example:
+```
+simulate_L=minus+plus
+simulate_A=L+R
+simulate_rstick_click=ZL
+```
+This configuration allows you to trigger specific buttons using combinations of other buttons, offering more flexibility in custom mappings.
 
 ## Troubleshooting
 For common issues a troubleshooting guide is available: [Troubleshooting](https://github.com/o0Zz/sys-con/blob/master/doc/Troubleshooting.md)

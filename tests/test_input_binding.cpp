@@ -115,10 +115,12 @@ TEST(BaseController, test_input_simulate_buttons)
     config.buttonsPin[ControllerButton::Y][0] = 2;
     config.buttonsPin[ControllerButton::A][0] = 3;
     config.buttonsPin[ControllerButton::B][0] = 4;
-    config.simulateHome[0] = ControllerButton::X;
-    config.simulateHome[1] = ControllerButton::Y;
-    config.simulateCapture[0] = ControllerButton::A;
-    config.simulateCapture[1] = ControllerButton::B;
+    config.simulateCombos[0].buttonSimulated = ControllerButton::HOME;
+    config.simulateCombos[0].buttons[0] = ControllerButton::X;
+    config.simulateCombos[0].buttons[1] = ControllerButton::Y;
+    config.simulateCombos[1].buttonSimulated = ControllerButton::CAPTURE;
+    config.simulateCombos[1].buttons[0] = ControllerButton::A;
+    config.simulateCombos[1].buttons[1] = ControllerButton::B;
 
     RawInputData inputData;
     inputData.buttons[1] = true;
@@ -205,10 +207,12 @@ TEST(BaseController, test_input_complex_combination)
 
     config.buttonsPin[ControllerButton::R][0] = DPAD_RIGHT_BUTTON_ID;
 
-    config.simulateHome[0] = ControllerButton::Y;
-    config.simulateHome[1] = ControllerButton::X;
-    config.simulateCapture[0] = ControllerButton::L;
-    config.simulateCapture[1] = ControllerButton::R;
+    config.simulateCombos[0].buttonSimulated = ControllerButton::HOME;
+    config.simulateCombos[0].buttons[0] = ControllerButton::X;
+    config.simulateCombos[0].buttons[1] = ControllerButton::Y;
+    config.simulateCombos[1].buttonSimulated = ControllerButton::CAPTURE;
+    config.simulateCombos[1].buttons[0] = ControllerButton::L;
+    config.simulateCombos[1].buttons[1] = ControllerButton::R;
 
     config.buttonsAnalog[ControllerButton::LSTICK_LEFT].bind = ControllerAnalogBinding_X;
     config.buttonsAnalog[ControllerButton::LSTICK_LEFT].sign = -1.0f;
