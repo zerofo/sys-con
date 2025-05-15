@@ -358,3 +358,15 @@ uint32_t BaseController::ReadBitsLE(uint8_t *buffer, uint32_t bitOffset, uint32_
 
     return result;
 }
+
+std::vector<uint8_t> BaseController::StrToByteArray(const std::string &str)
+{
+    std::vector<uint8_t> byteArray;
+    for (size_t i = 0; i < str.size(); i += 2)
+    {
+        std::string byteStr = str.substr(i, 2);
+        uint8_t byte = static_cast<uint8_t>(std::stoi(byteStr, nullptr, 16));
+        byteArray.push_back(byte);
+    }
+    return byteArray;
+}
