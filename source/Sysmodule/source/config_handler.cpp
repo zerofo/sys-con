@@ -10,6 +10,7 @@
 #include <chrono>
 #include <iomanip>
 #include "ini.h"
+#include "logger.h"
 
 namespace syscon::config
 {
@@ -332,6 +333,7 @@ namespace syscon::config
 
                         ini_data->controller_config->simulateCombos[i].buttonSimulated = btn;
                         parseHotKey(value, ini_data->controller_config->simulateCombos[i].buttons);
+                        break; // Found a free slot
                     }
                 }
                 else
