@@ -108,7 +108,7 @@ namespace syscon::usb
                             default_profile = "xbox";
 
                         ControllerConfig config;
-                        ::syscon::config::LoadControllerConfig(&config, interface->device_desc.idVendor, interface->device_desc.idProduct, g_auto_add_controller, default_profile);
+                        ::syscon::config::LoadControllerConfig(CONFIG_FULLPATH, &config, interface->device_desc.idVendor, interface->device_desc.idProduct, g_auto_add_controller, default_profile);
 
                         if (config.driver == "dualshock3")
                         {

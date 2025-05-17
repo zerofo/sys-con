@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.14)
 project(SysConTests)
 
 # GoogleTest requires at least C++14
-set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD 17)
 
 include(FetchContent)
 FetchContent_Declare(
@@ -23,8 +23,9 @@ file(GLOB TEST_FILES ${PROJECT_SOURCE_DIR}/*.cpp)
 
 add_executable(SysConTests ${TEST_FILES}) # add this executable
 
-target_link_libraries(SysConTests PRIVATE GTest::gmock_main) # link google test to this executable
-target_link_libraries(SysConTests PRIVATE SysConControllerLib) # link google test \to this executable
+target_link_libraries(SysConTests PRIVATE GTest::gmock_main)
+target_link_libraries(SysConTests PRIVATE SysConControllerLib)
+target_link_libraries(SysConTests PRIVATE SysConModule)
 
 include(GoogleTest)
 gtest_discover_tests(SysConTests) # discovers tests by asking the compiled test executable to enumerate its tests

@@ -19,7 +19,7 @@ namespace syscon::logger
 
     const char klogLevelStr[LOG_LEVEL_COUNT] = {'T', 'D', 'P', 'I', 'W', 'E'};
 
-    Result Initialize(const std::string &log)
+    void Initialize(const std::string &log)
     {
         std::lock_guard<std::mutex> printLock(sLogMutex);
 
@@ -38,8 +38,6 @@ namespace syscon::logger
             if (fileSize >= LOG_FILE_SIZE_MAX)
                 std::filesystem::remove(sLogPath);
         }
-
-        return 0;
     }
 
     void SetLogLevel(int level)
@@ -63,8 +61,8 @@ namespace syscon::logger
 
         std::lock_guard<std::mutex> printLock(sLogMutex);
 
-        u64 current_time_ms = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
-        std::snprintf(sLogBuffer, sizeof(sLogBuffer), "|%c|%02li:%02li:%02li.%03li|%08X| ", klogLevelStr[lvl], (current_time_ms / 3600000) % 24, (current_time_ms / 60000) % 60, (current_time_ms / 1000) % 60, current_time_ms % 1000, (uint32_t)((uint64_t)threadGetSelf()));
+        uint64_t current_time_ms = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+        std::snprintf(sLogBuffer, sizeof(sLogBuffer), "|%c|%02lu:%02lu:%02lu.%03lu|%08X| ", klogLevelStr[lvl], (current_time_ms / 3600000) % 24, (current_time_ms / 60000) % 60, (current_time_ms / 1000) % 60, current_time_ms % 1000, (uint32_t)std::hash<std::thread::id>{}(std::this_thread::get_id()));
         std::vsnprintf(&sLogBuffer[strlen(sLogBuffer)], sizeof(sLogBuffer) - strlen(sLogBuffer), fmt, vl);
 
         /* Write in the file. */
@@ -78,8 +76,8 @@ namespace syscon::logger
 
         std::lock_guard<std::mutex> printLock(sLogMutex);
 
-        u64 current_time_ms = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
-        std::snprintf(sLogBuffer, sizeof(sLogBuffer), "|%c|%02li:%02li:%02li.%03li|%08X| ", klogLevelStr[lvl], (current_time_ms / 3600000) % 24, (current_time_ms / 60000) % 60, (current_time_ms / 1000) % 60, current_time_ms % 1000, (uint32_t)((uint64_t)threadGetSelf()));
+        uint64_t current_time_ms = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+        std::snprintf(sLogBuffer, sizeof(sLogBuffer), "|%c|%02lu:%02lu:%02lu.%03lu|%08X| ", klogLevelStr[lvl], (current_time_ms / 3600000) % 24, (current_time_ms / 60000) % 60, (current_time_ms / 1000) % 60, current_time_ms % 1000, (uint32_t)std::hash<std::thread::id>{}(std::this_thread::get_id()));
 
         size_t start_offset = strlen(sLogBuffer);
 

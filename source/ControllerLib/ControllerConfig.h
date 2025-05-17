@@ -119,6 +119,8 @@ public:
     uint8_t analogFactorPercent[ControllerAnalogBinding_Count]{100};
 
     uint8_t buttonsPin[ControllerButton::COUNT][MAX_PIN_BY_BUTTONS]{0};
+
+    bool buttonsAnalogUsed{false};
     ControllerAnalogConfig buttonsAnalog[ControllerButton::COUNT]{0};
 
     ControllerComboConfig simulateCombos[MAX_CONTROLLER_COMBO];
@@ -134,6 +136,13 @@ public:
         {
             analogDeadzonePercent[i] = 0;
             analogFactorPercent[i] = 100;
+        }
+
+        for (int i = 0; i < MAX_CONTROLLER_COMBO; i++)
+        {
+            simulateCombos[i].buttonSimulated = ControllerButton::NONE;
+            for (int j = 0; j < 2; j++)
+                simulateCombos[i].buttons[j] = ControllerButton::NONE;
         }
 
         memset(buttonsPin, 0, sizeof(buttonsPin));

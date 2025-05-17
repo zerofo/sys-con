@@ -1,16 +1,13 @@
 #include "config_handler.h"
-#include "Controllers.h"
-#include "ControllerConfig.h"
+
 #include "logger.h"
+#include "ini.h"
+
 #include <cstring>
 #include <cstdlib>
-#include <sstream>
 #include <fstream>
 #include <filesystem>
 #include <chrono>
-#include <iomanip>
-#include "ini.h"
-#include "logger.h"
 
 namespace syscon::config
 {
@@ -138,7 +135,7 @@ namespace syscon::config
             std::string stickcfg = convertToLowercase(cfg);
 
             analogCfg->bind = ControllerAnalogBinding::ControllerAnalogBinding_Unknown;
-            analogCfg->sign = stickcfg[0] == '-' ? -1.0 : 1.0;
+            analogCfg->sign = stickcfg[0] == '-' ? -1.0f : 1.0f;
 
             if (stickcfg[0] == '-' || stickcfg[0] == '+')
                 stickcfg = stickcfg.substr(1);
@@ -310,7 +307,10 @@ namespace syscon::config
 
             ControllerButton buttonId = stringToButton(nameStr.c_str());
             if (buttonId != ControllerButton::NONE)
+            {
+                ini_data->controller_config->buttonsAnalogUsed = true;
                 parseBinding(value, ini_data->controller_config->buttonsPin[buttonId], &ini_data->controller_config->buttonsAnalog[buttonId]);
+            }
             else if (nameStr == "driver")
                 ini_data->controller_config->driver = convertToLowercase(value);
             else if (nameStr == "profile")
@@ -386,29 +386,29 @@ namespace syscon::config
             return 1; // Success
         }
 
-        Result ReadFromConfig(const char *path, ini_handler h, void *config)
+        int ReadFromConfig(const char *path, ini_handler h, void *config)
         {
             return ini_parse(path, h, config);
         }
     } // namespace
 
-    Result LoadGlobalConfig(GlobalConfig *config)
+    int LoadGlobalConfig(const std::string &configFullPath, GlobalConfig *config)
     {
         ConfigINIData cfg("global", config);
 
-        syscon::logger::LogDebug("Loading global config: '%s' ...", CONFIG_FULLPATH);
+        syscon::logger::LogDebug("Loading global config: '%s' ...", configFullPath.c_str());
 
-        Result rc = ReadFromConfig(CONFIG_FULLPATH, ParseGlobalConfigLine, &cfg);
-        if (R_FAILED(rc))
+        int rc = ReadFromConfig(configFullPath.c_str(), ParseGlobalConfigLine, &cfg);
+        if (rc)
         {
-            syscon::logger::LogError("Failed to load global config: '%s' (Error: 0x%08X) !", CONFIG_FULLPATH, rc);
+            syscon::logger::LogError("Failed to load global config: '%s' (Error: 0x%08X) !", configFullPath.c_str(), rc);
             return rc;
         }
 
         return 0;
     }
 
-    Result AddControllerToConfig(const std::string &path, const std::string &section, const std::string &profile)
+    int AddControllerToConfig(const std::string &path, const std::string &section, const std::string &profile)
     {
         std::stringstream ss;
 
@@ -467,51 +467,51 @@ namespace syscon::config
         return 0;
     }
 
-    Result LoadControllerConfig(ControllerConfig *config, uint16_t vendor_id, uint16_t product_id, bool auto_add_controller, const std::string &default_profile)
+    int LoadControllerConfig(const std::string &configFullPath, ControllerConfig *config, uint16_t vendor_id, uint16_t product_id, bool auto_add_controller, const std::string &default_profile)
     {
         ControllerVidPid controllerVidPid(vendor_id, product_id);
         ConfigINIData cfg_default("default", config);
         ConfigINIData cfg_controller(controllerVidPid, config);
 
-        syscon::logger::LogDebug("Loading controller config: '%s' [default] ...", CONFIG_FULLPATH);
+        syscon::logger::LogDebug("Loading controller config: '%s' [default] ...", configFullPath.c_str());
 
-        Result rc = ReadFromConfig(CONFIG_FULLPATH, ParseControllerConfigLine, &cfg_default);
-        if (R_FAILED(rc))
+        int rc = ReadFromConfig(configFullPath.c_str(), ParseControllerConfigLine, &cfg_default);
+        if (rc)
             return rc;
 
         // Override with vendor specific config
-        syscon::logger::LogDebug("Loading controller config: '%s' [%s] ...", CONFIG_FULLPATH, std::string(controllerVidPid).c_str());
-        rc = ReadFromConfig(CONFIG_FULLPATH, ParseControllerConfigLine, &cfg_controller);
-        if (R_FAILED(rc))
+        syscon::logger::LogDebug("Loading controller config: '%s' [%s] ...", configFullPath.c_str(), std::string(controllerVidPid).c_str());
+        rc = ReadFromConfig(configFullPath.c_str(), ParseControllerConfigLine, &cfg_controller);
+        if (rc)
             return rc;
 
         if (!cfg_controller.ini_section_found && auto_add_controller)
         {
             syscon::logger::LogDebug("Controller not found in config file, adding it as '%s'...", default_profile.c_str());
-            rc = AddControllerToConfig(CONFIG_FULLPATH, std::string(controllerVidPid), default_profile);
-            if (R_FAILED(rc))
+            rc = AddControllerToConfig(configFullPath.c_str(), std::string(controllerVidPid), default_profile);
+            if (rc)
                 return rc;
 
-            syscon::logger::LogDebug("Reloading controller config: '%s' [%s] ...", CONFIG_FULLPATH, std::string(controllerVidPid).c_str());
-            rc = ReadFromConfig(CONFIG_FULLPATH, ParseControllerConfigLine, &cfg_controller);
-            if (R_FAILED(rc))
+            syscon::logger::LogDebug("Reloading controller config: '%s' [%s] ...", configFullPath.c_str(), std::string(controllerVidPid).c_str());
+            rc = ReadFromConfig(configFullPath.c_str(), ParseControllerConfigLine, &cfg_controller);
+            if (rc)
                 return rc;
         }
 
         // Check if have a "profile"
         if (config->profile.length() > 0)
         {
-            syscon::logger::LogDebug("Loading controller config: '%s' (Profile: [%s]) ... ", CONFIG_FULLPATH, config->profile.c_str());
+            syscon::logger::LogDebug("Loading controller config: '%s' (Profile: [%s]) ... ", configFullPath.c_str(), config->profile.c_str());
             ConfigINIData cfg_profile(config->profile, config);
-            rc = ReadFromConfig(CONFIG_FULLPATH, ParseControllerConfigLine, &cfg_profile);
-            if (R_FAILED(rc))
+            rc = ReadFromConfig(configFullPath.c_str(), ParseControllerConfigLine, &cfg_profile);
+            if (rc)
                 return rc;
 
             // Re-Override with vendor specific config
             // We are doing this to allow the profile to be overrided by the vendor specific config
             // In other words we would like to have [default] overrided by [profile] overrided by [vid-pid]
-            rc = ReadFromConfig(CONFIG_FULLPATH, ParseControllerConfigLine, &cfg_controller);
-            if (R_FAILED(rc))
+            rc = ReadFromConfig(configFullPath.c_str(), ParseControllerConfigLine, &cfg_controller);
+            if (rc)
                 return rc;
         }
 

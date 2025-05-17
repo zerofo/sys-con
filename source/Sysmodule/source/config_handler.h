@@ -1,11 +1,13 @@
 #pragma once
+
+#include "logger.h"
 #include "ControllerTypes.h"
 #include "ControllerConfig.h"
-#include "logger.h"
 #include <string>
 #include <sstream>
 #include <iomanip>
 #include <vector>
+#include <stdlib.h>
 
 #define CONFIG_PATH     "/config/sys-con/"
 #define CONFIG_FULLPATH CONFIG_PATH "config.ini"
@@ -25,8 +27,8 @@ namespace syscon::config
                 std::string vidStr = vidpid.substr(0, delimIdx);
                 std::string pidStr = vidpid.substr(delimIdx + 1);
 
-                vid = strtol(vidStr.c_str(), NULL, 16);
-                pid = strtol(pidStr.c_str(), NULL, 16);
+                vid = static_cast<uint16_t>(strtol(vidStr.c_str(), NULL, 16));
+                pid = static_cast<uint16_t>(strtol(pidStr.c_str(), NULL, 16));
             }
         }
 
@@ -59,15 +61,15 @@ namespace syscon::config
     {
     public:
         uint16_t polling_frequency_ms{0};
-        s8 polling_thread_priority{0x30};
+        int8_t polling_thread_priority{0x30};
         int log_level{LOG_LEVEL_INFO};
         DiscoveryMode discovery_mode{DiscoveryMode::HID_AND_XBOX};
         std::vector<ControllerVidPid> discovery_vidpid;
         bool auto_add_controller{true};
     };
 
-    Result LoadGlobalConfig(GlobalConfig *config);
+    int LoadGlobalConfig(const std::string &configFullPath, GlobalConfig *config);
 
-    Result LoadControllerConfig(ControllerConfig *config, uint16_t vendor_id, uint16_t product_id, bool auto_add_controller, const std::string &default_profile);
+    int LoadControllerConfig(const std::string &configFullPath, ControllerConfig *config, uint16_t vendor_id, uint16_t product_id, bool auto_add_controller, const std::string &default_profile);
 
 }; // namespace syscon::config

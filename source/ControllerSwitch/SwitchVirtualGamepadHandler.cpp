@@ -2,7 +2,7 @@
 #include "SwitchLogger.h"
 #include <chrono>
 
-SwitchVirtualGamepadHandler::SwitchVirtualGamepadHandler(std::unique_ptr<IController> &&controller, s32 polling_frequency_ms, s8 thread_priority)
+SwitchVirtualGamepadHandler::SwitchVirtualGamepadHandler(std::unique_ptr<IController> &&controller, int32_t polling_frequency_ms, int8_t thread_priority)
     : m_controller(std::move(controller)),
       m_polling_frequency_ms(std::max(1, polling_frequency_ms)),
       m_polling_thread_priority(thread_priority)
@@ -82,7 +82,7 @@ void SwitchVirtualGamepadHandler::ExitThread()
     threadClose(&m_Thread);
 }
 
-void SwitchVirtualGamepadHandler::ConvertAxisToSwitchAxis(float x, float y, s32 *x_out, s32 *y_out)
+void SwitchVirtualGamepadHandler::ConvertAxisToSwitchAxis(float x, float y, int32_t *x_out, int32_t *y_out)
 {
     float floatRange = 2.0f;
     float newRange = (JOYSTICK_MAX - JOYSTICK_MIN);

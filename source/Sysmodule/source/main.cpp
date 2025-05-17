@@ -87,7 +87,7 @@ int main(int argc, char *argv[])
     ::syscon::logger::LogDebug("Initializing configuration ...");
 
     ::syscon::config::GlobalConfig globalConfig;
-    ::syscon::config::LoadGlobalConfig(&globalConfig);
+    ::syscon::config::LoadGlobalConfig(CONFIG_FULLPATH, &globalConfig);
 
     ::syscon::logger::SetLogLevel(globalConfig.log_level);
 

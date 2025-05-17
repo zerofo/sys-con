@@ -214,6 +214,8 @@ TEST(BaseController, test_input_complex_combination)
     config.simulateCombos[1].buttons[0] = ControllerButton::L;
     config.simulateCombos[1].buttons[1] = ControllerButton::R;
 
+    config.buttonsAnalogUsed = true;
+
     config.buttonsAnalog[ControllerButton::LSTICK_LEFT].bind = ControllerAnalogBinding_X;
     config.buttonsAnalog[ControllerButton::LSTICK_LEFT].sign = -1.0f;
     config.buttonsAnalog[ControllerButton::LSTICK_RIGHT].bind = ControllerAnalogBinding_X;

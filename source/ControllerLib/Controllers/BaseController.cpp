@@ -242,34 +242,34 @@ void BaseController::MapRawInputToNormalized(RawInputData &rawData, NormalizedBu
             *stick.value_addr = stick.sign * value;
     }
 
-    static_assert(MAX_PIN_BY_BUTTONS == 2, "You need to update IsPinPressed macro !");
+    const ControllerButton controllerButtonList[MAX_CONTROLLER_BUTTONS] = {
+        ControllerButton::X,
+        ControllerButton::A,
+        ControllerButton::B,
+        ControllerButton::Y,
+        ControllerButton::LSTICK_CLICK,
+        ControllerButton::RSTICK_CLICK,
+        ControllerButton::L,
+        ControllerButton::R,
+        ControllerButton::ZL,
+        ControllerButton::ZR,
+        ControllerButton::MINUS,
+        ControllerButton::PLUS,
+        ControllerButton::CAPTURE,
+        ControllerButton::HOME,
+        ControllerButton::DPAD_UP,
+        ControllerButton::DPAD_DOWN,
+        ControllerButton::DPAD_RIGHT,
+        ControllerButton::DPAD_LEFT};
 
-#define IsButtonPressed(rawData, controllerButton)                                                                               \
-    (rawData.buttons[GetConfig().buttonsPin[controllerButton][0]] ||                                                             \
-     rawData.buttons[GetConfig().buttonsPin[controllerButton][1]] ||                                                             \
-     GetConfig().buttonsAnalog[controllerButton].sign * rawData.analog[GetConfig().buttonsAnalog[controllerButton].bind] > 0.0f) \
-        ? true                                                                                                                   \
-        : false
+    for (ControllerButton controllerButton : controllerButtonList)
+        normalData->buttons[controllerButton] = rawData.buttons[GetConfig().buttonsPin[controllerButton][0]] || rawData.buttons[GetConfig().buttonsPin[controllerButton][1]];
 
-    // Set Buttons
-    normalData->buttons[ControllerButton::X] = IsButtonPressed(rawData, ControllerButton::X);
-    normalData->buttons[ControllerButton::A] = IsButtonPressed(rawData, ControllerButton::A);
-    normalData->buttons[ControllerButton::B] = IsButtonPressed(rawData, ControllerButton::B);
-    normalData->buttons[ControllerButton::Y] = IsButtonPressed(rawData, ControllerButton::Y);
-    normalData->buttons[ControllerButton::LSTICK_CLICK] = IsButtonPressed(rawData, ControllerButton::LSTICK_CLICK);
-    normalData->buttons[ControllerButton::RSTICK_CLICK] = IsButtonPressed(rawData, ControllerButton::RSTICK_CLICK);
-    normalData->buttons[ControllerButton::L] = IsButtonPressed(rawData, ControllerButton::L);
-    normalData->buttons[ControllerButton::R] = IsButtonPressed(rawData, ControllerButton::R);
-    normalData->buttons[ControllerButton::ZL] = IsButtonPressed(rawData, ControllerButton::ZL);
-    normalData->buttons[ControllerButton::ZR] = IsButtonPressed(rawData, ControllerButton::ZR);
-    normalData->buttons[ControllerButton::MINUS] = IsButtonPressed(rawData, ControllerButton::MINUS);
-    normalData->buttons[ControllerButton::PLUS] = IsButtonPressed(rawData, ControllerButton::PLUS);
-    normalData->buttons[ControllerButton::CAPTURE] = IsButtonPressed(rawData, ControllerButton::CAPTURE);
-    normalData->buttons[ControllerButton::HOME] = IsButtonPressed(rawData, ControllerButton::HOME);
-    normalData->buttons[ControllerButton::DPAD_UP] = IsButtonPressed(rawData, ControllerButton::DPAD_UP);
-    normalData->buttons[ControllerButton::DPAD_DOWN] = IsButtonPressed(rawData, ControllerButton::DPAD_DOWN);
-    normalData->buttons[ControllerButton::DPAD_RIGHT] = IsButtonPressed(rawData, ControllerButton::DPAD_RIGHT);
-    normalData->buttons[ControllerButton::DPAD_LEFT] = IsButtonPressed(rawData, ControllerButton::DPAD_LEFT);
+    if (GetConfig().buttonsAnalogUsed)
+    {
+        for (ControllerButton controllerButton : controllerButtonList)
+            normalData->buttons[controllerButton] |= (GetConfig().buttonsAnalog[controllerButton].sign * rawData.analog[GetConfig().buttonsAnalog[controllerButton].bind]) > 0.0f;
+    }
 
     // Simulate buttons
     for (int i = 0; i < MAX_CONTROLLER_COMBO; i++)
@@ -289,17 +289,13 @@ void BaseController::MapRawInputToNormalized(RawInputData &rawData, NormalizedBu
 
 float BaseController::ApplyDeadzone(uint8_t deadzonePercent, float value)
 {
-    float deadzone = 1.0f * deadzonePercent / 100.0f;
+    float deadzone = deadzonePercent / 100.0f;
 
     if (std::abs(value) < deadzone)
         return 0.0f;
 
-    if (value > 0)
-        value = (value - deadzone) / (1.0f - deadzone);
-    else
-        value = (value + deadzone) / (1.0f - deadzone);
-
-    return value;
+    const float scale = 1.0f / (1.0f - deadzone);
+    return (value > 0) ? (value - deadzone) * scale : (value + deadzone) * scale;
 }
 
 float BaseController::Normalize(int32_t value, int32_t min, int32_t max)

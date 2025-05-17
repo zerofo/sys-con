@@ -4,7 +4,7 @@
 
 static HiddbgHdlsSessionId g_hdlsSessionId;
 
-SwitchHDLHandler::SwitchHDLHandler(std::unique_ptr<IController> &&controller, s32 polling_frequency_ms, s8 thread_priority)
+SwitchHDLHandler::SwitchHDLHandler(std::unique_ptr<IController> &&controller, int32_t polling_frequency_ms, int8_t thread_priority)
     : SwitchVirtualGamepadHandler(std::move(controller), polling_frequency_ms, thread_priority)
 {
     for (int i = 0; i < CONTROLLER_MAX_INPUTS; i++)
@@ -231,7 +231,7 @@ Result SwitchHDLHandler::UpdateHdlState(const NormalizedButtonData &data, uint16
     return 0;
 }
 
-void SwitchHDLHandler::UpdateInput(s32 timeout_us)
+void SwitchHDLHandler::UpdateInput(uint32_t timeout_us)
 {
     uint16_t input_idx = 0;
     NormalizedButtonData buttonData = {0};

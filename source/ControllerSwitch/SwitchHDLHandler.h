@@ -37,7 +37,7 @@ private:
 
 public:
     // Initialize the class with specified controller
-    SwitchHDLHandler(std::unique_ptr<IController> &&controller, s32 polling_frequency_ms, s8 thread_priority);
+    SwitchHDLHandler(std::unique_ptr<IController> &&controller, int32_t polling_frequency_ms, int8_t thread_priority);
     ~SwitchHDLHandler();
 
     // Initialize controller handler, HDL state
@@ -45,7 +45,7 @@ public:
     virtual void Exit() override;
 
     // This will be called periodically by the input threads
-    virtual void UpdateInput(s32 timeout_us) override;
+    virtual void UpdateInput(uint32_t timeout_us) override;
     // This will be called periodically by the output threads
     virtual void UpdateOutput() override;
 
