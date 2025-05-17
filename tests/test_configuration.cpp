@@ -10,6 +10,14 @@ TEST(Configuration, test_load_config_unknown)
 
     int rc = ::syscon::config::LoadControllerConfig(CONFIG_FULLPATH_PROJECT, &config, 0x0000, 0x0000, false, "");
     EXPECT_EQ(rc, 0);
+
+    EXPECT_EQ(config.driver, "");
+    EXPECT_EQ(config.profile, "");
+    EXPECT_EQ(config.controllerType, ControllerType_Pro);
+    EXPECT_EQ(config.buttonsPin[ControllerButton::X][0], 0);
+    EXPECT_EQ(config.buttonsPin[ControllerButton::A][0], 0);
+    EXPECT_EQ(config.buttonsPin[ControllerButton::B][0], 0);
+    EXPECT_EQ(config.buttonsPin[ControllerButton::Y][0], 0);
 }
 
 TEST(Configuration, test_load_config_no_profile)
@@ -18,6 +26,14 @@ TEST(Configuration, test_load_config_no_profile)
 
     int rc = ::syscon::config::LoadControllerConfig(CONFIG_FULLPATH_PROJECT, &config, 0x054c, 0x0cda, false, "");
     EXPECT_EQ(rc, 0);
+
+    EXPECT_EQ(config.driver, "");
+    EXPECT_EQ(config.profile, "");
+    EXPECT_EQ(config.controllerType, ControllerType_Pro);
+    EXPECT_EQ(config.buttonsPin[ControllerButton::X][0], 1);
+    EXPECT_EQ(config.buttonsPin[ControllerButton::A][0], 2);
+    EXPECT_EQ(config.buttonsPin[ControllerButton::B][0], 3);
+    EXPECT_EQ(config.buttonsPin[ControllerButton::Y][0], 4);
 }
 
 TEST(Configuration, test_load_config_with_profile_xboxone)

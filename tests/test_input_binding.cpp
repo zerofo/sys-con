@@ -106,7 +106,7 @@ TEST(BaseController, test_input_factor)
     EXPECT_FLOAT_EQ(normalizedData.sticks[0].axis_y, 1.0f);
 }
 
-TEST(BaseController, test_input_simulate_buttons)
+TEST(BaseController, test_input_simulate_home_capture)
 {
     NormalizedButtonData normalizedData = {0};
 
