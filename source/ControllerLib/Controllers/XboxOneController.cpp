@@ -47,6 +47,10 @@ static const uint8_t xboxone_hori_pdp_ack_id[] = {
     GIP_CMD_ACK, GIP_OPT_INTERNAL, GIP_SEQ(0), GIP_PL_LEN(9),
     0x00, GIP_CMD_IDENTIFY, GIP_OPT_INTERNAL, 0x3a, 0x00, 0x00, 0x00, 0x80, 0x00};
 
+static const uint8_t xboxone_pdp_ack_id_fa[] = {
+    GIP_CMD_ACK, GIP_OPT_INTERNAL, GIP_SEQ(0), GIP_PL_LEN(9),
+    0x00, GIP_CMD_IDENTIFY, GIP_OPT_INTERNAL, 0x3a, 0x00, 0x00, 0x00, 0xfa, 0x00};
+
 static const uint8_t xboxone_power_on[] = {
     GIP_CMD_POWER, GIP_OPT_INTERNAL, GIP_SEQ(1), GIP_PL_LEN(1), GIP_PWR_ON};
 
@@ -62,7 +66,7 @@ static const uint8_t xboxone_pdp_led_on[] = {
 static const uint8_t xboxone_pdp_auth0[] = { // This one is need for 0e6f:02de and 0e6f:0316 and maybe some others ?
     GIP_CMD_AUTHENTICATE, 0xa0, GIP_SEQ(4), 0x00, 0x92, 0x02};
 
-static const uint8_t xboxone_pdp_8bit_auth[] = {
+static const uint8_t xboxone_pdp_auth[] = {
     GIP_CMD_AUTHENTICATE, GIP_OPT_INTERNAL, GIP_SEQ(5), GIP_PL_LEN(2), 0x01, 0x00};
 
 // Seq on rumble can be reset to 1
@@ -108,16 +112,21 @@ struct xboxone_init_packet
     }
 
 static const struct xboxone_init_packet xboxone_init_packets[] = {
-    XBOXONE_INIT_PKT(0x0e6f, 0x0165, xboxone_hori_pdp_ack_id), // 0e6f-0165
+    XBOXONE_INIT_PKT(0x0e6f, 0x02ea, xboxone_pdp_ack_id_fa), // sys-con add: 0e6f-02ea
+    XBOXONE_INIT_PKT(0x0e6f, 0x0165, xboxone_hori_pdp_ack_id),
     XBOXONE_INIT_PKT(0x0f0d, 0x0067, xboxone_hori_pdp_ack_id),
     XBOXONE_INIT_PKT(0x0000, 0x0000, xboxone_power_on),
     XBOXONE_INIT_PKT(0x045e, 0x02ea, xboxone_s_init),
     XBOXONE_INIT_PKT(0x045e, 0x0b00, xboxone_s_init),
     XBOXONE_INIT_PKT(0x045e, 0x0b00, extra_input_packet_init),
     XBOXONE_INIT_PKT(0x0e6f, 0x0000, xboxone_pdp_led_on),
-    XBOXONE_INIT_PKT(0x0e6f, 0x0000, xboxone_pdp_auth0), // 0e6f-02de and 0e6f-0316
-    XBOXONE_INIT_PKT(0x0e6f, 0x0000, xboxone_pdp_8bit_auth),
-    XBOXONE_INIT_PKT(0x2dc8, 0x0000, xboxone_pdp_8bit_auth), // 2dc8-2008
+    XBOXONE_INIT_PKT(0x0f0d, 0x01b2, xboxone_pdp_led_on),
+    XBOXONE_INIT_PKT(0x20d6, 0xa01a, xboxone_pdp_led_on),
+    XBOXONE_INIT_PKT(0x0e6f, 0x0000, xboxone_pdp_auth0), // sys-con add: 0e6f-02de and 0e6f-0316
+    XBOXONE_INIT_PKT(0x0e6f, 0x0000, xboxone_pdp_auth),
+    XBOXONE_INIT_PKT(0x0f0d, 0x01b2, xboxone_pdp_auth),
+    XBOXONE_INIT_PKT(0x20d6, 0xa01a, xboxone_pdp_auth),
+    XBOXONE_INIT_PKT(0x2dc8, 0x0000, xboxone_pdp_auth), // sys-con add: 2dc8-2008
     XBOXONE_INIT_PKT(0x24c6, 0x541a, xboxone_rumblebegin_init),
     XBOXONE_INIT_PKT(0x24c6, 0x542a, xboxone_rumblebegin_init),
     XBOXONE_INIT_PKT(0x24c6, 0x543a, xboxone_rumblebegin_init),
@@ -128,16 +137,16 @@ static const struct xboxone_init_packet xboxone_init_packets[] = {
 
 /*
 static const struct xboxone_init_packet xboxone_init_packets[] = {
-    // XBOXONE_INIT_PKT_STR(0x0000, 0x0000, "04200100"),
-    // XBOXONE_INIT_PKT_STR(0x0000, 0x0000, "012002090004203a000000fa00"), // xboxone_hori_pdp_ack_id ? mandatory - This command make the controller to change its behavior
-    // XBOXONE_INIT_PKT_STR(0x0000, 0x0000, "01200209000420220100001200"),
-    // XBOXONE_INIT_PKT_STR(0x0000, 0x0000, "01200209000420340100000000"),
-    XBOXONE_INIT_PKT_STR(0x0000, 0x0000, "0520020f060000000000005553000000000000"),
+    XBOXONE_INIT_PKT_STR(0x0000, 0x0000, "04200100"),
+    XBOXONE_INIT_PKT_STR(0x0000, 0x0000, "012002090004203a000000fa00"), // xboxone_hori_pdp_ack_id ? mandatory - This command make the controller to change its behavior
+    XBOXONE_INIT_PKT_STR(0x0000, 0x0000, "01200209000420220100001200"),
+    XBOXONE_INIT_PKT_STR(0x0000, 0x0000, "01200209000420340100000000"),
+    // XBOXONE_INIT_PKT_STR(0x0000, 0x0000, "0520020f060000000000005553000000000000"),
 
     XBOXONE_INIT_PKT_STR(0x0000, 0x0000, "0520030100"),     // NEEDED xboxone_power_on
     XBOXONE_INIT_PKT_STR(0x0000, 0x0000, "0a200403000114"), // NEEDED  xboxone_pdp_led_on
     XBOXONE_INIT_PKT_STR(0x0000, 0x0000, "06a004009202"),   // NEEDED xboxone_pdp_auth0
-    XBOXONE_INIT_PKT_STR(0x0000, 0x0000, "062007020100"),   // NEEDED xboxone_pdp_8bit_auth
+    XBOXONE_INIT_PKT_STR(0x0000, 0x0000, "062007020100"),   // NEEDED xboxone_pdp_auth
 };
 */
 XboxOneController::XboxOneController(std::unique_ptr<IUSBDevice> &&device, const ControllerConfig &config, std::unique_ptr<ILogger> &&logger)
@@ -231,6 +240,8 @@ ControllerResult XboxOneController::ParseData(uint8_t *buffer, size_t size, RawI
 
 ControllerResult XboxOneController::SendInitBytes(uint16_t input_idx)
 {
+    uint8_t packet_seq = 1;
+
     if (m_outPipe.size() <= input_idx)
         return CONTROLLER_STATUS_SUCCESS;
 
@@ -247,6 +258,9 @@ ControllerResult XboxOneController::SendInitBytes(uint16_t input_idx)
             bufferOut = BaseController::StrToByteArray(reinterpret_cast<const char *>(xboxone_init_packets[i].data));
         else if (xboxone_init_packets[i].type == XBOXONE_DATATYPE_BINARY)
             bufferOut = std::vector<uint8_t>(xboxone_init_packets[i].data, xboxone_init_packets[i].data + xboxone_init_packets[i].len);
+
+        // Make sure packet sequence is incremented (Otherwise some controller will not work) (Like PDP)
+        bufferOut.data()[2] = packet_seq++;
 
         ControllerResult result = m_outPipe[input_idx]->Write(bufferOut.data(), bufferOut.size());
         if (result != CONTROLLER_STATUS_SUCCESS)
