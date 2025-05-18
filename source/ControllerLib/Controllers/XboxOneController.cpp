@@ -74,10 +74,17 @@ static const uint8_t xboxone_rumbleend_init[] = {
     GIP_CMD_RUMBLE, 0x00, GIP_SEQ(2), GIP_PL_LEN(9),
     0x00, GIP_MOTOR_ALL, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
 
+enum xboxone_data_type
+{
+    XBOXONE_DATATYPE_BINARY = 0,
+    XBOXONE_DATATYPE_HEXSTR = 1
+};
+
 struct xboxone_init_packet
 {
     uint16_t idVendor;
     uint16_t idProduct;
+    const xboxone_data_type type;
     const uint8_t *data;
     int16_t len;
 };
@@ -86,6 +93,7 @@ struct xboxone_init_packet
     {                                       \
         .idVendor = (_vid),                 \
         .idProduct = (_pid),                \
+        .type = XBOXONE_DATATYPE_BINARY,    \
         .data = (_data),                    \
         .len = sizeof(_data),               \
     }
@@ -94,8 +102,9 @@ struct xboxone_init_packet
     {                                           \
         .idVendor = (_vid),                     \
         .idProduct = (_pid),                    \
+        .type = XBOXONE_DATATYPE_HEXSTR,        \
         .data = (const uint8_t *)(_data),       \
-        .len = -1,                              \
+        .len = 0,                               \
     }
 
 static const struct xboxone_init_packet xboxone_init_packets[] = {
@@ -119,42 +128,18 @@ static const struct xboxone_init_packet xboxone_init_packets[] = {
 
 /*
 static const struct xboxone_init_packet xboxone_init_packets[] = {
-    XBOXONE_INIT_PKT_STR(0x0000, 0x0000, "04200100"),
-    XBOXONE_INIT_PKT_STR(0x0000, 0x0000, "012002090004203a000000fa00"), // xboxone_hori_pdp_ack_id ? mandatory - This command make the controller to change its behavior
-    XBOXONE_INIT_PKT_STR(0x0000, 0x0000, "01200209000420220100001200"),
-    XBOXONE_INIT_PKT_STR(0x0000, 0x0000, "01200209000420340100000000"),
+    // XBOXONE_INIT_PKT_STR(0x0000, 0x0000, "04200100"),
+    // XBOXONE_INIT_PKT_STR(0x0000, 0x0000, "012002090004203a000000fa00"), // xboxone_hori_pdp_ack_id ? mandatory - This command make the controller to change its behavior
+    // XBOXONE_INIT_PKT_STR(0x0000, 0x0000, "01200209000420220100001200"),
+    // XBOXONE_INIT_PKT_STR(0x0000, 0x0000, "01200209000420340100000000"),
     XBOXONE_INIT_PKT_STR(0x0000, 0x0000, "0520020f060000000000005553000000000000"),
-    XBOXONE_INIT_PKT_STR(0x0000, 0x0000, "0520030100"),     // NEEDED POWER ON
-    XBOXONE_INIT_PKT_STR(0x0000, 0x0000, "0a200403000114"), // NEEDED  PDP LED ON
-    // XBOXONE_INIT_PKT_STR(0x0000, 0x0000, "0630013a00410001002c01010028f1eda4453a6adb2e2108b8eb084c05352e64e5c6267d330ba435765c76fd7ad000000000457bafe90000000000000000"),
-    // XBOXONE_INIT_PKT_STR(0x0000, 0x0000, "01200109000620060000000000"),
-    // XBOXONE_INIT_PKT_STR(0x0000, 0x0000, "0630020e0042000200540000000000000000"),
-    // XBOXONE_INIT_PKT_STR(0x0000, 0x0000, "012002090006203a0000002000"),
-    // XBOXONE_INIT_PKT_STR(0x0000, 0x0000, "012002090006205a0000000000"),
-    // XBOXONE_INIT_PKT_STR(0x0000, 0x0000, "0630030e0042000304040000000000000000"),
-    // XBOXONE_INIT_PKT_STR(0x0000, 0x0000, "012003090006203a000000ff02"),
-    // XBOXONE_INIT_PKT_STR(0x0000, 0x0000, "01200309000620220100001702"),
-    // XBOXONE_INIT_PKT_STR(0x0000, 0x0000, "0120030900062044020000f500"),
-    // XBOXONE_INIT_PKT_STR(0x0000, 0x0000, "01200309000620390300000000"),
-    // XBOXONE_INIT_PKT_STR(0x0000, 0x0000, "06f0043a920200410005010405010100af711ffa412e24f08692f328f6668d77c17f89dc5515b5ec2e14f857453675c40225d9321081d653332e9d4df828e474"),
-    // XBOXONE_INIT_PKT_STR(0x0000, 0x0000, "06a004ba003a2b5f6d5ecb24a98c1855c33957fccd197e2892368c2b65f4cabd1777e0942732addc03308578d94bccb956d196a4434bfa618e730977fd35b22b"),
-    // XBOXONE_INIT_PKT_STR(0x0000, 0x0000, "06a004ba007441bf4884ae4fd21685634c2e07b8eec79d0636ecb58f6c509f1abfbf60f3fc410220430d612bf9be0481d6d8bff856ec3636e9eee6a3deb3dad3"),
-    // XBOXONE_INIT_PKT_STR(0x0000, 0x0000, "06a0043aae01bf427024fc6f76ca92f981226ac1f5b1d70702902e13dfdc9feec72b6f898a44ea6ea26f9ada85100c733a96fce928bd790c1b86abd1c1ff74be"),
-    // XBOXONE_INIT_PKT_STR(0x0000, 0x0000, "06b0042ae801f2e2886657a218bde99a1caf11ec54d4a245ddddeb182d356ac3af48af9ef17429380000000000000000"),
-    XBOXONE_INIT_PKT_STR(0x0000, 0x0000, "06a004009202"), // NEEDED PDP
-    // XBOXONE_INIT_PKT_STR(0x0000, 0x0000, "01200409000620060000000000"),
-    // XBOXONE_INIT_PKT_STR(0x0000, 0x0000, "0630053200410007002407010020676b579cb3467e514a3c4204319ae919b6c29614fcec7c8950b306e37fd003b10000000000000000"),
-    // XBOXONE_INIT_PKT_STR(0x0000, 0x0000, "01200509000620060000000000"),
-    // XBOXONE_INIT_PKT_STR(0x0000, 0x0000, "0630060e0042000800440000000000000000"),
-    // XBOXONE_INIT_PKT_STR(0x0000, 0x0000, "012006090006203a0000001000"),
-    // XBOXONE_INIT_PKT_STR(0x0000, 0x0000, "012006090006204a0000000000"),
-    XBOXONE_INIT_PKT_STR(0x0000, 0x0000, "062007020100"), // NEEDED for sure
-    // XBOXONE_INIT_PKT_STR(0x0000, 0x0000, "09000109000f00000000ff00eb"), //NOT NEEDED
-    // XBOXONE_INIT_PKT_STR(0x0000, 0x0000, "09000209000f00000000ff00eb"), //NOT NEEDED
-    // XBOXONE_INIT_PKT_STR(0x0000, 0x0000, "09000309000f00000000ff00eb"), //NOT NEEDED
+
+    XBOXONE_INIT_PKT_STR(0x0000, 0x0000, "0520030100"),     // NEEDED xboxone_power_on
+    XBOXONE_INIT_PKT_STR(0x0000, 0x0000, "0a200403000114"), // NEEDED  xboxone_pdp_led_on
+    XBOXONE_INIT_PKT_STR(0x0000, 0x0000, "06a004009202"),   // NEEDED xboxone_pdp_auth0
+    XBOXONE_INIT_PKT_STR(0x0000, 0x0000, "062007020100"),   // NEEDED xboxone_pdp_8bit_auth
 };
 */
-
 XboxOneController::XboxOneController(std::unique_ptr<IUSBDevice> &&device, const ControllerConfig &config, std::unique_ptr<ILogger> &&logger)
     : BaseController(std::move(device), std::move(config), std::move(logger))
 {
@@ -251,31 +236,28 @@ ControllerResult XboxOneController::SendInitBytes(uint16_t input_idx)
 
     for (size_t i = 0; i < sizeof(xboxone_init_packets) / sizeof(struct xboxone_init_packet); i++)
     {
+        std::vector<uint8_t> bufferOut;
+
         if (xboxone_init_packets[i].idVendor != 0 && xboxone_init_packets[i].idVendor != m_device->GetVendor())
             continue;
         if (xboxone_init_packets[i].idProduct != 0 && xboxone_init_packets[i].idProduct != m_device->GetProduct())
             continue;
 
-        if (xboxone_init_packets[i].len == -1)
-        {
-            std::vector<uint8_t> buffer = BaseController::StrToByteArray(reinterpret_cast<const char *>(xboxone_init_packets[i].data));
-            ControllerResult result = m_outPipe[input_idx]->Write(buffer.data(), buffer.size());
-            if (result != CONTROLLER_STATUS_SUCCESS)
-                return result;
-        }
-        else
-        {
-            ControllerResult result = m_outPipe[input_idx]->Write(xboxone_init_packets[i].data, xboxone_init_packets[i].len);
-            if (result != CONTROLLER_STATUS_SUCCESS)
-                return result;
-        }
+        if (xboxone_init_packets[i].type == XBOXONE_DATATYPE_HEXSTR)
+            bufferOut = BaseController::StrToByteArray(reinterpret_cast<const char *>(xboxone_init_packets[i].data));
+        else if (xboxone_init_packets[i].type == XBOXONE_DATATYPE_BINARY)
+            bufferOut = std::vector<uint8_t>(xboxone_init_packets[i].data, xboxone_init_packets[i].data + xboxone_init_packets[i].len);
+
+        ControllerResult result = m_outPipe[input_idx]->Write(bufferOut.data(), bufferOut.size());
+        if (result != CONTROLLER_STATUS_SUCCESS)
+            return result;
 
         /* This part of the code is needed to unqueue messages on certains controller (Like PDP)
            Otherwise, the controller might not work
         */
-        uint8_t buffer[256];
-        size_t size = sizeof(buffer);
-        m_inPipe[input_idx]->Read(buffer, &size, 250 * 1000); // 250ms timeout
+        uint8_t bufferIn[256];
+        size_t size = sizeof(bufferIn);
+        m_inPipe[input_idx]->Read(bufferIn, &size, 250 * 1000); // 250ms timeout
     }
 
     return CONTROLLER_STATUS_SUCCESS;
