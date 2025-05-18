@@ -15,7 +15,7 @@
 #define GIP_CMD_FIRMWARE      0x0c
 #define GIP_CMD_INPUT         0x20
 
-#define GIP_SEQ(x) (x)
+#define GIP_SEQ0 0x00
 
 #define GIP_OPT_ACK      0x10
 #define GIP_OPT_INTERNAL 0x20
@@ -43,39 +43,42 @@ How to find correct init sequence ?
     Linux controller hardcode the sequence to 0, however some controller like the PDP (0e6f:02de and 0e6f:0316) need to have an incremental sequence during init.
 */
 
-static const uint8_t xboxone_hori_pdp_ack_id[] = {
-    GIP_CMD_ACK, GIP_OPT_INTERNAL, GIP_SEQ(0), GIP_PL_LEN(9),
+static const uint8_t xboxone_hori_pdp_ack_id_3a[] = {
+    GIP_CMD_ACK, GIP_OPT_INTERNAL, GIP_SEQ0, GIP_PL_LEN(9),
     0x00, GIP_CMD_IDENTIFY, GIP_OPT_INTERNAL, 0x3a, 0x00, 0x00, 0x00, 0x80, 0x00};
 
-static const uint8_t xboxone_pdp_ack_id_fa[] = {
-    GIP_CMD_ACK, GIP_OPT_INTERNAL, GIP_SEQ(0), GIP_PL_LEN(9),
-    0x00, GIP_CMD_IDENTIFY, GIP_OPT_INTERNAL, 0x3a, 0x00, 0x00, 0x00, 0xfa, 0x00};
+static const uint8_t xboxone_identify[] = {
+    GIP_CMD_IDENTIFY, GIP_OPT_INTERNAL, GIP_SEQ0, 0x00};
+
+static const uint8_t xboxone_pdp_ack_id_22[] = {
+    GIP_CMD_ACK, GIP_OPT_INTERNAL, GIP_SEQ0, GIP_PL_LEN(9),
+    0x00, GIP_CMD_IDENTIFY, GIP_OPT_INTERNAL, 0x22, 0x01, 0x00, 0x00, 0x12, 0x00};
 
 static const uint8_t xboxone_power_on[] = {
-    GIP_CMD_POWER, GIP_OPT_INTERNAL, GIP_SEQ(1), GIP_PL_LEN(1), GIP_PWR_ON};
+    GIP_CMD_POWER, GIP_OPT_INTERNAL, GIP_SEQ0, GIP_PL_LEN(1), GIP_PWR_ON};
 
 static const uint8_t xboxone_s_init[] = {
-    GIP_CMD_POWER, GIP_OPT_INTERNAL, GIP_SEQ(2), 0x0f, 0x06};
+    GIP_CMD_POWER, GIP_OPT_INTERNAL, GIP_SEQ0, 0x0f, 0x06};
 
 static const uint8_t extra_input_packet_init[] = {
-    0x4d, 0x10, 0x01 /*SEQ3?*/, 0x02, 0x07, 0x00};
+    0x4d, 0x10, GIP_SEQ0, 0x02, 0x07, 0x00};
 
 static const uint8_t xboxone_pdp_led_on[] = {
-    GIP_CMD_LED, GIP_OPT_INTERNAL, GIP_SEQ(3), GIP_PL_LEN(3), 0x00, GIP_LED_ON, 0x14};
+    GIP_CMD_LED, GIP_OPT_INTERNAL, GIP_SEQ0, GIP_PL_LEN(3), 0x00, GIP_LED_ON, 0x14};
 
 static const uint8_t xboxone_pdp_auth0[] = { // This one is need for 0e6f:02de and 0e6f:0316 and maybe some others ?
-    GIP_CMD_AUTHENTICATE, 0xa0, GIP_SEQ(4), 0x00, 0x92, 0x02};
+    GIP_CMD_AUTHENTICATE, 0xa0, GIP_SEQ0, 0x00, 0x92, 0x02};
 
 static const uint8_t xboxone_pdp_auth[] = {
-    GIP_CMD_AUTHENTICATE, GIP_OPT_INTERNAL, GIP_SEQ(5), GIP_PL_LEN(2), 0x01, 0x00};
+    GIP_CMD_AUTHENTICATE, GIP_OPT_INTERNAL, GIP_SEQ0, GIP_PL_LEN(2), 0x01, 0x00};
 
 // Seq on rumble can be reset to 1
 static const uint8_t xboxone_rumblebegin_init[] = {
-    GIP_CMD_RUMBLE, 0x00, GIP_SEQ(1), GIP_PL_LEN(9),
+    GIP_CMD_RUMBLE, 0x00, GIP_SEQ0, GIP_PL_LEN(9),
     0x00, GIP_MOTOR_ALL, 0x00, 0x00, 0x1D, 0x1D, 0xFF, 0x00, 0x00};
 
 static const uint8_t xboxone_rumbleend_init[] = {
-    GIP_CMD_RUMBLE, 0x00, GIP_SEQ(2), GIP_PL_LEN(9),
+    GIP_CMD_RUMBLE, 0x00, GIP_SEQ0, GIP_PL_LEN(9),
     0x00, GIP_MOTOR_ALL, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
 
 enum xboxone_data_type
@@ -112,9 +115,10 @@ struct xboxone_init_packet
     }
 
 static const struct xboxone_init_packet xboxone_init_packets[] = {
-    XBOXONE_INIT_PKT(0x0e6f, 0x02ea, xboxone_pdp_ack_id_fa), // sys-con add: 0e6f-02ea
-    XBOXONE_INIT_PKT(0x0e6f, 0x0165, xboxone_hori_pdp_ack_id),
-    XBOXONE_INIT_PKT(0x0f0d, 0x0067, xboxone_hori_pdp_ack_id),
+    XBOXONE_INIT_PKT(0x0e6f, 0x02ea, xboxone_identify),      // sys-con add: 0e6f-02ea
+    XBOXONE_INIT_PKT(0x0e6f, 0x02ea, xboxone_pdp_ack_id_22), // sys-con add: 0e6f-02ea
+    XBOXONE_INIT_PKT(0x0e6f, 0x0165, xboxone_hori_pdp_ack_id_3a),
+    XBOXONE_INIT_PKT(0x0f0d, 0x0067, xboxone_hori_pdp_ack_id_3a),
     XBOXONE_INIT_PKT(0x0000, 0x0000, xboxone_power_on),
     XBOXONE_INIT_PKT(0x045e, 0x02ea, xboxone_s_init),
     XBOXONE_INIT_PKT(0x045e, 0x0b00, xboxone_s_init),
@@ -138,17 +142,14 @@ static const struct xboxone_init_packet xboxone_init_packets[] = {
 /*
 static const struct xboxone_init_packet xboxone_init_packets[] = {
     XBOXONE_INIT_PKT_STR(0x0000, 0x0000, "04200100"),
-    XBOXONE_INIT_PKT_STR(0x0000, 0x0000, "012002090004203a000000fa00"), // xboxone_hori_pdp_ack_id ? mandatory - This command make the controller to change its behavior
     XBOXONE_INIT_PKT_STR(0x0000, 0x0000, "01200209000420220100001200"),
-    XBOXONE_INIT_PKT_STR(0x0000, 0x0000, "01200209000420340100000000"),
-    // XBOXONE_INIT_PKT_STR(0x0000, 0x0000, "0520020f060000000000005553000000000000"),
-
-    XBOXONE_INIT_PKT_STR(0x0000, 0x0000, "0520030100"),     // NEEDED xboxone_power_on
-    XBOXONE_INIT_PKT_STR(0x0000, 0x0000, "0a200403000114"), // NEEDED  xboxone_pdp_led_on
-    XBOXONE_INIT_PKT_STR(0x0000, 0x0000, "06a004009202"),   // NEEDED xboxone_pdp_auth0
-    XBOXONE_INIT_PKT_STR(0x0000, 0x0000, "062007020100"),   // NEEDED xboxone_pdp_auth
+    XBOXONE_INIT_PKT_STR(0x0000, 0x0000, "0520030100"),     // xboxone_power_on
+    XBOXONE_INIT_PKT_STR(0x0000, 0x0000, "0a200403000114"), // xboxone_pdp_led_on
+    XBOXONE_INIT_PKT_STR(0x0000, 0x0000, "06a004009202"),   // xboxone_pdp_auth0
+    XBOXONE_INIT_PKT_STR(0x0000, 0x0000, "062007020100"),   // xboxone_pdp_auth
 };
 */
+
 XboxOneController::XboxOneController(std::unique_ptr<IUSBDevice> &&device, const ControllerConfig &config, std::unique_ptr<ILogger> &&logger)
     : BaseController(std::move(device), std::move(config), std::move(logger))
 {
