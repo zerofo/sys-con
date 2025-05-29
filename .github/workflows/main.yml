@@ -1,6 +1,7 @@
 name: NX_CI
 
 on:
+  workflow_dispatch:
   push:
     branches:
       - master
