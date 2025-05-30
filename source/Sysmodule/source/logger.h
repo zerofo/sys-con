@@ -20,6 +20,7 @@ namespace syscon::logger
 
     void LogTrace(const char *format, ...);
     void LogDebug(const char *format, ...);
+    void LogPerf(const char *format, ...);
     void LogInfo(const char *format, ...);
     void LogWarning(const char *format, ...);
     void LogError(const char *format, ...);

@@ -39,7 +39,7 @@ TEST(Controller, test_xboxone_pdp_controller_init)
     EXPECT_CALL(*mockUSBEndpointIn, Open).WillOnce(testing::Return(CONTROLLER_STATUS_SUCCESS));
     EXPECT_CALL(*mockUSBEndpointOut, Open).WillOnce(testing::Return(CONTROLLER_STATUS_SUCCESS));
 
-    uint8_t power_on[] = {0x05, 0x20, 0x01, 0x01, 0x00};
+    uint8_t buffer1[] = {0x05, 0x20, 0x01, 0x01, 0x00};
     uint8_t buffer2[] = {0x05, 0x06, 0x07, 0x08}; // Second expected buffer
     uint8_t buffer3[] = {0x09, 0x0A, 0x0B, 0x0C}; // Third expected buffer
 

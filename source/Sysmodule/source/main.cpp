@@ -94,12 +94,8 @@ int main(int argc, char *argv[])
     ::syscon::logger::LogDebug("Initializing controllers ...");
     ::syscon::controllers::Initialize();
 
-    // Reduce polling frequency when we use debug or trace to avoid spamming the logs
-    if ((globalConfig.log_level <= LOG_LEVEL_DEBUG) && globalConfig.polling_frequency_ms < 100)
-        globalConfig.polling_frequency_ms = 100;
-
-    ::syscon::logger::LogDebug("Polling frequency: %d ms", globalConfig.polling_frequency_ms);
-    ::syscon::controllers::SetPollingParameters(globalConfig.polling_frequency_ms, globalConfig.polling_thread_priority);
+    ::syscon::logger::LogDebug("Polling timeout: %d ms", globalConfig.polling_timeout_ms);
+    ::syscon::controllers::SetPollingParameters(globalConfig.polling_timeout_ms, globalConfig.polling_thread_priority);
 
     ::syscon::logger::LogDebug("Initializing USB stack ...");
     ::syscon::usb::Initialize(globalConfig.discovery_mode, globalConfig.discovery_vidpid, globalConfig.auto_add_controller);

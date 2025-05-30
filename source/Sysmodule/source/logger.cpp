@@ -112,6 +112,14 @@ namespace syscon::logger
         va_end(vl);
     }
 
+    void LogPerf(const char *fmt, ...)
+    {
+        ::std::va_list vl;
+        va_start(vl, fmt);
+        Log(LOG_LEVEL_PERF, fmt, vl);
+        va_end(vl);
+    }
+
     void LogInfo(const char *fmt, ...)
     {
         ::std::va_list vl;

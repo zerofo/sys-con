@@ -2,10 +2,10 @@
 #include "SwitchLogger.h"
 #include <chrono>
 
-SwitchVirtualGamepadHandler::SwitchVirtualGamepadHandler(std::unique_ptr<IController> &&controller, int32_t polling_frequency_ms, int8_t thread_priority)
+SwitchVirtualGamepadHandler::SwitchVirtualGamepadHandler(std::unique_ptr<IController> &&controller, int32_t polling_timeout_ms, int8_t thread_priority)
     : m_controller(std::move(controller)),
-      m_polling_frequency_ms(std::max(1, polling_frequency_ms)),
-      m_polling_thread_priority(thread_priority)
+      m_polling_thread_priority(thread_priority),
+      m_polling_timeout_ms(polling_timeout_ms)
 {
 }
 
@@ -19,8 +19,6 @@ Result SwitchVirtualGamepadHandler::Initialize()
     if (R_FAILED(rc))
         return rc;
 
-    m_read_input_timeout_us = (m_polling_frequency_ms * 1000) / m_controller->GetInputCount();
-
     return 0;
 }
 
@@ -33,22 +31,28 @@ void SwitchVirtualGamepadHandler::Exit()
 
 void SwitchVirtualGamepadHandler::onRun()
 {
+    Result rc;
     ::syscon::logger::LogDebug("SwitchVirtualGamepadHandler InputThread running ...");
+
+    /*
+     Read timeout depends on the polling frequency and number of interfaces
+      - On XBOX360 controllers, we have 4 interfaces, so the read timeout is divided by 4 to make sure we read all interfaces in time.
+      - On most of other controllers, we have 1 interface, so the read timeout is equal to the polling frequency but
+        it don't have a big impact on the performance - It's even better to set a bigger timeout to avoid the thread to be too busy.
+    */
+    uint32_t polling_timeout_us = (m_polling_timeout_ms * 1000) / m_controller->GetDevice()->GetInterfaces().size();
 
     do
     {
         auto startTimer = std::chrono::steady_clock::now();
 
-        UpdateInput(m_read_input_timeout_us);
-        UpdateOutput();
+        rc = UpdateInput(polling_timeout_us);
+        (void)UpdateOutput();
 
         s64 execution_time_us = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now() - startTimer).count();
 
-        if ((execution_time_us - m_read_input_timeout_us) > 10000) // 10ms
+        if ((rc != CONTROLLER_STATUS_TIMEOUT) && (execution_time_us > 30000)) // 30ms
             ::syscon::logger::LogWarning("SwitchVirtualGamepadHandler UpdateInputOutput took: %d ms !", execution_time_us / 1000);
-
-        if (execution_time_us < m_read_input_timeout_us)
-            svcSleepThread((m_read_input_timeout_us - execution_time_us) * 1000);
 
     } while (m_ThreadIsRunning);
 

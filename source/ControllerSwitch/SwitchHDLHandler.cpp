@@ -1,11 +1,12 @@
 #include "SwitchHDLHandler.h"
 #include "SwitchLogger.h"
 #include <cmath>
+#include <chrono>
 
 static HiddbgHdlsSessionId g_hdlsSessionId;
 
-SwitchHDLHandler::SwitchHDLHandler(std::unique_ptr<IController> &&controller, int32_t polling_frequency_ms, int8_t thread_priority)
-    : SwitchVirtualGamepadHandler(std::move(controller), polling_frequency_ms, thread_priority)
+SwitchHDLHandler::SwitchHDLHandler(std::unique_ptr<IController> &&controller, int32_t polling_timeout_ms, int8_t thread_priority)
+    : SwitchVirtualGamepadHandler(std::move(controller), polling_timeout_ms, thread_priority)
 {
     for (int i = 0; i < CONTROLLER_MAX_INPUTS; i++)
         m_controllerData[i].m_is_sync = true;
@@ -231,7 +232,7 @@ Result SwitchHDLHandler::UpdateHdlState(const NormalizedButtonData &data, uint16
     return 0;
 }
 
-void SwitchHDLHandler::UpdateInput(uint32_t timeout_us)
+Result SwitchHDLHandler::UpdateInput(uint32_t timeout_us)
 {
     uint16_t input_idx = 0;
     NormalizedButtonData buttonData = {0};
@@ -254,15 +255,23 @@ void SwitchHDLHandler::UpdateInput(uint32_t timeout_us)
     }
 
     if (R_FAILED(read_rc))
-        return;
+        return read_rc;
+
+    auto startTimer = std::chrono::steady_clock::now();
 
     // We get the button inputs from the input packet and update the state of our controller
     UpdateHdlState(buttonData, input_idx);
+
+    s64 execution_time_us = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now() - startTimer).count();
+    syscon::logger::LogPerf("SwitchHDLHandler[%04x-%04x] UpdateInput took: %d us for idx: %d !", m_controller->GetDevice()->GetVendor(), m_controller->GetDevice()->GetProduct(), execution_time_us, input_idx);
+
+    return 0;
 }
 
-void SwitchHDLHandler::UpdateOutput()
+Result SwitchHDLHandler::UpdateOutput()
 {
     // Vibrations are not supported with HDL
+    return 0;
 }
 
 HiddbgHdlsSessionId &SwitchHDLHandler::GetHdlsSessionId()

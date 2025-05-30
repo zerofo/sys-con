@@ -170,12 +170,12 @@ ControllerResult BaseController::ReadInput(NormalizedButtonData *normalData, uin
     MapRawInputToNormalized(rawData, normalData);
 
     auto end = std::chrono::high_resolution_clock::now();
-    Log(LogLevelPerf, "Controller[%04x-%04x] Reading: %dms, Parsing: %dms, Mapping: %dms",
+    Log(LogLevelPerf, "Controller[%04x-%04x] Reading: %dus, Parsing: %dus, Mapping: %dus",
         m_device->GetVendor(),
         m_device->GetProduct(),
-        std::chrono::duration_cast<std::chrono::milliseconds>(parse_start - read_start).count(),
-        std::chrono::duration_cast<std::chrono::milliseconds>(map_start - parse_start).count(),
-        std::chrono::duration_cast<std::chrono::milliseconds>(end - map_start).count());
+        std::chrono::duration_cast<std::chrono::microseconds>(parse_start - read_start).count(),
+        std::chrono::duration_cast<std::chrono::microseconds>(map_start - parse_start).count(),
+        std::chrono::duration_cast<std::chrono::microseconds>(end - map_start).count());
 
     return CONTROLLER_STATUS_SUCCESS;
 }
