@@ -23,7 +23,8 @@ endif
 endif
 
 libhiddatainterpreter:
-	$(MAKE) -C ../external/HIDDataInterpreter/build/switch
+	mkdir -p ../external/HIDDataInterpreter/build/switch
+	make -C $(CURDIR)/../external/HIDDataInterpreter/build/switch TOPDIR=$(CURDIR)/../external/HIDDataInterpreter/build/switch
 
 companion:
 	$(MAKE) -C companion

@@ -47,7 +47,7 @@ INCLUDES	:=	include
 #---------------------------------------------------------------------------------
 # options for code generation
 #---------------------------------------------------------------------------------
-ARCH	:=	-march=armv8-a+crc+crypto -mtune=cortex-a57 -mtp=soft -fPIE
+ARCH	:=	-march=armv8-a+crc+crypto -mtune=cortex-a57 -mtp=soft
 
 # Warning set matches the sysmodule and the syscon::warnings target in CMakeLists.txt.
 WARNFLAGS	:=	-Wall -Wextra -Wshadow -Wundef -Wformat=2 -Wno-unused-parameter
@@ -165,6 +165,12 @@ endif
 .PHONY: $(BUILD) clean all
 
 #---------------------------------------------------------------------------------
+all: | fix_cwd $(BUILD)
+.PHONY: fix_cwd
+# Same CURDIR anchoring fix for the companion.
+fix_cwd:
+	@true
+
 all: $(BUILD)
 
 $(BUILD):

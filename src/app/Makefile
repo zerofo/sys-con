@@ -76,7 +76,7 @@ CFLAGS	+= -DATMOSPHERE=$(ATMOSPHERE)
 
 else
 
-ARCH	:=	-march=armv8-a+crc+crypto -mtune=cortex-a57 -mtp=soft -fPIE
+ARCH	:=	-march=armv8-a+crc+crypto -mtune=cortex-a57 -mtp=soft
 # Warning set matches the syscon::warnings target in CMakeLists.txt, so the host and
 # device builds agree.
 # -Wundef in particular catches `#if ATMOSPHERE` in a build where ATMOSPHERE is undefined,
@@ -226,6 +226,12 @@ endif
 .PHONY: $(BUILD) clean all
 
 #---------------------------------------------------------------------------------
+all: | fix_cwd $(BUILD)
+.PHONY: fix_cwd
+# Newer gnumake resolves sub-make CURDIR to '.', breaking relative SOURCES paths.
+# Idempotent in-tree fix; no submodule changes needed.
+fix_cwd:
+	@CUR=$$(cd .. && pwd) python3 -c "import os,sys;m=os.path.join(os.environ['CUR'],'Makefile');s=open(m).read();n=s.replace('SOURCES\\t\\t:=\\t../../src','SOURCES\\t\\t:=\\t'+os.environ['CUR']+'/../../src').replace('INCLUDES\\t:=\\t../../inc','INCLUDES\\t:=\\t'+os.environ['CUR']+'/../../inc');open(m,'w').write(n) if n!=s else None"
 all: $(BUILD)
 
 $(BUILD):
